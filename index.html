@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Agenda de eventos</title>
+
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
+
+</head>
+<body>
+
+  <header>
+    <h1>Agenda de eventos</h1>
+    <button id="loginBtn">Login</button>
+    <button id="logoutBtn" hidden>Logout</button>
+  </header>
+
+  <!-- VISTA PÚBLICA -->
+  <section id="publicView">
+    <h2>Buscar eventos cerca (2 km)</h2>
+
+<div class="mapControls">
+  <button id="autoLocationBtn">Usar mi ubicación</button>
+
+  <!-- inputs manuales (ocultos, quedan para debug) -->
+  <input id="userLat" type="number" step="0.000001" placeholder="Tu latitud" class="debugHidden">
+  <input id="userLng" type="number" step="0.000001" placeholder="Tu longitud" class="debugHidden">
+
+  <button id="searchNearbyBtn">¿Qué hay cerca mío?</button>
+
+<div style="display:block;margin-top:8px;">
+  Categoría:
+</div>
+
+<div class="chipRow" id="categoryChips">
+  <button type="button" class="chip isActive" data-cat="all">Todo</button>
+  <button type="button" class="chip" data-cat="music">🎵 Música</button>
+  <button type="button" class="chip" data-cat="dance">💃 Danza</button>
+  <button type="button" class="chip" data-cat="theatre">🎭 Teatro</button>
+  <button type="button" class="chip" data-cat="visual_arts">🖼️ Visuales</button>
+</div>
+  <!-- contador -->
+  <div id="nearbyCount" class="nearbyCount"></div>
+</div>
+
+
+    <h3>Mapa</h3>
+    <div id="map"></div>
+
+    <!-- VISTA ADMIN -->
+<hr>
+
+<h3>Buscar lugar real</h3>
+<input id="placeQuery" placeholder="Ej: Teatro Colón">
+<button id="searchPlaceBtn">Buscar</button>
+<ul id="placeResults"></ul>
+
+<section id="adminView" hidden>
+    <h2>Panel administrador</h2>
+    <p>
+      Tip: hacé click en el mapa para fijar tu ubicación.
+      Para cargar un evento, usá el pin de creación (se activa al estar logueado).
+    </p>
+    <input id="eventPlace" placeholder="Lugar (ej: Teatro Solís)">
+
+    <div class="chipRow chipRow--admin" id="adminCategoryChips">
+  <span class="chipLabel">Categoría:</span>
+  <button type="button" class="chip chip--sm isActive" data-cat="music">🎵</button>
+  <button type="button" class="chip chip--sm" data-cat="dance">💃</button>
+  <button type="button" class="chip chip--sm" data-cat="theatre">🎭</button>
+  <button type="button" class="chip chip--sm" data-cat="visual_arts">🖼️</button>
+</div>
+
+<input type="hidden" id="eventCategory" value="music">
+
+    <input id="eventTitle" placeholder="Título del evento">
+    <input id="eventDate" type="date">
+    <input id="eventStart" type="time">
+    
+
+    <input id="eventLat" type="number" step="0.000001" placeholder="Latitud">
+    <input id="eventLng" type="number" step="0.000001" placeholder="Longitud">
+
+    <button id="addEventBtn">Agregar evento</button>
+
+    <button id="clearEventsBtn" style="background:#fff;color:#111;border:1px solid #ddd;">
+      Borrar todos los eventos
+    </button>
+  </section>
+
+    <details class="accordion">
+      <summary>Resultados cerca (2 km)</summary>
+      <ul id="nearbyList"></ul>
+    </details>
+
+    <hr>
+
+    <details class="accordion">
+      <summary>Eventos de hoy</summary>
+      <ul id="todayEvents"></ul>
+    </details>
+
+    <hr>
+
+    <details class="accordion">
+      <summary>Próximos eventos</summary>
+      <ul id="eventList"></ul>
+    </details>
+
+    <hr>
+
+    <h2>Calendario</h2>
+    <div id="calendarHeader">
+      <button id="prevMonthBtn">◀</button>
+      <div id="monthLabel"></div>
+      <button id="nextMonthBtn">▶</button>
+    </div>
+
+    <div id="calendarDays">
+      <div>Dom</div><div>Lun</div><div>Mar</div><div>Mié</div><div>Jue</div><div>Vie</div><div>Sáb</div>
+    </div>
+    <div id="calendar"></div>
+
+    <hr>
+  </section>
+
+  
+
+  <!-- SCRIPTS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+<script src="state-config.js"></script>
+<script src="storage.js"></script>
+<script src="ui-calendar.js"></script>
+<script src="map-places.js"></script>
+</body>
+</html>
