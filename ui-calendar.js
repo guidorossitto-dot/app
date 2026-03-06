@@ -3,7 +3,7 @@
   "use strict";
 
   const App = window.App;
-  const { util, state, storage } = App;
+  const { util, state, storage, selectors } = App;
 
   /* =========================
      CATEGORY HTML HELPERS
@@ -17,177 +17,125 @@
      GROUP BY PLACE + RENDER
   ========================= */
   function groupByPlace(list) {
-    const groups = new Map();
-
-    for (const ev of list || []) {
-      if (!ev) continue;
-      const key = util.locationKey(ev.lat, ev.lng);
-
-      if (!groups.has(key)) {
-        groups.set(key, {
-          key,
-          placeName: (ev.placeName || "").trim(),
-          lat: ev.lat,
-          lng: ev.lng,
-          events: []
-        });
-      }
-
-      groups.get(key).events.push(ev);
-    }
-
-    return [...groups.values()];
-  }
+  return selectors.getGroupedEvents(list || []);
+}
 
   function renderGroupedList(ul, list) {
-    if (!ul) return;
-    ul.innerHTML = "";
+  if (!ul) return;
+  ul.innerHTML = "";
 
-    if (!list || list.length === 0) {
-      ul.innerHTML = "<li>No hay eventos</li>";
-      return;
-    }
+  if (!list || list.length === 0) {
+    ul.innerHTML = "<li>No hay eventos</li>";
+    return;
+  }
 
-    function safeMinutesToStart(ev) {
-      const m = util.minutesToStart(ev);
-      return Number.isFinite(m) ? m : null;
-    }
+  const groups = groupByPlace(list);
 
-    function bestPlaceBadge(events) {
-      const cands = (events || [])
-        .map((ev) => ({ ev, min: safeMinutesToStart(ev) }))
-        .filter((x) => x.min !== null);
+  const renderEv = (ev) => {
+    const time = util.formatTimeStart(ev);
+    const status = util.getEventStatus(ev);
 
-      if (cands.length === 0) return "";
-
-      const soon = cands
-        .filter((x) => x.min > 0 && x.min <= 60)
-        .sort((a, b) => a.min - b.min)[0];
-      if (soon) return `🔥 Empieza en ${soon.min} min`;
-
-      const inProg = cands
-        .filter((x) => x.min <= 0 && x.min > -180)
-        .sort((a, b) => Math.abs(a.min) - Math.abs(b.min))[0];
-      if (inProg) return "🔴 En curso";
-
-      return "";
-    }
-
-    const groups = groupByPlace(list);
-
-    groups.sort((ga, gb) => {
-      const aBadge = bestPlaceBadge(ga.events);
-      const bBadge = bestPlaceBadge(gb.events);
-
-      if (!!aBadge !== !!bBadge) return aBadge ? -1 : 1;
-
-      const aMin = Math.min(
-        ...ga.events.map((e) => {
-          const m = safeMinutesToStart(e);
-          return m === null ? 999999 : m > 0 ? m : 100000 + Math.abs(m);
-        })
-      );
-
-      const bMin = Math.min(
-        ...gb.events.map((e) => {
-          const m = safeMinutesToStart(e);
-          return m === null ? 999999 : m > 0 ? m : 100000 + Math.abs(m);
-        })
-      );
-
-      return aMin - bMin;
-    });
-
-    const renderEv = (ev) => {
-      const time = util.formatTimeStart(ev);
-      const status = util.getEventStatus(ev);
-
-      return `
-        <div style="padding:6px 0;border-top:1px solid #eee">
-          <div style="font-weight:600">
-            ${time ? `<span style="opacity:.75;margin-right:6px">${time}</span>` : ""}
-            ${ev.title}${categoryTagHTML(ev)}
-            ${status ? `<span style="opacity:.6;font-size:.85em;margin-left:6px">${status}</span>` : ""}
-          </div>
-
-          <div style="opacity:.75;font-size:.9em">
-            ${util.formatDateDisplay(ev.date)}
-          </div>
-
-          <div style="margin-top:4px;display:flex;gap:10px;font-size:.85em">
-            <button class="linkBtn"
-              data-lat="${ev.lat}"
-              data-lng="${ev.lng}"
-              data-key="${util.locationKey(ev.lat, ev.lng)}">
-              Ver en mapa
-            </button>
-
-            <button class="linkBtn shareBtn"
-              data-eid="${encodeURIComponent(ev.id)}"
-              data-title="${encodeURIComponent(ev.title || "")}">
-              Compartir
-            </button>
-          </div>
+    return `
+      <div style="padding:6px 0;border-top:1px solid #eee">
+        <div style="font-weight:600">
+          ${time ? `<span style="opacity:.75;margin-right:6px">${time}</span>` : ""}
+          ${ev.title}${categoryTagHTML(ev)}
+          ${status ? `<span style="opacity:.6;font-size:.85em;margin-left:6px">${status}</span>` : ""}
         </div>
-      `;
-    };
 
-    for (const g of groups) {
-      const placeTitle = util.shortPlaceName(g.placeName) || "Lugar sin nombre";
-      const count = g.events.length;
-      const evs = [...g.events].sort(util.sortEventsByStatusThenTime);
-      const badge = bestPlaceBadge(evs);
+        <div style="opacity:.75;font-size:.9em">
+          ${util.formatDateDisplay(ev.date)}
+        </div>
 
-      const li = document.createElement("li");
+        <div style="margin-top:4px;display:flex;gap:10px;font-size:.85em;align-items:center;flex-wrap:wrap">
+          <button class="linkBtn"
+            data-lat="${ev.lat}"
+            data-lng="${ev.lng}"
+            data-key="${util.smartLocationKey(ev, state.events || [])}">
+            Ver en mapa
+          </button>
 
-      if (count === 1) {
-        li.innerHTML = `
-          <div style="padding:8px 0;border-top:1px solid #eee">
-            <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
-              <div>
-                <div style="font-weight:500">${placeTitle}</div>
-                ${badge ? `<div style="opacity:.7;font-size:.9em;margin-top:2px">${badge}</div>` : ""}
-              </div>
-              <button class="linkBtn"
-                data-lat="${g.lat}"
-                data-lng="${g.lng}"
-                data-key="${g.key}">
-                Ver en mapa
-              </button>
-            </div>
-            <div style="margin-top:6px">${renderEv(evs[0])}</div>
-          </div>
-        `;
-        ul.appendChild(li);
-        continue;
-      }
+          <button class="linkBtn shareBtn"
+            data-eid="${encodeURIComponent(ev.id)}"
+            data-title="${encodeURIComponent(ev.title || "")}">
+            Compartir
+          </button>
 
+          ${
+            state.isLoggedIn
+              ? `<button class="linkBtn deleteEventBtn"
+                  data-delete-eid="${encodeURIComponent(ev.id)}"
+                  data-delete-title="${encodeURIComponent(ev.title || "")}">
+                  Borrar
+                </button>`
+              : ""
+          }
+        </div>
+      </div>
+    `;
+  };
+
+  for (const g of groups) {
+    const placeTitle = g.placeTitle;
+    const count = g.count;
+    const evs = g.events;
+    const badge = g.badge;
+
+    const li = document.createElement("li");
+
+    if (count === 1) {
       li.innerHTML = `
-        <details class="accordion" style="margin:6px 0">
-          <summary style="display:flex;align-items:center;justify-content:space-between;gap:10px">
-            <span>
-              <span style="font-weight:500">${placeTitle}</span>
-              <span style="opacity:.65"> · ${count} ${count === 1 ? "evento" : "eventos"}</span>
-              ${badge ? `<span style="opacity:.7;font-size:.9em;margin-left:8px">${badge}</span>` : ""}
-            </span>
+        <div style="padding:8px 0;border-top:1px solid #eee">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+            <div>
+              <div style="font-weight:500">${placeTitle}</div>
+              ${badge ? `<div style="opacity:.7;font-size:.9em;margin-top:2px">${badge}</div>` : ""}
+            </div>
             <button class="linkBtn"
               data-lat="${g.lat}"
               data-lng="${g.lng}"
-              data-key="${g.key}"
-              style="margin-left:auto">
+              data-key="${g.key}">
               Ver en mapa
             </button>
-          </summary>
-
-          <div style="padding:6px 8px">
-            ${evs.map(renderEv).join("")}
           </div>
-        </details>
+
+          <div style="margin-top:6px">
+            ${renderEv(evs[0])}
+          </div>
+        </div>
       `;
 
       ul.appendChild(li);
+      continue;
     }
+
+    li.innerHTML = `
+      <details class="accordion" style="margin:6px 0">
+        <summary style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+          <span>
+            <span style="font-weight:500">${placeTitle}</span>
+            <span style="opacity:.65"> · ${count} ${count === 1 ? "evento" : "eventos"}</span>
+            ${badge ? `<span style="opacity:.7;font-size:.9em;margin-left:8px">${badge}</span>` : ""}
+          </span>
+
+          <button class="linkBtn"
+            data-lat="${g.lat}"
+            data-lng="${g.lng}"
+            data-key="${g.key}"
+            style="margin-left:auto">
+            Ver en mapa
+          </button>
+        </summary>
+
+        <div style="padding:6px 8px">
+          ${evs.map(renderEv).join("")}
+        </div>
+      </details>
+    `;
+
+    ul.appendChild(li);
   }
+}
 
   /* =========================
      APP SHELL
@@ -275,12 +223,24 @@
             </div>
             <div class="eventPlace">
               ${ev.placeName ? `<div>${util.shortPlaceName(ev.placeName)}</div>` : ""}
-              <button class="linkBtn"
-                data-lat="${ev.lat}"
-                data-lng="${ev.lng}"
-                data-key="${util.locationKey(ev.lat, ev.lng)}">
-                Ver en mapa
-              </button>
+              <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+                <button class="linkBtn"
+  data-lat="${ev.lat}"
+  data-lng="${ev.lng}"
+  data-key="${util.smartLocationKey(ev, state.events || [])}">
+  Ver en mapa
+</button>
+
+                ${
+                  state.isLoggedIn
+                    ? `<button class="linkBtn deleteEventBtn"
+                        data-delete-eid="${encodeURIComponent(ev.id)}"
+                        data-delete-title="${encodeURIComponent(ev.title || "")}">
+                        Borrar
+                      </button>`
+                    : ""
+                }
+              </div>
             </div>
           </div>
         </div>
@@ -290,11 +250,37 @@
   }
 
   function updateNearbyCount(list = state.nearbyEvents) {
-    const el = document.getElementById("nearbyCount");
-    if (!el) return;
+    const topEl = document.getElementById("nearbyCount");
+    const bottomEl = document.getElementById("nearbySummaryBlock");
+
+    if (topEl) topEl.innerHTML = "";
+    if (bottomEl) bottomEl.innerHTML = "";
+
+    if (!topEl && !bottomEl) return;
 
     if (!list || list.length === 0) {
-      el.textContent = "No hay eventos cerca tuyo hoy";
+      if (topEl) {
+        topEl.innerHTML = `
+          <div class="mapActionBar mapActionBar--insideNearby">
+            <button id="autoLocationBtnInline" class="primaryMapActionBtn">📍 Eventos cerca mío</button>
+          </div>
+          <div class="nearbyInlineEmpty">
+            No hay eventos cerca tuyo hoy
+          </div>
+        `;
+      }
+
+      if (bottomEl) {
+        bottomEl.innerHTML = `
+          <div class="nearbyInlineEmpty">
+            No hay eventos cerca tuyo hoy
+          </div>
+        `;
+      }
+
+      const inlineBtn = document.getElementById("autoLocationBtnInline");
+      if (inlineBtn) inlineBtn.addEventListener("click", () => App.map?.useMyLocation?.());
+
       return;
     }
 
@@ -302,7 +288,28 @@
     const todayList = (list || []).filter((ev) => (ev?.date || "").slice(0, 10) === today);
 
     if (todayList.length === 0) {
-      el.textContent = "No hay eventos cerca tuyo hoy";
+      if (topEl) {
+        topEl.innerHTML = `
+          <div class="mapActionBar mapActionBar--insideNearby">
+            <button id="autoLocationBtnInline" class="primaryMapActionBtn">📍 Eventos cerca mío</button>
+          </div>
+          <div class="nearbyInlineEmpty">
+            No hay eventos cerca tuyo hoy
+          </div>
+        `;
+      }
+
+      if (bottomEl) {
+        bottomEl.innerHTML = `
+          <div class="nearbyInlineEmpty">
+            No hay eventos cerca tuyo hoy
+          </div>
+        `;
+      }
+
+      const inlineBtn = document.getElementById("autoLocationBtnInline");
+      if (inlineBtn) inlineBtn.addEventListener("click", () => App.map?.useMyLocation?.());
+
       return;
     }
 
@@ -317,38 +324,16 @@
     function featuredRank(ev) {
       const m = safeMinutesToStart(ev);
       if (m === null) return 999999;
-
       if (m <= 0 && m > -180) return Math.abs(m) / 1000;
       if (m > 0 && m <= 60) return 10 + m;
       if (m > 60) return 100 + m;
-
       return 900000 + Math.abs(m);
-    }
-
-    function bestLabelForGroup(events) {
-      const cands = (events || [])
-        .map((ev) => ({ ev, min: safeMinutesToStart(ev) }))
-        .filter((x) => x.min !== null);
-
-      if (cands.length === 0) return "";
-
-      const soon = cands
-        .filter((x) => x.min > 0 && x.min <= 60)
-        .sort((a, b) => a.min - b.min)[0];
-      if (soon) return `🔥 Empieza en ${soon.min} min`;
-
-      const inProg = cands
-        .filter((x) => x.min <= 0 && x.min > -180)
-        .sort((a, b) => Math.abs(a.min) - Math.abs(b.min))[0];
-      if (inProg) return "🔴 En curso";
-
-      return "";
     }
 
     const featured = [...todayList].sort((a, b) => featuredRank(a) - featuredRank(b))[0];
     const featuredStatus = featured ? util.getEventStatus(featured) : "";
     const featuredPlace = featured ? util.shortPlaceName(featured.placeName) || "Lugar sin nombre" : "";
-    const featuredKey = featured ? util.locationKey(featured.lat, featured.lng) : "";
+    const featuredKey = featured ? util.smartLocationKey(featured, state.events || []) : "";
 
     const featuredHTML = featured
       ? `
@@ -365,7 +350,7 @@
 
           <div class="featuredTitle">
             ${util.formatTimeStart(featured) ? `<span style="opacity:.75;margin-right:6px">${util.formatTimeStart(featured)}</span>` : ""}
-            ${featured.title}${categoryTagHTML(featured)}
+            ${featured.title}
             ${featuredStatus ? `<span style="opacity:.6;font-size:.85em;margin-left:6px">${featuredStatus}</span>` : ""}
           </div>
 
@@ -379,112 +364,26 @@
     const n = todayList.length;
     const header = n === 1 ? "1 evento cerca" : `${n} eventos cerca`;
 
-    const groups = new Map();
-    for (const ev of todayList) {
-      const key = util.locationKey(ev.lat, ev.lng);
-      if (!groups.has(key)) {
-        groups.set(key, {
-          key,
-          placeName: (ev.placeName || "").trim(),
-          lat: ev.lat,
-          lng: ev.lng,
-          events: []
-        });
-      }
-      groups.get(key).events.push(ev);
-    }
-
-    const groupArr = [...groups.values()]
-      .map((g) => {
-        const sortKey = Math.min(
-          ...g.events.map((e) => {
-            const m = safeMinutesToStart(e);
-            return m === null ? 999999 : m > 0 ? m : 100000 + Math.abs(m);
-          })
-        );
-        return { ...g, label: bestLabelForGroup(g.events), sortKey };
-      })
-      .sort((a, b) => a.sortKey - b.sortKey);
-
-    const renderEventLine = (ev) => {
-      const time = util.formatTimeStart(ev);
-      const status = util.getEventStatus(ev);
-      return `
-        <div class="nearbyEventLine">
-          <div class="nearbyEventTitle">
-            ${time ? `<span style="opacity:.75;margin-right:6px">${time}</span>` : ""}
-            ${ev.title}${categoryTagHTML(ev)}
-            ${status ? `<span style="opacity:.6;font-size:.85em;margin-left:6px">${status}</span>` : ""}
-          </div>
-          <div class="nearbySmall">${util.formatDateDisplay(ev.date)}</div>
+    if (topEl) {
+      topEl.innerHTML = `
+        ${featuredHTML}
+        <div class="mapActionBar mapActionBar--insideNearby">
+          <button id="autoLocationBtnInline" class="primaryMapActionBtn">📍 Eventos cerca mío</button>
         </div>
-      `;
-    };
-
-    let inner = "";
-    for (const g of groupArr) {
-      const placeTitle = util.shortPlaceName(g.placeName) || "Lugar sin nombre";
-      const count = g.events.length;
-      const label = g.label;
-      const evs = [...g.events].sort(util.sortEventsByStatusThenTime);
-
-      if (count === 1) {
-        inner += `
-          <div style="padding:8px 0;border-top:1px solid #eee">
-            <div class="nearbyPlaceLine">
-              <div>
-                <div class="nearbyPlaceTitle">${placeTitle}</div>
-                ${label ? `<div class="nearbyMeta">${label}</div>` : ""}
-              </div>
-              <button class="linkBtn"
-                data-lat="${g.lat}"
-                data-lng="${g.lng}"
-                data-key="${g.key}">
-                Ver en mapa
-              </button>
-            </div>
-            ${renderEventLine(evs[0])}
-          </div>
-        `;
-        continue;
-      }
-
-      inner += `
-        <details class="accordion" style="margin:8px 0">
-          <summary class="nearbyPlaceLine">
-            <span>
-              <span class="nearbyPlaceTitle">${placeTitle}</span>
-              <span style="opacity:.65"> · ${count} eventos</span>
-              ${label ? `<span class="nearbyMeta" style="display:inline-block;margin-left:8px">${label}</span>` : ""}
-            </span>
-            <button class="linkBtn"
-              data-lat="${g.lat}"
-              data-lng="${g.lng}"
-              data-key="${g.key}">
-              Ver en mapa
-            </button>
-          </summary>
-          <div style="padding:6px 8px">
-            ${evs.map(renderEventLine).join("")}
-          </div>
-        </details>
       `;
     }
 
-    el.innerHTML = `
-      ${featuredHTML}
-      <details class="nearbyMaster">
-        <summary>
-          <span class="nearbySummaryLeft">
-            <span>${header}</span>
-            ${catChip}
-          </span>
-        </summary>
-        <div class="nearbyMasterBody">
-          ${inner}
+    if (bottomEl) {
+      bottomEl.innerHTML = `
+        <div class="nearbyInlineHeader">
+          <span class="nearbyInlineCount">${header}</span>
+          ${catChip}
         </div>
-      </details>
-    `;
+      `;
+    }
+
+    const inlineBtn = document.getElementById("autoLocationBtnInline");
+    if (inlineBtn) inlineBtn.addEventListener("click", () => App.map?.useMyLocation?.());
   }
 
   function renderList() {
@@ -604,6 +503,40 @@
     }
   }
 
+  function bindSidebarUI() {
+    const layout = document.querySelector(".appLayout--leftSidebar");
+    const btn = document.getElementById("toggleSidebarBtn");
+    if (!layout || !btn) return;
+
+    const saved = localStorage.getItem("leftSidebarCollapsed");
+    const startsCollapsed = saved === "true";
+
+    if (startsCollapsed) {
+      layout.classList.add("isCollapsed");
+      btn.setAttribute("aria-expanded", "false");
+      btn.textContent = "☰";
+      btn.title = "Expandir agenda";
+    } else {
+      btn.setAttribute("aria-expanded", "true");
+      btn.textContent = "☰ Agenda";
+      btn.title = "Contraer agenda";
+    }
+
+    btn.addEventListener("click", () => {
+  const collapsed = layout.classList.toggle("isCollapsed");
+  btn.setAttribute("aria-expanded", collapsed ? "false" : "true");
+  btn.textContent = collapsed ? "☰" : "☰ Agenda";
+  btn.title = collapsed ? "Expandir agenda" : "Contraer agenda";
+  localStorage.setItem("leftSidebarCollapsed", String(collapsed));
+
+  if (state.map) {
+    setTimeout(() => {
+      state.map.invalidateSize();
+    }, 240);
+  }
+});
+  }
+
   function bindCalendarUI() {
     const prevMonthBtn = document.getElementById("prevMonthBtn");
     const nextMonthBtn = document.getElementById("nextMonthBtn");
@@ -666,22 +599,33 @@
     const loginBtn = document.getElementById("loginBtn");
     const logoutBtn = document.getElementById("logoutBtn");
 
-    if (loginBtn) {
-      loginBtn.addEventListener("click", () => {
-        state.isLoggedIn = true;
-        storage.saveLoginState();
-        renderAll({ rebuildMarkers: true, recomputeNearby: true });
-      });
-    }
+   function bindLoginUI() {
+  const loginBtn = document.getElementById("loginBtn");
+  const logoutBtn = document.getElementById("logoutBtn");
 
-    if (logoutBtn) {
-      logoutBtn.addEventListener("click", () => {
-        state.isLoggedIn = false;
-        storage.saveLoginState();
-        App.map.clearEventCreationMarker();
-        renderAll({ rebuildMarkers: true, recomputeNearby: true });
-      });
-    }
+  if (loginBtn) {
+    loginBtn.addEventListener("click", () => {
+      state.isLoggedIn = true;
+      storage.saveLoginState();
+
+      if (state.map) state.map.closePopup();
+
+      renderAll({ rebuildMarkers: true, recomputeNearby: true });
+    });
+  }
+
+  if (logoutBtn) {
+    logoutBtn.addEventListener("click", () => {
+      state.isLoggedIn = false;
+      storage.saveLoginState();
+
+      if (state.map) state.map.closePopup();
+
+      App.map.clearEventCreationMarker();
+      renderAll({ rebuildMarkers: true, recomputeNearby: true });
+    });
+  }
+}
   }
 
   function bindPublicUI() {
@@ -689,15 +633,71 @@
     const searchBtn = document.getElementById("searchNearbyBtn");
 
     if (autoBtn) autoBtn.addEventListener("click", () => App.map?.useMyLocation?.());
-    if (searchBtn) searchBtn.addEventListener("click", () => App.map?.searchNearbyFromInputs?.());
+
+    if (searchBtn && !searchBtn.classList.contains("debugHidden")) {
+      searchBtn.addEventListener("click", () => App.map?.searchNearbyFromInputs?.());
+    }
+  }
+
+  function bindDeleteEventUI() {
+    document.addEventListener("click", (e) => {
+      const btn = e.target.closest(".deleteEventBtn");
+      if (!btn) return;
+
+      const eventId = decodeURIComponent((btn.dataset.deleteEid || "").trim());
+      if (!eventId) return;
+
+      const title = decodeURIComponent((btn.dataset.deleteTitle || "").trim());
+      const msg = title
+        ? `¿Seguro que querés borrar "${title}"?`
+        : "¿Seguro que querés borrar este evento?";
+
+      if (!confirm(msg)) return;
+
+      const result = App.events?.removeEvent?.(eventId);
+      if (!result?.ok) {
+        alert("No se pudo borrar el evento.");
+        return;
+      }
+
+      App.events.saveAndRefresh({ rebuildMarkers: true });
+    });
   }
 
   function bindAdminUI() {
     const addBtn = document.getElementById("addEventBtn");
     const clearBtn = document.getElementById("clearEventsBtn");
+    const cancelBtn = document.getElementById("cancelEditBtn");
 
     if (addBtn) addBtn.addEventListener("click", () => App.map?.createEventFromAdminForm?.());
     if (clearBtn) clearBtn.addEventListener("click", () => App.map?.clearAllEvents?.());
+
+    if (cancelBtn) {
+      cancelBtn.addEventListener("click", () => {
+        state.editingEventId = null;
+
+        const titleEl = document.getElementById("eventTitle");
+        const dateEl = document.getElementById("eventDate");
+        const latEl = document.getElementById("eventLat");
+        const lngEl = document.getElementById("eventLng");
+        const placeEl = document.getElementById("eventPlace");
+        const startEl = document.getElementById("eventStart");
+        const catEl = document.getElementById("eventCategory");
+        const addBtn2 = document.getElementById("addEventBtn");
+
+        if (titleEl) titleEl.value = "";
+        if (dateEl) dateEl.value = "";
+        if (latEl) latEl.value = "";
+        if (lngEl) lngEl.value = "";
+        if (placeEl) placeEl.value = "";
+        if (startEl) startEl.value = "";
+        if (catEl) catEl.value = "music";
+        if (addBtn2) addBtn2.textContent = "Agregar evento";
+
+        cancelBtn.hidden = true;
+        App.map?.clearEventCreationMarker?.();
+      });
+    }
   }
 
   function bindCategoryUI() {
@@ -742,8 +742,7 @@
     const eventId = state._pendingDeepLinkEventId;
     if (!eventId) return;
 
-    const all = state.events || [];
-    const ev = all.find((e) => String(e.id) === String(eventId));
+    const ev = App.events?.findEventById?.(eventId) || null;
     if (!ev) {
       state._pendingDeepLinkEventId = null;
       return;
@@ -764,9 +763,7 @@
       const row = document.getElementById("categoryChips");
       if (row) {
         const chips = [...row.querySelectorAll(".chip")];
-        chips.forEach((btn) =>
-          btn.classList.toggle("isActive", btn.dataset.cat === "all")
-        );
+        chips.forEach((btn) => btn.classList.toggle("isActive", btn.dataset.cat === "all"));
       }
     }
 
@@ -808,6 +805,8 @@
     bindAdminUI();
     bindCalendarUI();
     bindCategoryUI();
+    bindDeleteEventUI();
+    bindSidebarUI();
 
     App.map?.bindAdminCategoryChips?.();
 

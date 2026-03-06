@@ -3,7 +3,7 @@
   "use strict";
 
   const App = window.App;
-  const { util, state, storage } = App;
+  const { util, state, events } = App;
 
   /* =========================
      INPUTS USER
@@ -77,8 +77,23 @@
     if (state.markerCluster) state.markerCluster.clearLayers();
   }
 
+  function findLocationMarkerByEvent(ev, { rebuildIfMissing = true } = {}) {
+  if (!ev) return null;
+
+  let key = util.smartLocationKey(ev, state.events || []);
+  let loc = state.locationMarkers?.[key] || null;
+
+  if (!loc && rebuildIfMissing) {
+    rebuildLocationMarkers(state.events);
+    key = util.smartLocationKey(ev, state.events || []);
+    loc = state.locationMarkers?.[key] || null;
+  }
+
+  return loc;
+}
+
   function highlightNearbyMarkers(filteredEvents) {
-    const nearbyKeys = new Set((filteredEvents || []).map((ev) => util.locationKey(ev.lat, ev.lng)));
+    const nearbyKeys = new Set((filteredEvents || []).map((ev) => util.smartLocationKey(ev, state.events)));
 
     Object.entries(state.locationMarkers || {}).forEach(([key, loc]) => {
       const isNear = nearbyKeys.has(key);
@@ -89,6 +104,7 @@
   /* =========================
      REBUILD LOCATION MARKERS
   ========================= */
+  
   function rebuildLocationMarkers(list = state.events) {
     if (!state.map || !state.markerCluster) return;
 
@@ -105,16 +121,29 @@
 
       if (!util.isValidCoord(ev.lat) || !util.isValidCoord(ev.lng)) continue;
 
-      const key = util.locationKey(ev.lat, ev.lng);
+      const key = util.smartLocationKey(ev, list);
 
       if (!state.locationMarkers[key]) {
-        const marker = L.marker([ev.lat, ev.lng], {
+        const anchor = util.findPlaceAnchor(ev, list) || {
+          lat: ev.lat,
+          lng: ev.lng,
+          placeName: ev.placeName || ""
+        };
+
+        const marker = L.marker([anchor.lat, anchor.lng], {
           bubblingMouseEvents: false,
           icon: getCategoryIcon(ev.category || "music")
         });
 
         state.markerCluster.addLayer(marker);
-        state.locationMarkers[key] = { marker, events: [], lat: ev.lat, lng: ev.lng };
+
+        state.locationMarkers[key] = {
+          marker,
+          events: [],
+          lat: anchor.lat,
+          lng: anchor.lng,
+          placeName: anchor.placeName
+        };
 
         let clickTimer = null;
 
@@ -161,14 +190,17 @@
       const sorted = [...loc.events].sort(util.sortEventsByStatusThenTime);
       const total = sorted.length;
 
+      console.log("POPUP BUILD -> isLoggedIn:", state.isLoggedIn);
+
+
       const actionBtn = state.isLoggedIn
-        ? `<button class="popupBtn popupBtnPrimary popupAddBtn"
-              data-lat="${loc.lat}"
-              data-lng="${loc.lng}"
-              data-place="${encodeURIComponent(placeName || "")}">
-            Cargar evento acá
-          </button>`
-        : "";
+  ? `<button class="popupBtn popupBtnPrimary popupAddBtn"
+        data-lat="${loc.lat}"
+        data-lng="${loc.lng}"
+        data-place="${encodeURIComponent(placeName || "")}">
+      Cargar evento acá
+    </button>`
+  : "";
 
       const centerBtn = `
         <button class="popupBtn popupCenterBtn"
@@ -187,10 +219,10 @@
             </div>
           </div>
 
-          <div class="popupActions">
-            ${centerBtn}
-            ${actionBtn}
-          </div>
+          <div class="popupActions" style="display:flex;flex-wrap:wrap;gap:8px;margin:8px 0 10px;align-items:center;">
+  ${centerBtn}
+  ${actionBtn}
+</div>
 
           <div class="popupList">
       `;
@@ -202,24 +234,51 @@
 
         html += `
           <div class="popupItem" ${eid ? `data-eid="${encodeURIComponent(eid)}"` : ""}>
-            <div class="popupItemTitle" style="display:flex;gap:8px;align-items:center;justify-content:space-between;">
+            <div class="popupItemTitle">
               <div style="min-width:0;">
                 ${st ? `<span style="opacity:.75;margin-right:6px">${st}</span>` : ""}
                 <span style="word-break:break-word;">${e.title}${categoryTagHTML(e)}</span>
                 ${status ? `<span style="opacity:.6;font-size:.85em;margin-left:6px">${status}</span>` : ""}
               </div>
-
-              ${eid ? `
-                <button class="popupBtn popupShareBtn"
-                  data-eid="${encodeURIComponent(eid)}"
-                  data-title="${encodeURIComponent(e.title || "")}"
-                  title="Copiar link de este evento">
-                  Compartir
-                </button>
-              ` : ""}
             </div>
 
             <div class="popupItemMeta">${util.formatDateDisplay(e.date)}</div>
+
+            ${
+              eid
+                ? `
+                  <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:6px;">
+                    <button class="popupBtn popupShareBtn"
+                      data-eid="${encodeURIComponent(eid)}"
+                      data-title="${encodeURIComponent(e.title || "")}"
+                      title="Copiar link de este evento">
+                      Compartir
+                    </button>
+
+                    ${
+                      state.isLoggedIn
+                        ? `<button class="popupBtn popupEditBtn"
+                            data-edit-eid="${encodeURIComponent(eid)}"
+                            title="Editar este evento">
+                            Editar
+                          </button>`
+                        : ""
+                    }
+
+                    ${
+                      state.isLoggedIn
+                        ? `<button class="popupBtn popupDeleteBtn"
+                            data-delete-eid="${encodeURIComponent(eid)}"
+                            data-delete-title="${encodeURIComponent(e.title || "")}"
+                            title="Borrar este evento">
+                            Borrar
+                          </button>`
+                        : ""
+                    }
+                  </div>
+                `
+                : ""
+            }
           </div>
         `;
       }
@@ -228,6 +287,8 @@
           </div>
         </div>
       `;
+
+      
 
       loc.marker.bindPopup(html, {
         closeButton: true,
@@ -251,25 +312,41 @@
           ev.preventDefault();
           ev.stopPropagation();
 
-          if (btn.classList.contains("popupCenterBtn")) {
-            const lat = parseFloat(btn.dataset.lat);
-            const lng = parseFloat(btn.dataset.lng);
-            if (!Number.isFinite(lat) || !Number.isFinite(lng) || !state.map) return;
+         if (btn.classList.contains("popupCenterBtn")) {
+  const lat = parseFloat(btn.dataset.lat);
+  const lng = parseFloat(btn.dataset.lng);
 
-            const targetZoom = Math.max(state.map.getZoom(), 17);
+  if (!Number.isFinite(lat) || !Number.isFinite(lng) || !state.map) return;
 
-            if (state.markerCluster && typeof state.markerCluster.zoomToShowLayer === "function") {
-              state.markerCluster.zoomToShowLayer(loc.marker, () => {
-                state.map.setView([lat, lng], targetZoom, { animate: true });
-                loc.marker.openPopup();
-              });
-            } else {
-              state.map.setView([lat, lng], targetZoom, { animate: true });
-              loc.marker.openPopup();
-            }
-            return;
-          }
+  const marker = loc?.marker;
+  const targetZoom = Math.max(state.map.getZoom(), 17);
 
+  if (marker && state.markerCluster && typeof state.markerCluster.zoomToShowLayer === "function") {
+    state.markerCluster.zoomToShowLayer(marker, () => {
+      state._uiPanZoomInProgress = true;
+      try {
+        state.map.setView([lat, lng], targetZoom, { animate: true });
+        marker.openPopup();
+        glowMarker(marker);
+      } finally {
+        setTimeout(() => (state._uiPanZoomInProgress = false), 250);
+      }
+    });
+  } else {
+    state._uiPanZoomInProgress = true;
+    try {
+      state.map.setView([lat, lng], targetZoom, { animate: true });
+      if (marker) {
+        marker.openPopup();
+        glowMarker(marker);
+      }
+    } finally {
+      setTimeout(() => (state._uiPanZoomInProgress = false), 250);
+    }
+  }
+
+  return;
+}
           if (btn.classList.contains("popupShareBtn")) {
             const eventId = decodeURIComponent((btn.dataset.eid || "").trim());
             if (!eventId) return;
@@ -301,6 +378,89 @@
             return;
           }
 
+          if (btn.classList.contains("popupEditBtn")) {
+            const eventId = decodeURIComponent((btn.dataset.editEid || "").trim());
+            if (!eventId) return;
+
+            const evData = App.events?.findEventById?.(eventId);
+            if (!evData) {
+              alert("No se encontró el evento.");
+              return;
+            }
+
+            state.editingEventId = eventId;
+
+            const titleEl = document.getElementById("eventTitle");
+            const dateEl = document.getElementById("eventDate");
+            const latEl = document.getElementById("eventLat");
+            const lngEl = document.getElementById("eventLng");
+            const placeEl = document.getElementById("eventPlace");
+            const startEl = document.getElementById("eventStart");
+            const catEl = document.getElementById("eventCategory");
+            const addBtn = document.getElementById("addEventBtn");
+            const cancelBtn = document.getElementById("cancelEditBtn");
+
+            if (titleEl) titleEl.value = evData.title || "";
+            if (dateEl) dateEl.value = evData.date || "";
+            if (latEl) latEl.value = Number(evData.lat).toFixed(6);
+            if (lngEl) lngEl.value = Number(evData.lng).toFixed(6);
+            if (placeEl) placeEl.value = evData.placeName || "";
+            if (startEl) startEl.value = evData.startTime || "";
+            if (catEl) catEl.value = evData.category || "music";
+
+            const adminRow = document.getElementById("adminCategoryChips");
+            if (adminRow) {
+              const chips = [...adminRow.querySelectorAll(".chip[data-cat]")];
+              chips.forEach((b) =>
+                b.classList.toggle("isActive", b.dataset.cat === (evData.category || "music"))
+              );
+            }
+
+            if (addBtn) addBtn.textContent = "Guardar cambios";
+            if (cancelBtn) cancelBtn.hidden = false;
+
+            if (state.map) {
+              prepareEventCreation(evData.lat, evData.lng);
+              state.map.setView([evData.lat, evData.lng], 15);
+            }
+
+            const adminView = document.getElementById("adminView");
+            if (adminView) adminView.hidden = false;
+
+            const titleTarget = document.getElementById("eventTitle");
+            if (titleTarget) {
+              titleTarget.scrollIntoView({ behavior: "smooth", block: "center" });
+              titleTarget.focus();
+            }
+
+            return;
+          }
+
+          if (btn.classList.contains("popupDeleteBtn")) {
+            const eventId = decodeURIComponent((btn.dataset.deleteEid || "").trim());
+            if (!eventId) return;
+
+            const title = decodeURIComponent((btn.dataset.deleteTitle || "").trim());
+            const msg = title
+              ? `¿Seguro que querés borrar "${title}"?`
+              : "¿Seguro que querés borrar este evento?";
+
+            if (!confirm(msg)) return;
+
+            const result = App.events?.removeEvent?.(eventId);
+            if (!result?.ok) {
+              alert("No se pudo borrar el evento.");
+              return;
+            }
+
+            if (state.deepLinkLayer && typeof state.deepLinkLayer.clearLayers === "function") {
+              state.deepLinkLayer.clearLayers();
+            }
+
+            App.events.saveAndRefresh({ rebuildMarkers: true });
+            return;
+          }
+
           if (btn.classList.contains("popupAddBtn")) {
             const lat = Number(btn.dataset.lat);
             const lng = Number(btn.dataset.lng);
@@ -321,6 +481,7 @@
             if (titleEl) titleEl.focus();
 
             App.ui?.renderAll?.({ rebuildMarkers: false, recomputeNearby: false });
+            return;
           }
         };
 
@@ -428,6 +589,48 @@
     }
   }
 
+  function normalizePlaceText(s) {
+    return (s || "")
+      .toString()
+      .trim()
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "");
+  }
+
+  function findCanonicalPlace(placeName, lat, lng) {
+    const targetName = normalizePlaceText(util.shortPlaceName(placeName));
+    const all = state.events || [];
+
+    if (!util.isValidCoord(lat) || !util.isValidCoord(lng)) return null;
+
+    let best = null;
+
+    for (const ev of all) {
+      if (!ev || !util.isValidCoord(ev.lat) || !util.isValidCoord(ev.lng)) continue;
+
+      const evName = normalizePlaceText(util.shortPlaceName(ev.placeName));
+      const dist = util.distanceKm(lat, lng, ev.lat, ev.lng);
+
+      const sameName = !!targetName && !!evName && targetName === evName;
+      const veryNear = dist <= 0.12;
+      const nearAndSameName = sameName && dist <= 0.35;
+
+      if (!veryNear && !nearAndSameName) continue;
+
+      if (!best || dist < best.dist) {
+        best = {
+          lat: ev.lat,
+          lng: ev.lng,
+          placeName: ev.placeName || placeName,
+          dist
+        };
+      }
+    }
+
+    return best;
+  }
+
   /* =========================
      ADMIN EVENTS
   ========================= */
@@ -439,48 +642,92 @@
     const placeEl = document.getElementById("eventPlace");
     const startEl = document.getElementById("eventStart");
     const catEl = document.getElementById("eventCategory");
+    const addBtn = document.getElementById("addEventBtn");
+    const cancelBtn = document.getElementById("cancelEditBtn");
 
     if (!titleEl || !dateEl || !latEl || !lngEl) return;
 
-    const rawEvent = {
-      id: util.newId(),
-      title: titleEl.value.trim(),
-      date: dateEl.value.trim(),
-      lat: Number(latEl.value),
-      lng: Number(lngEl.value),
-      placeName: placeEl ? placeEl.value.trim() : "",
-      startTime: startEl ? startEl.value.trim() : "",
-      category: catEl ? catEl.value : "music"
+    const title = titleEl.value.trim();
+    const date = dateEl.value.trim();
+    let lat = Number(latEl.value);
+    let lng = Number(lngEl.value);
+    let placeName = placeEl ? placeEl.value.trim() : "";
+    const startTime = startEl ? startEl.value.trim() : "";
+    const category = catEl ? catEl.value : "music";
+
+    const canonical = findCanonicalPlace(placeName, lat, lng);
+    if (canonical) {
+      lat = canonical.lat;
+      lng = canonical.lng;
+      placeName = canonical.placeName;
+
+      if (latEl) latEl.value = Number(lat).toFixed(6);
+      if (lngEl) lngEl.value = Number(lng).toFixed(6);
+      if (placeEl) placeEl.value = util.shortPlaceName(placeName);
+    }
+
+    const patch = {
+      title,
+      date,
+      lat,
+      lng,
+      placeName,
+      startTime,
+      category
     };
 
-    const ev = util.normalizeEvent(rawEvent);
+    if (state.editingEventId) {
+      const result = events.replaceEvent(state.editingEventId, patch);
 
-    if (!util.isValidEvent(ev)) {
-      alert("Completá título, fecha y coordenadas válidas.");
-      return;
+      if (!result.ok) {
+        alert("No se pudo guardar la edición.");
+        return;
+      }
+
+      state.editingEventId = null;
+    } else {
+      const rawEvent = {
+        id: util.newId(),
+        ...patch
+      };
+
+      const result = events.addEvent(rawEvent);
+
+      if (!result.ok) {
+        alert("Completá título, fecha y coordenadas válidas.");
+        return;
+      }
     }
-
-    state.events.push(ev);
 
     titleEl.value = "";
+    dateEl.value = "";
+    latEl.value = "";
+    lngEl.value = "";
+    if (placeEl) placeEl.value = "";
     if (startEl) startEl.value = "";
+    if (catEl) catEl.value = "music";
 
-    if (state.nearbyCenter) {
-      recomputeNearbyEvents(state.nearbyCenter.lat, state.nearbyCenter.lng);
+    const adminRow = document.getElementById("adminCategoryChips");
+    if (adminRow) {
+      const chips = [...adminRow.querySelectorAll(".chip[data-cat]")];
+      chips.forEach((b) => b.classList.toggle("isActive", b.dataset.cat === "music"));
     }
 
-    storage.saveEvents();
-    App.ui.commit({ rebuildMarkers: true, recomputeNearby: false });
+    if (addBtn) addBtn.textContent = "Agregar evento";
+    if (cancelBtn) cancelBtn.hidden = true;
+
+    clearEventCreationMarker();
+    events.saveAndRefresh({ rebuildMarkers: true });
   }
 
   function clearAllEvents() {
     if (!confirm("¿Seguro que querés borrar todos los eventos?")) return;
 
-    state.events = [];
+    events.clearAllEvents();
     state.nearbyEvents = [];
+    state.nearbyCenter = null;
 
-    storage.saveEvents();
-    App.ui.commit({ rebuildMarkers: true, recomputeNearby: false });
+    events.saveAndRefresh({ rebuildMarkers: true });
   }
 
   /* =========================
@@ -600,10 +847,14 @@
 
     state.map.closePopup();
 
-    rebuildLocationMarkers(state.events);
+    let loc = state.locationMarkers?.[key];
 
-    const loc = state.locationMarkers?.[key];
-    const targetZoom = Math.max(state.map.getZoom(), 16);
+if (!loc) {
+  rebuildLocationMarkers(state.events);
+  loc = state.locationMarkers?.[key];
+}
+
+const targetZoom = Math.max(state.map.getZoom(), 16);
 
     uiSetView(lat, lng, targetZoom);
 
@@ -730,122 +981,136 @@
      DEEP LINK TARGET
   ========================= */
   function focusEventById(eventId) {
-    const id = String(eventId || "").trim();
-    if (!id) return false;
+  const id = String(eventId || "").trim();
+  if (!id) return false;
 
-    const ev = (state.events || []).find((e) => String(e.id) === id);
-    if (!ev || !state.map) return false;
+  const ev = App.events?.findEventById?.(id) || null;
+  if (!ev || !state.map) return false;
 
-    if (state.deepLinkLayer && typeof state.deepLinkLayer.clearLayers === "function") {
-      state.deepLinkLayer.clearLayers();
-    }
+  if (state.deepLinkLayer && typeof state.deepLinkLayer.clearLayers === "function") {
+    state.deepLinkLayer.clearLayers();
+  }
 
-    const key = util.locationKey(ev.lat, ev.lng);
-    const loc = state.locationMarkers?.[key];
+  // Buscar marker existente
+  let key = util.smartLocationKey(ev, state.events || []);
+  let loc = state.locationMarkers?.[key];
 
-    if (loc?.marker) {
-      state._pendingOpenEventId = id;
+  // Si no existe, reconstruir markers
+  if (!loc) {
+    rebuildLocationMarkers(state.events);
+    key = util.smartLocationKey(ev, state.events || []);
+    loc = state.locationMarkers?.[key];
+  }
 
-      const targetZoom = Math.max(state.map.getZoom(), 17);
-
-      if (state.markerCluster && typeof state.markerCluster.zoomToShowLayer === "function") {
-        state.markerCluster.zoomToShowLayer(loc.marker, () => {
-          state.map.setView([ev.lat, ev.lng], targetZoom, { animate: true });
-          loc.marker.openPopup();
-        });
-      } else {
-        state.map.setView([ev.lat, ev.lng], targetZoom, { animate: true });
-        loc.marker.openPopup();
-      }
-      return true;
-    }
-
-    const placeTitle = util.shortPlaceName(ev.placeName) || "Lugar sin nombre";
-    const st = util.formatTimeStart(ev);
-    const status = util.getEventStatus(ev);
-
-    const html = `
-      <div class="popupCard">
-        <div class="popupHeader">
-          <div>
-            <div class="popupPlace">${placeTitle}</div>
-            <div class="popupSub">Evento (link compartido)</div>
-          </div>
-        </div>
-
-        <div class="popupList">
-          <div class="popupItem popupItemHighlight">
-            <div class="popupItemTitle">
-              ${st ? `<span style="opacity:.75;margin-right:6px">${st}</span>` : ""}
-              ${ev.title}
-              ${status ? `<span style="opacity:.6;font-size:.85em;margin-left:6px">${status}</span>` : ""}
-            </div>
-            <div class="popupItemMeta">${util.formatDateDisplay(ev.date)}</div>
-          </div>
-        </div>
-      </div>
-    `;
-
-    const markerOpts = {};
-    try {
-      markerOpts.icon = getCategoryIcon(ev.category || "music");
-      markerOpts.bubblingMouseEvents = false;
-    } catch {}
-
-    const m = L.marker([ev.lat, ev.lng], markerOpts);
-    m.bindPopup(html, {
-      closeButton: true,
-      autoPan: true,
-      keepInView: true,
-      autoPanPadding: [30, 30],
-      offset: [0, -10]
-    });
-
-    if (state.deepLinkLayer) m.addTo(state.deepLinkLayer);
-    else m.addTo(state.map);
+  // Si encontramos el marker real
+  if (loc?.marker) {
+    state._pendingOpenEventId = id;
 
     const targetZoom = Math.max(state.map.getZoom(), 17);
-    state.map.setView([ev.lat, ev.lng], targetZoom, { animate: true });
-    m.openPopup();
 
-    setTimeout(() => {
-      const el = m.getElement?.();
-      if (el) {
-        el.classList.add("marker-highlight");
-        setTimeout(() => el.classList.remove("marker-highlight"), 900);
-      }
-    }, 50);
+    if (
+      state.markerCluster &&
+      typeof state.markerCluster.zoomToShowLayer === "function"
+    ) {
+      state.markerCluster.zoomToShowLayer(loc.marker, () => {
+        state.map.setView([ev.lat, ev.lng], targetZoom, { animate: true });
+        loc.marker.openPopup();
+      });
+    } else {
+      state.map.setView([ev.lat, ev.lng], targetZoom, { animate: true });
+      loc.marker.openPopup();
+    }
 
     return true;
   }
+
+  // Fallback: crear marker temporal
+  const placeTitle = util.shortPlaceName(ev.placeName) || "Lugar sin nombre";
+  const st = util.formatTimeStart(ev);
+  const status = util.getEventStatus(ev);
+
+  const html = `
+    <div class="popupCard">
+      <div class="popupHeader">
+        <div>
+          <div class="popupPlace">${placeTitle}</div>
+          <div class="popupSub">Evento (link compartido)</div>
+        </div>
+      </div>
+
+      <div class="popupList">
+        <div class="popupItem popupItemHighlight">
+          <div class="popupItemTitle">
+            ${st ? `<span style="opacity:.75;margin-right:6px">${st}</span>` : ""}
+            ${ev.title}
+            ${status ? `<span style="opacity:.6;font-size:.85em;margin-left:6px">${status}</span>` : ""}
+          </div>
+          <div class="popupItemMeta">${util.formatDateDisplay(ev.date)}</div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  const markerOpts = {};
+  try {
+    markerOpts.icon = getCategoryIcon(ev.category || "music");
+    markerOpts.bubblingMouseEvents = false;
+  } catch {}
+
+  const m = L.marker([ev.lat, ev.lng], markerOpts);
+
+  m.bindPopup(html, {
+    closeButton: true,
+    autoPan: true,
+    keepInView: true,
+    autoPanPadding: [30, 30],
+    offset: [0, -10]
+  });
+
+  if (state.deepLinkLayer) {
+    m.addTo(state.deepLinkLayer);
+  } else {
+    m.addTo(state.map);
+  }
+
+  const targetZoom = Math.max(state.map.getZoom(), 17);
+  state.map.setView([ev.lat, ev.lng], targetZoom, { animate: true });
+
+  m.openPopup();
+
+  // Highlight visual
+  setTimeout(() => {
+    const el = m.getElement?.();
+    if (el) {
+      el.classList.add("marker-highlight");
+      setTimeout(() => el.classList.remove("marker-highlight"), 900);
+    }
+  }, 50);
+
+  return true;
+}
 
   /* =========================
      EXPORT MAP MODULE
   ========================= */
   App.map = {
     initMap,
-
     rebuildLocationMarkers,
     renderMap,
-
     recomputeNearbyEvents,
     filterEventsByDistance,
-
     setUserLocation,
     prepareEventCreation,
     clearEventCreationMarker,
-
     useMyLocation,
     searchNearbyFromInputs,
-
     bindAdminCategoryChips,
     bindPlaceSearchUI,
-
     createEventFromAdminForm,
     focusEventById,
     clearAllEvents
   };
 
-  App.map.bindPlaceSearchUI();
-  App.ui.bootAfterMapReady();
+    App.map.bindPlaceSearchUI();
+    App.ui?.bootAfterMapReady?.();
 })();

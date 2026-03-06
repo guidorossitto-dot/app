@@ -4,40 +4,55 @@
 
   const App = (window.App = window.App || {});
 
+  /* =========================
+     CONFIG
+  ========================= */
   App.CFG = {
     SEARCH_RADIUS_KM: 2,
     PIN_PRECISION: 4,
     DEFAULT_LAT: -34.6037,
     DEFAULT_LNG: -58.3816,
-    REFRESH_MS: 60000
+    REFRESH_MS: 60000,
+
+    CATEGORY_ALL: "all",
+    DEFAULT_CATEGORY: "music",
+    ALLOWED_CATEGORIES: ["music", "dance", "theatre", "visual_arts"]
   };
 
+  /* =========================
+     APP STATE
+     - persistable / app-level
+     - runtime / map-level
+  ========================= */
   App.state = {
+    // App/domain state
     isLoggedIn: false,
     events: [],
-
-    map: null,
-    userMarker: null,
-    eventCreationMarker: null,
-
-    markerCluster: null,
-    deepLinkLayer: null,
-
-    locationMarkers: {},
-    eventMarkers: [],
-
     calendarCursor: new Date(),
-    activeCategory: "all",
-
+    activeCategory: App.CFG.CATEGORY_ALL,
+    editingEventId: null,
     nearbyCenter: null, // { lat, lng } | null
     nearbyEvents: [],
 
+    // Runtime map state
+    map: null,
+    userMarker: null,
+    eventCreationMarker: null,
+    markerCluster: null,
+    deepLinkLayer: null,
+    locationMarkers: {},
+    eventMarkers: [],
+
+    // UI/runtime flags
     _pendingOpenEventId: null,
     _pendingDeepLinkEventId: null,
     _bootReady: false,
     _uiPanZoomInProgress: false
   };
 
+  /* =========================
+     BASIC HELPERS
+  ========================= */
   function newId() {
     try {
       if (crypto && crypto.randomUUID) return crypto.randomUUID();
@@ -56,25 +71,49 @@
   }
 
   function locationKey(lat, lng) {
-    return `${Number(lat).toFixed(App.CFG.PIN_PRECISION)},${Number(lng).toFixed(App.CFG.PIN_PRECISION)}`;
+    return `${Number(lat).toFixed(App.CFG.PIN_PRECISION)},${Number(lng).toFixed(
+      App.CFG.PIN_PRECISION
+    )}`;
+  }
+
+  function normalizePlaceText(s) {
+    return (s || "")
+      .toString()
+      .trim()
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "");
+  }
+
+  /* =========================
+     DATE / TIME HELPERS
+  ========================= */
+  function formatDateParts(date) {
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, "0");
+    const d = String(date.getDate()).padStart(2, "0");
+    return { y, m, d };
   }
 
   function todayStrYYYYMMDD() {
     const t = new Date();
-    return `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, "0")}-${String(t.getDate()).padStart(2, "0")}`;
+    const { y, m, d } = formatDateParts(t);
+    return `${y}-${m}-${d}`;
   }
 
   function addDaysYYYYMMDD(dateStr, days) {
-    const [y, m, d] = dateStr.split("-").map(Number);
-    const dt = new Date(y, m - 1, d);
-    dt.setDate(dt.getDate() + days);
-    return `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, "0")}-${String(dt.getDate()).padStart(2, "0")}`;
+    const [y, m, d] = (dateStr || "").split("-").map(Number);
+    const dt = new Date(y, (m || 1) - 1, d || 1);
+    dt.setDate(dt.getDate() + Number(days || 0));
+
+    const parts = formatDateParts(dt);
+    return `${parts.y}-${parts.m}-${parts.d}`;
   }
 
   function makeLocalDateTime(dateStr, timeStr) {
-    const [y, m, d] = dateStr.split("-").map(Number);
+    const [y, m, d] = (dateStr || "").split("-").map(Number);
     const [hh, mm] = (timeStr || "00:00").split(":").map(Number);
-    return new Date(y, m - 1, d, hh || 0, mm || 0, 0, 0);
+    return new Date(y || 0, (m || 1) - 1, d || 1, hh || 0, mm || 0, 0, 0);
   }
 
   function formatDateDisplay(dateStr) {
@@ -86,7 +125,7 @@
 
   function formatTimeStart(ev) {
     const s = (ev?.startTime || "").toString().trim();
-    return s ? s : "";
+    return s || "";
   }
 
   function minutesToStart(ev) {
@@ -95,14 +134,14 @@
     const st = (ev.startTime || "").toString().trim();
     if (!st) return null;
 
-    const [y, mo, d] = ev.date.split("-").map(Number);
-    const [hh, mm] = st.split(":").map(Number);
-
-    const eventDate = new Date(y, mo - 1, d, hh || 0, mm || 0, 0, 0);
+    const eventDate = makeLocalDateTime(ev.date, st);
     const diff = eventDate.getTime() - Date.now();
     return Math.round(diff / 60000);
   }
 
+  /* =========================
+     EVENT STATUS / SORT
+  ========================= */
   function getEventStatus(ev) {
     if (!ev || !ev.date) return "";
 
@@ -163,24 +202,29 @@
     return (a?.title || "").localeCompare(b?.title || "");
   }
 
+  /* =========================
+     GEO / DISTANCE
+  ========================= */
   function distanceKm(lat1, lng1, lat2, lng2) {
     const R = 6371;
-    const dLat = (lat2 - lat1) * Math.PI / 180;
-    const dLng = (lng2 - lng1) * Math.PI / 180;
+    const dLat = ((lat2 - lat1) * Math.PI) / 180;
+    const dLng = ((lng2 - lng1) * Math.PI) / 180;
 
     const a =
       Math.sin(dLat / 2) ** 2 +
-      Math.cos(lat1 * Math.PI / 180) *
-      Math.cos(lat2 * Math.PI / 180) *
-      Math.sin(dLng / 2) ** 2;
+      Math.cos((lat1 * Math.PI) / 180) *
+        Math.cos((lat2 * Math.PI) / 180) *
+        Math.sin(dLng / 2) ** 2;
 
     return 2 * R * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   }
 
+  /* =========================
+     CATEGORY
+  ========================= */
   function normalizeCategory(raw) {
     const v = (raw ?? "").toString().trim();
-    const allowed = new Set(["music", "dance", "theatre", "visual_arts"]);
-    return allowed.has(v) ? v : "music";
+    return App.CFG.ALLOWED_CATEGORIES.includes(v) ? v : App.CFG.DEFAULT_CATEGORY;
   }
 
   function categoryLabel(cat) {
@@ -198,6 +242,9 @@
     }
   }
 
+  /* =========================
+     EVENT MODEL
+  ========================= */
   function normalizeEvent(raw) {
     const lat = Number(raw?.lat);
     const lng = Number(raw?.lng);
@@ -228,14 +275,17 @@
     );
   }
 
+  /* =========================
+     COLLECTION HELPERS / SELECTORS
+  ========================= */
   function getAllEvents(list = App.state.events) {
     return Array.isArray(list) ? list : [];
   }
 
   function filterByActiveCategory(list = getAllEvents()) {
     const cat = App.state.activeCategory;
-    if (!cat || cat === "all") return list;
-    return list.filter((ev) => ev?.category === cat);
+    if (!cat || cat === App.CFG.CATEGORY_ALL) return list;
+    return getAllEvents(list).filter((ev) => ev?.category === cat);
   }
 
   function getTodayEvents(list = getAllEvents()) {
@@ -261,21 +311,74 @@
     });
   }
 
+  /* =========================
+     PLACE GROUPING / KEYS
+  ========================= */
+  function findPlaceAnchor(ev, list = App.state.events) {
+    if (!ev) return null;
+    if (!isValidCoord(ev.lat) || !isValidCoord(ev.lng)) return null;
+
+    const targetName = normalizePlaceText(shortPlaceName(ev.placeName));
+    const all = Array.isArray(list) ? list : [];
+
+    let best = null;
+
+    for (const other of all) {
+      if (!other) continue;
+      if (!isValidCoord(other.lat) || !isValidCoord(other.lng)) continue;
+
+      const otherName = normalizePlaceText(shortPlaceName(other.placeName));
+      const dist = distanceKm(ev.lat, ev.lng, other.lat, other.lng);
+
+      const sameShortName = !!targetName && !!otherName && targetName === otherName;
+      const veryNear = dist <= 0.12; // 120 m
+      const nearAndSameName = sameShortName && dist <= 0.35; // 350 m
+
+      if (!veryNear && !nearAndSameName) continue;
+
+      if (!best || dist < best.dist) {
+        best = {
+          lat: other.lat,
+          lng: other.lng,
+          placeName: other.placeName || ev.placeName,
+          dist
+        };
+      }
+    }
+
+    return best;
+  }
+
+  function smartLocationKey(ev, list = App.state.events) {
+    if (!ev) return "";
+    if (!isValidCoord(ev.lat) || !isValidCoord(ev.lng)) return "";
+
+    const anchor = findPlaceAnchor(ev, list);
+    if (anchor) return locationKey(anchor.lat, anchor.lng);
+
+    return locationKey(ev.lat, ev.lng);
+  }
+
+  /* =========================
+     EXPORTS
+  ========================= */
   App.util = {
     newId,
     isValidCoord,
     shortPlaceName,
     locationKey,
+    normalizePlaceText,
 
     todayStrYYYYMMDD,
     addDaysYYYYMMDD,
     makeLocalDateTime,
-
     formatDateDisplay,
     formatTimeStart,
     minutesToStart,
+
     getEventStatus,
     sortEventsByStatusThenTime,
+
     normalizeCategory,
     categoryLabel,
 
@@ -288,6 +391,9 @@
     getFutureEvents,
     getEventsOnDate,
     getNearbyTodayEvents,
+
+    findPlaceAnchor,
+    smartLocationKey,
 
     distanceKm
   };
