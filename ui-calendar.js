@@ -1,4 +1,3 @@
-// ui-calendar.js
 (() => {
   "use strict";
 
@@ -17,125 +16,125 @@
      GROUP BY PLACE + RENDER
   ========================= */
   function groupByPlace(list) {
-  return selectors.getGroupedEvents(list || []);
-}
-
-  function renderGroupedList(ul, list) {
-  if (!ul) return;
-  ul.innerHTML = "";
-
-  if (!list || list.length === 0) {
-    ul.innerHTML = "<li>No hay eventos</li>";
-    return;
+    return selectors.getGroupedEvents(list || []);
   }
 
-  const groups = groupByPlace(list);
+  function renderGroupedList(ul, list) {
+    if (!ul) return;
+    ul.innerHTML = "";
 
-  const renderEv = (ev) => {
-    const time = util.formatTimeStart(ev);
-    const status = util.getEventStatus(ev);
+    if (!list || list.length === 0) {
+      ul.innerHTML = "<li>No hay eventos</li>";
+      return;
+    }
 
-    return `
-      <div style="padding:6px 0;border-top:1px solid #eee">
-        <div style="font-weight:600">
-          ${time ? `<span style="opacity:.75;margin-right:6px">${time}</span>` : ""}
-          ${ev.title}${categoryTagHTML(ev)}
-          ${status ? `<span style="opacity:.6;font-size:.85em;margin-left:6px">${status}</span>` : ""}
-        </div>
+    const groups = groupByPlace(list);
 
-        <div style="opacity:.75;font-size:.9em">
-          ${util.formatDateDisplay(ev.date)}
-        </div>
+    const renderEv = (ev) => {
+      const time = util.formatTimeStart(ev);
+      const status = util.getEventStatus(ev);
 
-        <div style="margin-top:4px;display:flex;gap:10px;font-size:.85em;align-items:center;flex-wrap:wrap">
-          <button class="linkBtn"
-            data-lat="${ev.lat}"
-            data-lng="${ev.lng}"
-            data-key="${util.smartLocationKey(ev, state.events || [])}">
-            Ver en mapa
-          </button>
-
-          <button class="linkBtn shareBtn"
-            data-eid="${encodeURIComponent(ev.id)}"
-            data-title="${encodeURIComponent(ev.title || "")}">
-            Compartir
-          </button>
-
-          ${
-            state.isLoggedIn
-              ? `<button class="linkBtn deleteEventBtn"
-                  data-delete-eid="${encodeURIComponent(ev.id)}"
-                  data-delete-title="${encodeURIComponent(ev.title || "")}">
-                  Borrar
-                </button>`
-              : ""
-          }
-        </div>
-      </div>
-    `;
-  };
-
-  for (const g of groups) {
-    const placeTitle = g.placeTitle;
-    const count = g.count;
-    const evs = g.events;
-    const badge = g.badge;
-
-    const li = document.createElement("li");
-
-    if (count === 1) {
-      li.innerHTML = `
-        <div style="padding:8px 0;border-top:1px solid #eee">
-          <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
-            <div>
-              <div style="font-weight:500">${placeTitle}</div>
-              ${badge ? `<div style="opacity:.7;font-size:.9em;margin-top:2px">${badge}</div>` : ""}
-            </div>
-            <button class="linkBtn"
-              data-lat="${g.lat}"
-              data-lng="${g.lng}"
-              data-key="${g.key}">
-              Ver en mapa
-            </button>
+      return `
+        <div style="padding:6px 0;border-top:1px solid #eee">
+          <div style="font-weight:600">
+            ${time ? `<span style="opacity:.75;margin-right:6px">${time}</span>` : ""}
+            ${ev.title}${categoryTagHTML(ev)}
+            ${status ? `<span style="opacity:.6;font-size:.85em;margin-left:6px">${status}</span>` : ""}
           </div>
 
-          <div style="margin-top:6px">
-            ${renderEv(evs[0])}
+          <div style="opacity:.75;font-size:.9em">
+            ${util.formatDateDisplay(ev.date)}
+          </div>
+
+          <div style="margin-top:4px;display:flex;gap:10px;font-size:.85em;align-items:center;flex-wrap:wrap">
+            <button class="linkBtn"
+              data-lat="${ev.lat}"
+              data-lng="${ev.lng}"
+              data-key="${util.smartLocationKey(ev, state.events || [])}">
+              Ver en mapa
+            </button>
+
+            <button class="linkBtn shareBtn"
+              data-eid="${encodeURIComponent(ev.id)}"
+              data-title="${encodeURIComponent(ev.title || "")}">
+              Compartir
+            </button>
+
+            ${
+              state.isLoggedIn
+                ? `<button class="linkBtn deleteEventBtn"
+                    data-delete-eid="${encodeURIComponent(ev.id)}"
+                    data-delete-title="${encodeURIComponent(ev.title || "")}">
+                    Borrar
+                  </button>`
+                : ""
+            }
           </div>
         </div>
       `;
+    };
+
+    for (const g of groups) {
+      const placeTitle = g.placeTitle;
+      const count = g.count;
+      const evs = g.events;
+      const badge = g.badge;
+
+      const li = document.createElement("li");
+
+      if (count === 1) {
+        li.innerHTML = `
+          <div style="padding:8px 0;border-top:1px solid #eee">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+              <div>
+                <div style="font-weight:500">${placeTitle}</div>
+                ${badge ? `<div style="opacity:.7;font-size:.9em;margin-top:2px">${badge}</div>` : ""}
+              </div>
+              <button class="linkBtn"
+                data-lat="${g.lat}"
+                data-lng="${g.lng}"
+                data-key="${g.key}">
+                Ver en mapa
+              </button>
+            </div>
+
+            <div style="margin-top:6px">
+              ${renderEv(evs[0])}
+            </div>
+          </div>
+        `;
+
+        ul.appendChild(li);
+        continue;
+      }
+
+      li.innerHTML = `
+        <details class="accordion" style="margin:6px 0">
+          <summary style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+            <span>
+              <span style="font-weight:500">${placeTitle}</span>
+              <span style="opacity:.65"> · ${count} ${count === 1 ? "evento" : "eventos"}</span>
+              ${badge ? `<span style="opacity:.7;font-size:.9em;margin-left:8px">${badge}</span>` : ""}
+            </span>
+
+            <button class="linkBtn"
+              data-lat="${g.lat}"
+              data-lng="${g.lng}"
+              data-key="${g.key}"
+              style="margin-left:auto">
+              Ver en mapa
+            </button>
+          </summary>
+
+          <div style="padding:6px 8px">
+            ${evs.map(renderEv).join("")}
+          </div>
+        </details>
+      `;
 
       ul.appendChild(li);
-      continue;
     }
-
-    li.innerHTML = `
-      <details class="accordion" style="margin:6px 0">
-        <summary style="display:flex;align-items:center;justify-content:space-between;gap:10px">
-          <span>
-            <span style="font-weight:500">${placeTitle}</span>
-            <span style="opacity:.65"> · ${count} ${count === 1 ? "evento" : "eventos"}</span>
-            ${badge ? `<span style="opacity:.7;font-size:.9em;margin-left:8px">${badge}</span>` : ""}
-          </span>
-
-          <button class="linkBtn"
-            data-lat="${g.lat}"
-            data-lng="${g.lng}"
-            data-key="${g.key}"
-            style="margin-left:auto">
-            Ver en mapa
-          </button>
-        </summary>
-
-        <div style="padding:6px 8px">
-          ${evs.map(renderEv).join("")}
-        </div>
-      </details>
-    `;
-
-    ul.appendChild(li);
   }
-}
 
   /* =========================
      APP SHELL
@@ -225,11 +224,17 @@
               ${ev.placeName ? `<div>${util.shortPlaceName(ev.placeName)}</div>` : ""}
               <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
                 <button class="linkBtn"
-  data-lat="${ev.lat}"
-  data-lng="${ev.lng}"
-  data-key="${util.smartLocationKey(ev, state.events || [])}">
-  Ver en mapa
-</button>
+                  data-lat="${ev.lat}"
+                  data-lng="${ev.lng}"
+                  data-key="${util.smartLocationKey(ev, state.events || [])}">
+                  Ver en mapa
+                </button>
+
+                <button class="linkBtn shareBtn"
+                  data-eid="${encodeURIComponent(ev.id)}"
+                  data-title="${encodeURIComponent(ev.title || "")}">
+                  Compartir
+                </button>
 
                 ${
                   state.isLoggedIn
@@ -523,18 +528,18 @@
     }
 
     btn.addEventListener("click", () => {
-  const collapsed = layout.classList.toggle("isCollapsed");
-  btn.setAttribute("aria-expanded", collapsed ? "false" : "true");
-  btn.textContent = collapsed ? "☰" : "☰ Agenda";
-  btn.title = collapsed ? "Expandir agenda" : "Contraer agenda";
-  localStorage.setItem("leftSidebarCollapsed", String(collapsed));
+      const collapsed = layout.classList.toggle("isCollapsed");
+      btn.setAttribute("aria-expanded", collapsed ? "false" : "true");
+      btn.textContent = collapsed ? "☰" : "☰ Agenda";
+      btn.title = collapsed ? "Expandir agenda" : "Contraer agenda";
+      localStorage.setItem("leftSidebarCollapsed", String(collapsed));
 
-  if (state.map) {
-    setTimeout(() => {
-      state.map.invalidateSize();
-    }, 240);
-  }
-});
+      if (state.map) {
+        setTimeout(() => {
+          state.map.invalidateSize();
+        }, 240);
+      }
+    });
   }
 
   function bindCalendarUI() {
@@ -599,33 +604,28 @@
     const loginBtn = document.getElementById("loginBtn");
     const logoutBtn = document.getElementById("logoutBtn");
 
-   function bindLoginUI() {
-  const loginBtn = document.getElementById("loginBtn");
-  const logoutBtn = document.getElementById("logoutBtn");
+    if (loginBtn) {
+      loginBtn.addEventListener("click", () => {
+        state.isLoggedIn = true;
+        storage.saveLoginState();
 
-  if (loginBtn) {
-    loginBtn.addEventListener("click", () => {
-      state.isLoggedIn = true;
-      storage.saveLoginState();
+        if (state.map) state.map.closePopup();
 
-      if (state.map) state.map.closePopup();
+        renderAll({ rebuildMarkers: true, recomputeNearby: true });
+      });
+    }
 
-      renderAll({ rebuildMarkers: true, recomputeNearby: true });
-    });
-  }
+    if (logoutBtn) {
+      logoutBtn.addEventListener("click", () => {
+        state.isLoggedIn = false;
+        storage.saveLoginState();
 
-  if (logoutBtn) {
-    logoutBtn.addEventListener("click", () => {
-      state.isLoggedIn = false;
-      storage.saveLoginState();
+        if (state.map) state.map.closePopup();
 
-      if (state.map) state.map.closePopup();
-
-      App.map.clearEventCreationMarker();
-      renderAll({ rebuildMarkers: true, recomputeNearby: true });
-    });
-  }
-}
+        App.map?.clearEventCreationMarker?.();
+        renderAll({ rebuildMarkers: true, recomputeNearby: true });
+      });
+    }
   }
 
   function bindPublicUI() {

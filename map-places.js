@@ -1,4 +1,3 @@
-// map-places.js
 (() => {
   "use strict";
 
@@ -78,22 +77,24 @@
   }
 
   function findLocationMarkerByEvent(ev, { rebuildIfMissing = true } = {}) {
-  if (!ev) return null;
+    if (!ev) return null;
 
-  let key = util.smartLocationKey(ev, state.events || []);
-  let loc = state.locationMarkers?.[key] || null;
+    let key = util.smartLocationKey(ev, state.events || []);
+    let loc = state.locationMarkers?.[key] || null;
 
-  if (!loc && rebuildIfMissing) {
-    rebuildLocationMarkers(state.events);
-    key = util.smartLocationKey(ev, state.events || []);
-    loc = state.locationMarkers?.[key] || null;
+    if (!loc && rebuildIfMissing) {
+      rebuildLocationMarkers(state.events);
+      key = util.smartLocationKey(ev, state.events || []);
+      loc = state.locationMarkers?.[key] || null;
+    }
+
+    return loc;
   }
 
-  return loc;
-}
-
   function highlightNearbyMarkers(filteredEvents) {
-    const nearbyKeys = new Set((filteredEvents || []).map((ev) => util.smartLocationKey(ev, state.events)));
+    const nearbyKeys = new Set(
+      (filteredEvents || []).map((ev) => util.smartLocationKey(ev, state.events))
+    );
 
     Object.entries(state.locationMarkers || {}).forEach(([key, loc]) => {
       const isNear = nearbyKeys.has(key);
@@ -104,7 +105,6 @@
   /* =========================
      REBUILD LOCATION MARKERS
   ========================= */
-  
   function rebuildLocationMarkers(list = state.events) {
     if (!state.map || !state.markerCluster) return;
 
@@ -190,17 +190,14 @@
       const sorted = [...loc.events].sort(util.sortEventsByStatusThenTime);
       const total = sorted.length;
 
-      console.log("POPUP BUILD -> isLoggedIn:", state.isLoggedIn);
-
-
       const actionBtn = state.isLoggedIn
-  ? `<button class="popupBtn popupBtnPrimary popupAddBtn"
-        data-lat="${loc.lat}"
-        data-lng="${loc.lng}"
-        data-place="${encodeURIComponent(placeName || "")}">
-      Cargar evento acá
-    </button>`
-  : "";
+        ? `<button class="popupBtn popupBtnPrimary popupAddBtn"
+              data-lat="${loc.lat}"
+              data-lng="${loc.lng}"
+              data-place="${encodeURIComponent(placeName || "")}">
+            Cargar evento acá
+          </button>`
+        : "";
 
       const centerBtn = `
         <button class="popupBtn popupCenterBtn"
@@ -219,10 +216,10 @@
             </div>
           </div>
 
-          <div class="popupActions" style="display:flex;flex-wrap:wrap;gap:8px;margin:8px 0 10px;align-items:center;">
-  ${centerBtn}
-  ${actionBtn}
-</div>
+          <div class="popupActions">
+            ${centerBtn}
+            ${actionBtn}
+          </div>
 
           <div class="popupList">
       `;
@@ -288,8 +285,6 @@
         </div>
       `;
 
-      
-
       loc.marker.bindPopup(html, {
         closeButton: true,
         autoPan: true,
@@ -312,41 +307,42 @@
           ev.preventDefault();
           ev.stopPropagation();
 
-         if (btn.classList.contains("popupCenterBtn")) {
-  const lat = parseFloat(btn.dataset.lat);
-  const lng = parseFloat(btn.dataset.lng);
+          if (btn.classList.contains("popupCenterBtn")) {
+            const lat = parseFloat(btn.dataset.lat);
+            const lng = parseFloat(btn.dataset.lng);
 
-  if (!Number.isFinite(lat) || !Number.isFinite(lng) || !state.map) return;
+            if (!Number.isFinite(lat) || !Number.isFinite(lng) || !state.map) return;
 
-  const marker = loc?.marker;
-  const targetZoom = Math.max(state.map.getZoom(), 17);
+            const marker = loc?.marker;
+            const targetZoom = Math.max(state.map.getZoom(), 17);
 
-  if (marker && state.markerCluster && typeof state.markerCluster.zoomToShowLayer === "function") {
-    state.markerCluster.zoomToShowLayer(marker, () => {
-      state._uiPanZoomInProgress = true;
-      try {
-        state.map.setView([lat, lng], targetZoom, { animate: true });
-        marker.openPopup();
-        glowMarker(marker);
-      } finally {
-        setTimeout(() => (state._uiPanZoomInProgress = false), 250);
-      }
-    });
-  } else {
-    state._uiPanZoomInProgress = true;
-    try {
-      state.map.setView([lat, lng], targetZoom, { animate: true });
-      if (marker) {
-        marker.openPopup();
-        glowMarker(marker);
-      }
-    } finally {
-      setTimeout(() => (state._uiPanZoomInProgress = false), 250);
-    }
-  }
+            if (marker && state.markerCluster && typeof state.markerCluster.zoomToShowLayer === "function") {
+              state.markerCluster.zoomToShowLayer(marker, () => {
+                state._uiPanZoomInProgress = true;
+                try {
+                  state.map.setView([lat, lng], targetZoom, { animate: true });
+                  marker.openPopup();
+                  glowMarker(marker);
+                } finally {
+                  setTimeout(() => (state._uiPanZoomInProgress = false), 250);
+                }
+              });
+            } else {
+              state._uiPanZoomInProgress = true;
+              try {
+                state.map.setView([lat, lng], targetZoom, { animate: true });
+                if (marker) {
+                  marker.openPopup();
+                  glowMarker(marker);
+                }
+              } finally {
+                setTimeout(() => (state._uiPanZoomInProgress = false), 250);
+              }
+            }
 
-  return;
-}
+            return;
+          }
+
           if (btn.classList.contains("popupShareBtn")) {
             const eventId = decodeURIComponent((btn.dataset.eid || "").trim());
             if (!eventId) return;
@@ -830,7 +826,7 @@
      LISTENER: Ver en mapa
   ========================= */
   document.addEventListener("click", (e) => {
-    const linkBtn = e.target.closest(".linkBtn");
+    const linkBtn = e.target.closest(".linkBtn[data-lat][data-lng]");
     if (!linkBtn) return;
 
     e.preventDefault();
@@ -849,12 +845,12 @@
 
     let loc = state.locationMarkers?.[key];
 
-if (!loc) {
-  rebuildLocationMarkers(state.events);
-  loc = state.locationMarkers?.[key];
-}
+    if (!loc) {
+      rebuildLocationMarkers(state.events);
+      loc = state.locationMarkers?.[key];
+    }
 
-const targetZoom = Math.max(state.map.getZoom(), 16);
+    const targetZoom = Math.max(state.map.getZoom(), 16);
 
     uiSetView(lat, lng, targetZoom);
 
@@ -981,114 +977,109 @@ const targetZoom = Math.max(state.map.getZoom(), 16);
      DEEP LINK TARGET
   ========================= */
   function focusEventById(eventId) {
-  const id = String(eventId || "").trim();
-  if (!id) return false;
+    const id = String(eventId || "").trim();
+    if (!id) return false;
 
-  const ev = App.events?.findEventById?.(id) || null;
-  if (!ev || !state.map) return false;
+    const ev = App.events?.findEventById?.(id) || null;
+    if (!ev || !state.map) return false;
 
-  if (state.deepLinkLayer && typeof state.deepLinkLayer.clearLayers === "function") {
-    state.deepLinkLayer.clearLayers();
-  }
+    if (state.deepLinkLayer && typeof state.deepLinkLayer.clearLayers === "function") {
+      state.deepLinkLayer.clearLayers();
+    }
 
-  // Buscar marker existente
-  let key = util.smartLocationKey(ev, state.events || []);
-  let loc = state.locationMarkers?.[key];
+    let key = util.smartLocationKey(ev, state.events || []);
+    let loc = state.locationMarkers?.[key];
 
-  // Si no existe, reconstruir markers
-  if (!loc) {
-    rebuildLocationMarkers(state.events);
-    key = util.smartLocationKey(ev, state.events || []);
-    loc = state.locationMarkers?.[key];
-  }
+    if (!loc) {
+      rebuildLocationMarkers(state.events);
+      key = util.smartLocationKey(ev, state.events || []);
+      loc = state.locationMarkers?.[key];
+    }
 
-  // Si encontramos el marker real
-  if (loc?.marker) {
-    state._pendingOpenEventId = id;
+    if (loc?.marker) {
+      state._pendingOpenEventId = id;
 
-    const targetZoom = Math.max(state.map.getZoom(), 17);
+      const targetZoom = Math.max(state.map.getZoom(), 17);
 
-    if (
-      state.markerCluster &&
-      typeof state.markerCluster.zoomToShowLayer === "function"
-    ) {
-      state.markerCluster.zoomToShowLayer(loc.marker, () => {
+      if (
+        state.markerCluster &&
+        typeof state.markerCluster.zoomToShowLayer === "function"
+      ) {
+        state.markerCluster.zoomToShowLayer(loc.marker, () => {
+          state.map.setView([ev.lat, ev.lng], targetZoom, { animate: true });
+          loc.marker.openPopup();
+        });
+      } else {
         state.map.setView([ev.lat, ev.lng], targetZoom, { animate: true });
         loc.marker.openPopup();
-      });
-    } else {
-      state.map.setView([ev.lat, ev.lng], targetZoom, { animate: true });
-      loc.marker.openPopup();
+      }
+
+      return true;
     }
+
+    const placeTitle = util.shortPlaceName(ev.placeName) || "Lugar sin nombre";
+    const st = util.formatTimeStart(ev);
+    const status = util.getEventStatus(ev);
+
+    const html = `
+      <div class="popupCard">
+        <div class="popupHeader">
+          <div>
+            <div class="popupPlace">${placeTitle}</div>
+            <div class="popupSub">Evento (link compartido)</div>
+          </div>
+        </div>
+
+        <div class="popupList">
+          <div class="popupItem popupItemHighlight">
+            <div class="popupItemTitle">
+              ${st ? `<span style="opacity:.75;margin-right:6px">${st}</span>` : ""}
+              ${ev.title}
+              ${status ? `<span style="opacity:.6;font-size:.85em;margin-left:6px">${status}</span>` : ""}
+            </div>
+            <div class="popupItemMeta">${util.formatDateDisplay(ev.date)}</div>
+          </div>
+        </div>
+      </div>
+    `;
+
+    const markerOpts = {};
+    try {
+      markerOpts.icon = getCategoryIcon(ev.category || "music");
+      markerOpts.bubblingMouseEvents = false;
+    } catch {}
+
+    const m = L.marker([ev.lat, ev.lng], markerOpts);
+
+    m.bindPopup(html, {
+      closeButton: true,
+      autoPan: true,
+      keepInView: true,
+      autoPanPadding: [30, 30],
+      offset: [0, -10]
+    });
+
+    if (state.deepLinkLayer) {
+      m.addTo(state.deepLinkLayer);
+    } else {
+      m.addTo(state.map);
+    }
+
+    const targetZoom = Math.max(state.map.getZoom(), 17);
+    state.map.setView([ev.lat, ev.lng], targetZoom, { animate: true });
+
+    m.openPopup();
+
+    setTimeout(() => {
+      const el = m.getElement?.();
+      if (el) {
+        el.classList.add("marker-highlight");
+        setTimeout(() => el.classList.remove("marker-highlight"), 900);
+      }
+    }, 50);
 
     return true;
   }
-
-  // Fallback: crear marker temporal
-  const placeTitle = util.shortPlaceName(ev.placeName) || "Lugar sin nombre";
-  const st = util.formatTimeStart(ev);
-  const status = util.getEventStatus(ev);
-
-  const html = `
-    <div class="popupCard">
-      <div class="popupHeader">
-        <div>
-          <div class="popupPlace">${placeTitle}</div>
-          <div class="popupSub">Evento (link compartido)</div>
-        </div>
-      </div>
-
-      <div class="popupList">
-        <div class="popupItem popupItemHighlight">
-          <div class="popupItemTitle">
-            ${st ? `<span style="opacity:.75;margin-right:6px">${st}</span>` : ""}
-            ${ev.title}
-            ${status ? `<span style="opacity:.6;font-size:.85em;margin-left:6px">${status}</span>` : ""}
-          </div>
-          <div class="popupItemMeta">${util.formatDateDisplay(ev.date)}</div>
-        </div>
-      </div>
-    </div>
-  `;
-
-  const markerOpts = {};
-  try {
-    markerOpts.icon = getCategoryIcon(ev.category || "music");
-    markerOpts.bubblingMouseEvents = false;
-  } catch {}
-
-  const m = L.marker([ev.lat, ev.lng], markerOpts);
-
-  m.bindPopup(html, {
-    closeButton: true,
-    autoPan: true,
-    keepInView: true,
-    autoPanPadding: [30, 30],
-    offset: [0, -10]
-  });
-
-  if (state.deepLinkLayer) {
-    m.addTo(state.deepLinkLayer);
-  } else {
-    m.addTo(state.map);
-  }
-
-  const targetZoom = Math.max(state.map.getZoom(), 17);
-  state.map.setView([ev.lat, ev.lng], targetZoom, { animate: true });
-
-  m.openPopup();
-
-  // Highlight visual
-  setTimeout(() => {
-    const el = m.getElement?.();
-    if (el) {
-      el.classList.add("marker-highlight");
-      setTimeout(() => el.classList.remove("marker-highlight"), 900);
-    }
-  }, 50);
-
-  return true;
-}
 
   /* =========================
      EXPORT MAP MODULE
@@ -1111,6 +1102,6 @@ const targetZoom = Math.max(state.map.getZoom(), 16);
     clearAllEvents
   };
 
-    App.map.bindPlaceSearchUI();
-    App.ui?.bootAfterMapReady?.();
+  App.map.bindPlaceSearchUI();
+  App.ui?.bootAfterMapReady?.();
 })();

@@ -55,7 +55,7 @@ header button#logoutBtn {
 /* ==============
    Generic sections / lists
 ============== */
-section {
+body > section {
   max-width: 820px;
   margin: 16px auto;
   padding: 16px;
@@ -164,6 +164,7 @@ button:active {
 .pageShell {
   max-width: 1280px;
   margin: 0 auto;
+  padding: 16px;
 }
 
 .topIntro {
@@ -899,6 +900,11 @@ button:active {
 /* ==============
    Admin
 ============== */
+#adminView {
+  max-width: none;
+  margin: 16px 0 0;
+}
+
 .adminPanel {
   margin-top: 16px;
   padding: 14px;
@@ -983,6 +989,7 @@ button:active {
   padding: 0;
   background: transparent;
   border: none;
+  margin: 0;
 }
 
 #map {
@@ -1048,9 +1055,15 @@ button:active {
 /* ==============
    Popup
 ============== */
+.leaflet-popup-content-wrapper,
+.leaflet-popup-content {
+  overflow: visible !important;
+}
+
 .popupCard {
   min-width: 240px;
   max-width: 320px;
+  overflow: visible !important;
 }
 
 .popupHeader {
@@ -1059,6 +1072,7 @@ button:active {
   justify-content: space-between;
   gap: 10px;
   margin-bottom: 8px;
+  overflow: visible !important;
 }
 
 .popupPlace {
@@ -1078,6 +1092,8 @@ button:active {
   flex-wrap: wrap;
   gap: 8px;
   margin: 8px 0 10px;
+  align-items: center;
+  overflow: visible !important;
 }
 
 .popupBtn {
@@ -1091,28 +1107,25 @@ button:active {
   cursor: pointer;
 }
 
+.popupActions .popupBtn,
+.popupAddBtn {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
 .popupBtn:hover {
   border-color: #cfcfcf;
 }
 
-.popupBtnPrimary {
+.popupBtnPrimary,
+.popupAddBtn {
   background: #111;
   color: #fff;
   border-color: #111;
-}
-
-.popupAddBtn {
-  margin-top: 8px;
-  padding: 6px 10px;
-  border: 1px solid #ddd;
-  border-radius: 10px;
-  background: #fff;
-  cursor: pointer;
-}
-
-.popupAddBtn:hover,
-.popupShareBtn:hover {
-  filter: brightness(0.98);
 }
 
 .popupShareBtn {
@@ -1237,15 +1250,18 @@ button:active {
     grid-template-columns: 1fr;
   }
 
+  .mainColumn {
+    order: 1;
+  }
+
+  .sideColumn--left {
+    order: 2;
+  }
+
   .sideColumn {
     display: grid;
     grid-template-columns: 1fr;
     gap: 16px;
-  }
-
-  .sideColumn--left,
-  .mainColumn {
-    order: initial;
   }
 
   .sideColumn .panelCard {
@@ -1271,12 +1287,20 @@ button:active {
     box-shadow: revert;
   }
 
+  .sidebarToolbar {
+    margin-bottom: 0;
+  }
+
   #map {
     height: 460px;
   }
 }
 
 @media (max-width: 760px) {
+  .pageShell {
+    padding: 12px;
+  }
+
   .pageTitle {
     font-size: 21px;
   }
@@ -1325,6 +1349,11 @@ button:active {
     grid-template-columns: 1fr;
   }
 
+  .popupCard {
+    min-width: 0;
+    max-width: 100%;
+  }
+
   #map {
     height: 340px;
   }
@@ -1341,79 +1370,4 @@ button:active {
     transition: none !important;
     scroll-behavior: auto !important;
   }
-}
-.leaflet-popup-content-wrapper,
-.leaflet-popup-content {
-  overflow: visible !important;
-}
-
-.popupCard {
-  min-width: 240px;
-  max-width: 320px;
-  overflow: visible;
-}
-
-.popupActions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin: 8px 0 10px;
-  align-items: center;
-  overflow: visible;
-}
-
-.popupActions .popupBtn,
-.popupAddBtn {
-  display: inline-flex !important;
-  align-items: center;
-  justify-content: center;
-  white-space: nowrap;
-  visibility: visible !important;
-  opacity: 1 !important;
-}
-
-.leaflet-popup-content-wrapper,
-.leaflet-popup-content {
-  overflow: visible !important;
-}
-
-.popupCard {
-  min-width: 240px;
-  max-width: 320px;
-  overflow: visible !important;
-}
-
-.popupActions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin: 8px 0 10px;
-  align-items: center;
-  overflow: visible !important;
-}
-
-.popupActions .popupBtn,
-.popupAddBtn {
-  display: inline-flex !important;
-  align-items: center;
-  justify-content: center;
-  white-space: nowrap;
-  visibility: visible !important;
-  opacity: 1 !important;
-}
-
-.leaflet-popup-content-wrapper,
-.leaflet-popup-content {
-  overflow: visible !important;
-}
-
-.popupCard,
-.popupHeader,
-.popupActions {
-  overflow: visible !important;
-}
-.popupAddBtn {
-  background: #111;
-  color: #fff;
-  border-color: #111;
 }
