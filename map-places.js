@@ -594,38 +594,38 @@
       .replace(/[\u0300-\u036f]/g, "");
   }
 
-  function findCanonicalPlace(placeName, lat, lng) {
-    const targetName = normalizePlaceText(util.shortPlaceName(placeName));
-    const all = state.events || [];
+ function findCanonicalPlace(placeName, lat, lng) {
+  const targetName = normalizePlaceText(util.shortPlaceName(placeName));
+  const all = state.events || [];
 
-    if (!util.isValidCoord(lat) || !util.isValidCoord(lng)) return null;
+  if (!util.isValidCoord(lat) || !util.isValidCoord(lng)) return null;
+  if (!targetName) return null;
 
-    let best = null;
+  let best = null;
 
-    for (const ev of all) {
-      if (!ev || !util.isValidCoord(ev.lat) || !util.isValidCoord(ev.lng)) continue;
+  for (const ev of all) {
+    if (!ev || !util.isValidCoord(ev.lat) || !util.isValidCoord(ev.lng)) continue;
 
-      const evName = normalizePlaceText(util.shortPlaceName(ev.placeName));
-      const dist = util.distanceKm(lat, lng, ev.lat, ev.lng);
+    const evName = normalizePlaceText(util.shortPlaceName(ev.placeName));
+    const dist = util.distanceKm(lat, lng, ev.lat, ev.lng);
 
-      const sameName = !!targetName && !!evName && targetName === evName;
-      const veryNear = dist <= 0.12;
-      const nearAndSameName = sameName && dist <= 0.35;
+    const sameName = !!evName && targetName === evName;
+    const nearAndSameName = sameName && dist <= 0.12; // 120 m
 
-      if (!veryNear && !nearAndSameName) continue;
+    if (!nearAndSameName) continue;
 
-      if (!best || dist < best.dist) {
-        best = {
-          lat: ev.lat,
-          lng: ev.lng,
-          placeName: ev.placeName || placeName,
-          dist
-        };
-      }
+    if (!best || dist < best.dist) {
+      best = {
+        lat: ev.lat,
+        lng: ev.lng,
+        placeName: ev.placeName || placeName,
+        dist
+      };
     }
-
-    return best;
   }
+
+  return best;
+}
 
   /* =========================
      ADMIN EVENTS

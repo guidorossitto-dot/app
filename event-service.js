@@ -5,9 +5,6 @@
   const App = window.App;
   const { state, util, storage } = App;
 
-  /* =========================
-     INTERNAL HELPERS
-  ========================= */
   function ensureEventsArray() {
     if (!Array.isArray(state.events)) state.events = [];
     return state.events;
@@ -25,9 +22,6 @@
     return ensureEventsArray().some((ev) => String(ev.id) === id);
   }
 
-  /* =========================
-     READ
-  ========================= */
   function getAllEvents() {
     return ensureEventsArray();
   }
@@ -35,13 +29,9 @@
   function findEventById(eventId) {
     const id = String(eventId || "").trim();
     if (!id) return null;
-
     return ensureEventsArray().find((ev) => String(ev.id) === id) || null;
   }
 
-  /* =========================
-     WRITE
-  ========================= */
   function setAllEvents(list) {
     state.events = sanitizeEventsList(list);
     return state.events;
@@ -63,7 +53,6 @@
     }
 
     ensureEventsArray().push(ev);
-
     return { ok: true, error: null, event: ev };
   }
 
@@ -92,7 +81,6 @@
     }
 
     list[idx] = merged;
-
     return { ok: true, error: null, event: merged };
   }
 
@@ -121,10 +109,50 @@
     return { ok: true, error: null };
   }
 
-  /* =========================
-     INTEGRATION: STORAGE + UI
-  ========================= */
-  function saveAndRefresh(opts = {}) {
+  function setActiveCategory(category) {
+    state.activeCategory =
+      category === App.CFG.CATEGORY_ALL
+        ? App.CFG.CATEGORY_ALL
+        : util.normalizeCategory(category);
+
+    return state.activeCategory;
+  }
+
+  function setCalendarCursor(date) {
+    state.calendarCursor = date instanceof Date ? date : new Date();
+    return state.calendarCursor;
+  }
+
+  function setEditingEventId(eventId) {
+    state.editingEventId = eventId ? String(eventId).trim() : null;
+    return state.editingEventId;
+  }
+
+  function setNearbyCenter(center) {
+    if (!center || !util.isValidCoord(center.lat) || !util.isValidCoord(center.lng)) {
+      state.nearbyCenter = null;
+      return state.nearbyCenter;
+    }
+
+    state.nearbyCenter = {
+      lat: Number(center.lat),
+      lng: Number(center.lng)
+    };
+
+    return state.nearbyCenter;
+  }
+
+  function setNearbyEvents(list) {
+    state.nearbyEvents = sanitizeEventsList(list);
+    return state.nearbyEvents;
+  }
+
+  function commit(opts = {}) {
+    if (App.commit) {
+      App.commit(opts);
+      return;
+    }
+
     storage.saveEvents();
 
     if (state.nearbyCenter && App.map?.recomputeNearbyEvents) {
@@ -134,9 +162,19 @@
       );
     }
 
-    App.ui?.commit?.({
+    App.ui?.renderAll?.({
       rebuildMarkers: true,
       recomputeNearby: false,
+      ...opts
+    });
+  }
+
+  function saveAndRefresh(opts = {}) {
+    commit({
+      persist: true,
+      purgePast: false,
+      rebuildMarkers: true,
+      recomputeNearby: true,
       ...opts
     });
   }
@@ -149,6 +187,14 @@
     replaceEvent,
     removeEvent,
     clearAllEvents,
+
+    setActiveCategory,
+    setCalendarCursor,
+    setEditingEventId,
+    setNearbyCenter,
+    setNearbyEvents,
+
+    commit,
     saveAndRefresh
   };
 })();

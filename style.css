@@ -1371,3 +1371,111 @@ button:active {
     scroll-behavior: auto !important;
   }
 }
+
+.calendarEventPopover {
+  min-width: 220px;
+  max-width: 280px;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.14);
+  padding: 12px;
+}
+
+.calendarEventPopover__title {
+  font-weight: 600;
+  margin-bottom: 8px;
+  line-height: 1.2;
+}
+
+.calendarEventPopover__meta {
+  font-size: 0.92em;
+  opacity: 0.9;
+  display: grid;
+  gap: 4px;
+}
+
+.calendarEventPopover__actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+
+.event.event-more {
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.calendarListFlash {
+  animation: calendarListFlashAnim 0.9s ease;
+}
+
+@keyframes calendarListFlashAnim {
+  0% {
+    background: rgba(255, 230, 120, 0.55);
+  }
+  100% {
+    background: transparent;
+  }
+}
+
+.calendarEventPopover--dayList {
+  min-width: 260px;
+  max-width: 340px;
+}
+
+.calendarDayPopover__list {
+  max-height: 260px;
+  overflow-y: auto;
+  margin-top: 8px;
+  padding-right: 4px;
+}
+
+.calendarDayPopover__item {
+  padding: 8px 0;
+  border-top: 1px solid #eee;
+}
+
+.calendarDayPopover__item:first-child {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.calendarDayPopover__itemTitle {
+  font-weight: 600;
+  line-height: 1.2;
+  margin-bottom: 4px;
+}
+
+.calendarDayPopover__itemMeta {
+  font-size: 0.92em;
+  opacity: 0.9;
+  display: grid;
+  gap: 3px;
+}
+
+.calendarDayPopover__empty {
+  font-size: 0.95em;
+  opacity: 0.8;
+}
+
+@media (max-width: 760px) {
+  .placeSearchRow {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .placeSearchRow input {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .placeSearchRow button {
+    width: auto;
+    margin: 0;
+    white-space: nowrap;
+  }
+}

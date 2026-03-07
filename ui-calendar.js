@@ -421,11 +421,211 @@
     return mapObj;
   }
 
-  function renderCalendar() {
+    function removeCalendarPopover() {
+    const old = document.getElementById("calendarEventPopover");
+    if (old) old.remove();
+  }
+
+  function showCalendarEventPopover(anchorEl, ev) {
+    if (!anchorEl || !ev) return;
+
+    removeCalendarPopover();
+
+    const pop = document.createElement("div");
+    pop.id = "calendarEventPopover";
+    pop.className = "calendarEventPopover";
+
+    const time = util.formatTimeStart(ev);
+    const place = util.shortPlaceName(ev.placeName) || "Lugar sin nombre";
+    const dateText = util.formatDateDisplay(ev.date);
+
+    pop.innerHTML = `
+      <div class="calendarEventPopover__title">${ev.title || "Evento"}</div>
+      <div class="calendarEventPopover__meta">
+        ${time ? `<div><strong>Hora:</strong> ${time}</div>` : ""}
+        <div><strong>Lugar:</strong> ${place}</div>
+        <div><strong>Fecha:</strong> ${dateText}</div>
+      </div>
+      <div class="calendarEventPopover__actions">
+        <button type="button" class="linkBtn calendarPopoverMapBtn">Ver en mapa</button>
+        <button type="button" class="linkBtn calendarPopoverCloseBtn">Cerrar</button>
+      </div>
+    `;
+
+    document.body.appendChild(pop);
+
+    const rect = anchorEl.getBoundingClientRect();
+    const popRect = pop.getBoundingClientRect();
+
+    let top = window.scrollY + rect.bottom + 8;
+    let left = window.scrollX + rect.left;
+
+    const maxLeft = window.scrollX + window.innerWidth - popRect.width - 12;
+    if (left > maxLeft) left = Math.max(window.scrollX + 12, maxLeft);
+
+    pop.style.position = "absolute";
+    pop.style.top = `${top}px`;
+    pop.style.left = `${left}px`;
+    pop.style.zIndex = "9999";
+
+    const closeBtn = pop.querySelector(".calendarPopoverCloseBtn");
+    if (closeBtn) {
+      closeBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        removeCalendarPopover();
+      });
+    }
+
+    const mapBtn = pop.querySelector(".calendarPopoverMapBtn");
+    if (mapBtn) {
+      mapBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        removeCalendarPopover();
+
+        const mapEl = document.getElementById("map");
+        if (mapEl) mapEl.scrollIntoView({ behavior: "smooth", block: "start" });
+
+        const key = util.smartLocationKey(ev, state.events || []);
+        const loc = state.locationMarkers?.[key];
+
+        if (App.map?.focusEventById && ev.id) {
+          App.map.focusEventById(ev.id);
+          return;
+        }
+
+        if (state.map && Number.isFinite(ev.lat) && Number.isFinite(ev.lng)) {
+          state.map.setView([ev.lat, ev.lng], 16);
+          if (loc?.marker) loc.marker.openPopup();
+        }
+      });
+    }
+
+    requestAnimationFrame(() => {
+      const onDocClick = (e) => {
+        if (!pop.contains(e.target) && e.target !== anchorEl) {
+          removeCalendarPopover();
+          document.removeEventListener("click", onDocClick, true);
+        }
+      };
+
+      document.addEventListener("click", onDocClick, true);
+    });
+  }
+
+    function showCalendarDayPopover(anchorEl, dateStr, events) {
+    if (!anchorEl) return;
+
+    removeCalendarPopover();
+
+    const pop = document.createElement("div");
+    pop.id = "calendarEventPopover";
+    pop.className = "calendarEventPopover calendarEventPopover--dayList";
+
+    const safeEvents = [...(events || [])].sort(util.sortEventsByStatusThenTime);
+    const dateText = util.formatDateDisplay(dateStr);
+
+    pop.innerHTML = `
+      <div class="calendarEventPopover__title">Eventos del ${dateText}</div>
+      <div class="calendarDayPopover__list">
+        ${
+          safeEvents.length
+            ? safeEvents.map((ev) => {
+                const time = util.formatTimeStart(ev);
+                const place = util.shortPlaceName(ev.placeName) || "Lugar sin nombre";
+                const status = util.getEventStatus(ev);
+
+                return `
+                  <div class="calendarDayPopover__item">
+                    <div class="calendarDayPopover__itemTitle">
+                      ${ev.title || "Evento"}
+                    </div>
+                    <div class="calendarDayPopover__itemMeta">
+                      ${time ? `<div><strong>Hora:</strong> ${time}</div>` : ""}
+                      <div><strong>Lugar:</strong> ${place}</div>
+                      ${status ? `<div><strong>Estado:</strong> ${status}</div>` : ""}
+                    </div>
+                  </div>
+                `;
+              }).join("")
+            : `<div class="calendarDayPopover__empty">No hay eventos para este día</div>`
+        }
+      </div>
+      <div class="calendarEventPopover__actions">
+        <button type="button" class="linkBtn calendarPopoverCloseBtn">Cerrar</button>
+      </div>
+    `;
+
+    document.body.appendChild(pop);
+
+    const rect = anchorEl.getBoundingClientRect();
+    const popRect = pop.getBoundingClientRect();
+
+    let top = window.scrollY + rect.bottom + 8;
+    let left = window.scrollX + rect.left;
+
+    const maxLeft = window.scrollX + window.innerWidth - popRect.width - 12;
+    if (left > maxLeft) left = Math.max(window.scrollX + 12, maxLeft);
+
+    const maxTop = window.scrollY + window.innerHeight - popRect.height - 12;
+    if (top > maxTop) {
+      top = Math.max(window.scrollY + 12, window.scrollY + rect.top - popRect.height - 8);
+    }
+
+    pop.style.position = "absolute";
+    pop.style.top = `${top}px`;
+    pop.style.left = `${left}px`;
+    pop.style.zIndex = "9999";
+
+    const closeBtn = pop.querySelector(".calendarPopoverCloseBtn");
+    if (closeBtn) {
+      closeBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        removeCalendarPopover();
+      });
+    }
+
+    requestAnimationFrame(() => {
+      const onDocClick = (e) => {
+        if (!pop.contains(e.target) && e.target !== anchorEl) {
+          removeCalendarPopover();
+          document.removeEventListener("click", onDocClick, true);
+        }
+      };
+
+      document.addEventListener("click", onDocClick, true);
+    });
+  }
+
+      function openCalendarDay(dateStr, anchorEl = null) {
+    const dayEvents = util.getEventsOnDate(dateStr, state.events);
+    const today = util.todayStrYYYYMMDD();
+
+    if (anchorEl) {
+      showCalendarDayPopover(anchorEl, dateStr, dayEvents);
+      return;
+    }
+
+    removeCalendarPopover();
+
+    if (dateStr === today) {
+      renderEventsIntoUl("todayEvents", dayEvents, "No hay eventos hoy");
+    } else if (dateStr > today) {
+      renderEventsIntoUl("eventList", dayEvents, "No hay eventos ese día");
+    } else {
+      renderEventsIntoUl("eventList", [], "Ese día ya pasó");
+    }
+  }
+
+    function renderCalendar() {
     const cal = document.getElementById("calendar");
     const label = document.getElementById("monthLabel");
     if (!cal) return;
 
+    removeCalendarPopover();
     cal.innerHTML = "";
 
     const year = state.calendarCursor.getFullYear();
@@ -473,35 +673,38 @@
       cell.appendChild(dn);
 
       const evs = byDate[dateStr] || [];
-      evs.slice(0, 3).forEach((e) => {
+
+      evs.slice(0, 3).forEach((ev) => {
         const b = document.createElement("div");
         b.className = "event";
-        b.textContent = e.title;
+        b.textContent = ev.title;
+        b.dataset.eid = ev.id || "";
+
+        b.addEventListener("click", (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          showCalendarEventPopover(b, ev);
+        });
+
         cell.appendChild(b);
       });
 
-      if (evs.length > 3) {
+            if (evs.length > 3) {
         const more = document.createElement("div");
-        more.className = "event";
+        more.className = "event event-more";
         more.textContent = `+${evs.length - 3} más`;
+
+        more.addEventListener("click", (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          showCalendarDayPopover(more, dateStr, evs);
+        });
+
         cell.appendChild(more);
       }
 
       cell.addEventListener("click", () => {
-        const dayEvents = util.getEventsOnDate(dateStr, state.events);
-        const today = util.todayStrYYYYMMDD();
-
-        if (dateStr === today) {
-          renderEventsIntoUl("todayEvents", dayEvents, "No hay eventos hoy");
-        } else if (dateStr > today) {
-          renderEventsIntoUl("eventList", dayEvents, "No hay eventos ese día");
-        } else {
-          renderEventsIntoUl("eventList", [], "Ese día ya pasó");
-        }
-
-        if (dayEvents.length > 0 && state.map) {
-          state.map.setView([dayEvents[0].lat, dayEvents[0].lng], 14);
-        }
+        openCalendarDay(dateStr);
       });
 
       cal.appendChild(cell);
@@ -876,7 +1079,8 @@
   /* =========================
      EXPORT UI MODULE
   ========================= */
-  App.ui = {
+    
+    App.ui = {
     renderAll,
     commit,
     renderAppShell,
@@ -889,4 +1093,7 @@
     updateNearbyCount,
     bootAfterMapReady
   };
+
+  App.renderAll = App.renderAll || renderAll;
+  App.commit = App.commit || commit;
 })();

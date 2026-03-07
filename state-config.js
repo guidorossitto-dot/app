@@ -315,39 +315,41 @@
      PLACE GROUPING / KEYS
   ========================= */
   function findPlaceAnchor(ev, list = App.state.events) {
-    if (!ev) return null;
-    if (!isValidCoord(ev.lat) || !isValidCoord(ev.lng)) return null;
+  if (!ev) return null;
+  if (!isValidCoord(ev.lat) || !isValidCoord(ev.lng)) return null;
 
-    const targetName = normalizePlaceText(shortPlaceName(ev.placeName));
-    const all = Array.isArray(list) ? list : [];
+  const targetName = normalizePlaceText(shortPlaceName(ev.placeName));
+  const all = Array.isArray(list) ? list : [];
 
-    let best = null;
+  let best = null;
 
-    for (const other of all) {
-      if (!other) continue;
-      if (!isValidCoord(other.lat) || !isValidCoord(other.lng)) continue;
+  for (const other of all) {
+    if (!other) continue;
+    if (!isValidCoord(other.lat) || !isValidCoord(other.lng)) continue;
 
-      const otherName = normalizePlaceText(shortPlaceName(other.placeName));
-      const dist = distanceKm(ev.lat, ev.lng, other.lat, other.lng);
+    const otherName = normalizePlaceText(shortPlaceName(other.placeName));
+    const dist = distanceKm(ev.lat, ev.lng, other.lat, other.lng);
 
-      const sameShortName = !!targetName && !!otherName && targetName === otherName;
-      const veryNear = dist <= 0.12; // 120 m
-      const nearAndSameName = sameShortName && dist <= 0.35; // 350 m
+    // solo agrupar si hay nombre consistente
+    const sameShortName = !!targetName && !!otherName && targetName === otherName;
 
-      if (!veryNear && !nearAndSameName) continue;
+    // mismo nombre y bastante cerca
+    const nearAndSameName = sameShortName && dist <= 0.12; // 120 m
 
-      if (!best || dist < best.dist) {
-        best = {
-          lat: other.lat,
-          lng: other.lng,
-          placeName: other.placeName || ev.placeName,
-          dist
-        };
-      }
+    if (!nearAndSameName) continue;
+
+    if (!best || dist < best.dist) {
+      best = {
+        lat: other.lat,
+        lng: other.lng,
+        placeName: other.placeName || ev.placeName,
+        dist
+      };
     }
-
-    return best;
   }
+
+  return best;
+}
 
   function smartLocationKey(ev, list = App.state.events) {
     if (!ev) return "";
