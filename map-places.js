@@ -174,7 +174,7 @@
 
           if (state.isLoggedIn) prepareEventCreation(lat, lng);
 
-          App.ui?.renderAll?.({ rebuildMarkers: false, recomputeNearby: false });
+          App.renderAll?.({ rebuildMarkers: false, recomputeNearby: false });
         });
       }
 
@@ -384,7 +384,7 @@
               return;
             }
 
-            state.editingEventId = eventId;
+            App.events?.setEditingEventId?.(eventId);
 
             const titleEl = document.getElementById("eventTitle");
             const dateEl = document.getElementById("eventDate");
@@ -476,7 +476,7 @@
             const titleEl = document.getElementById("eventTitle");
             if (titleEl) titleEl.focus();
 
-            App.ui?.renderAll?.({ rebuildMarkers: false, recomputeNearby: false });
+            App.renderAll?.({ rebuildMarkers: false, recomputeNearby: false });
             return;
           }
         };
@@ -506,20 +506,23 @@
      NEARBY STATE
   ========================= */
   function recomputeNearbyEvents(lat, lng) {
-    if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
-      state.nearbyCenter = null;
-      state.nearbyEvents = [];
-      return [];
-    }
-
-    state.nearbyCenter = { lat, lng };
-    state.nearbyEvents = util.getNearbyTodayEvents(lat, lng, state.events);
-    return state.nearbyEvents;
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+    App.events?.setNearbyCenter?.(null);
+    App.events?.setNearbyEvents?.([]);
+    return [];
   }
+
+  App.events?.setNearbyCenter?.({ lat, lng });
+
+  const nearby = util.getNearbyTodayEvents(lat, lng, state.events);
+  App.events?.setNearbyEvents?.(nearby);
+
+  return state.nearbyEvents;
+}
 
   function filterEventsByDistance(lat, lng) {
     const filtered = recomputeNearbyEvents(lat, lng);
-    App.ui?.renderAll?.({ rebuildMarkers: false, recomputeNearby: false });
+    App.renderAll?.({ rebuildMarkers: false, recomputeNearby: false });
     return filtered;
   }
 
@@ -550,7 +553,7 @@
         const pos = e.target.getLatLng();
         setUserInputs(pos.lat, pos.lng);
         recomputeNearbyEvents(pos.lat, pos.lng);
-        App.ui?.renderAll?.({ rebuildMarkers: false, recomputeNearby: false });
+        App.renderAll?.({ rebuildMarkers: false, recomputeNearby: false });
       });
     }
   }
@@ -675,12 +678,12 @@
     if (state.editingEventId) {
       const result = events.replaceEvent(state.editingEventId, patch);
 
-      if (!result.ok) {
+    if (!result.ok) {
         alert("No se pudo guardar la edición.");
         return;
-      }
+     }
 
-      state.editingEventId = null;
+      App.events?.setEditingEventId?.(null);
     } else {
       const rawEvent = {
         id: util.newId(),
@@ -720,8 +723,8 @@
     if (!confirm("¿Seguro que querés borrar todos los eventos?")) return;
 
     events.clearAllEvents();
-    state.nearbyEvents = [];
-    state.nearbyCenter = null;
+    App.events?.setNearbyEvents?.([]);
+    App.events?.setNearbyCenter?.(null);
 
     events.saveAndRefresh({ rebuildMarkers: true });
   }
@@ -746,7 +749,7 @@
 
         if (state.isLoggedIn) prepareEventCreation(lat, lng);
 
-        App.ui?.renderAll?.({ rebuildMarkers: false, recomputeNearby: false });
+        App.renderAll?.({ rebuildMarkers: false, recomputeNearby: false });
       },
       (err) => {
         alert("No se pudo obtener la ubicación: " + err.message);
@@ -772,7 +775,7 @@
     recomputeNearbyEvents(lat, lng);
     state.map.setView([lat, lng], 15);
 
-    App.ui?.renderAll?.({ rebuildMarkers: false, recomputeNearby: false });
+    App.renderAll?.({ rebuildMarkers: false, recomputeNearby: false });
   }
 
   /* =========================
@@ -808,7 +811,7 @@
 
       if (state.isLoggedIn) prepareEventCreation(clat, clng);
 
-      App.ui?.renderAll?.({ rebuildMarkers: false, recomputeNearby: false });
+      App.renderAll?.({ rebuildMarkers: false, recomputeNearby: false });
     });
 
     state.map.on("dragstart", () => {

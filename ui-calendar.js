@@ -749,27 +749,31 @@
     const prevMonthBtn = document.getElementById("prevMonthBtn");
     const nextMonthBtn = document.getElementById("nextMonthBtn");
 
-    if (prevMonthBtn) {
-      prevMonthBtn.addEventListener("click", () => {
-        state.calendarCursor = new Date(
-          state.calendarCursor.getFullYear(),
-          state.calendarCursor.getMonth() - 1,
-          1
-        );
-        renderCalendar();
-      });
-    }
+   if (prevMonthBtn) {
+  prevMonthBtn.addEventListener("click", () => {
+    App.events?.setCalendarCursor?.(
+      new Date(
+        state.calendarCursor.getFullYear(),
+        state.calendarCursor.getMonth() - 1,
+        1
+      )
+    );
+    App.renderAll?.({ rebuildMarkers: false, recomputeNearby: false });
+  });
+}
 
-    if (nextMonthBtn) {
-      nextMonthBtn.addEventListener("click", () => {
-        state.calendarCursor = new Date(
-          state.calendarCursor.getFullYear(),
-          state.calendarCursor.getMonth() + 1,
-          1
-        );
-        renderCalendar();
-      });
-    }
+if (nextMonthBtn) {
+  nextMonthBtn.addEventListener("click", () => {
+    App.events?.setCalendarCursor?.(
+      new Date(
+        state.calendarCursor.getFullYear(),
+        state.calendarCursor.getMonth() + 1,
+        1
+      )
+    );
+    App.renderAll?.({ rebuildMarkers: false, recomputeNearby: false });
+  });
+}
   }
 
   /* =========================
@@ -876,8 +880,8 @@
     if (clearBtn) clearBtn.addEventListener("click", () => App.map?.clearAllEvents?.());
 
     if (cancelBtn) {
-      cancelBtn.addEventListener("click", () => {
-        state.editingEventId = null;
+    cancelBtn.addEventListener("click", () => {
+      App.events?.setEditingEventId?.(null);
 
         const titleEl = document.getElementById("eventTitle");
         const dateEl = document.getElementById("eventDate");
@@ -920,9 +924,9 @@
 
     chips.forEach((btn) => {
       btn.addEventListener("click", () => {
-        state.activeCategory = btn.dataset.cat || "all";
-        paintActive();
-        renderAll({ rebuildMarkers: true, recomputeNearby: true });
+        App.events?.setActiveCategory?.(btn.dataset.cat || "all");
+paintActive();
+App.renderAll?.({ rebuildMarkers: true, recomputeNearby: true });
       });
     });
   }
@@ -960,7 +964,7 @@
       state.activeCategory !== "all" &&
       state.activeCategory !== ev.category
     ) {
-      state.activeCategory = "all";
+      App.events?.setActiveCategory?.("all");
       categoryReset = true;
 
       const row = document.getElementById("categoryChips");
@@ -1001,7 +1005,7 @@
     storage.loadLoginState();
     if (storage.purgePastEvents()) storage.saveEvents();
 
-    state.calendarCursor = new Date();
+    App.events?.setCalendarCursor?.(new Date());
 
     bindLoginUI();
     bindPublicUI();
@@ -1081,18 +1085,16 @@
   ========================= */
     
     App.ui = {
-    renderAll,
-    commit,
-    renderAppShell,
-    renderList,
-    renderEvents,
-    renderNearbyEvents,
-    renderTodayEvents,
-    renderEventsIntoUl,
-    renderCalendar,
-    updateNearbyCount,
-    bootAfterMapReady
-  };
+  renderAppShell,
+  renderList,
+  renderEvents,
+  renderNearbyEvents,
+  renderTodayEvents,
+  renderEventsIntoUl,
+  renderCalendar,
+  updateNearbyCount,
+  bootAfterMapReady
+};
 
   App.renderAll = App.renderAll || renderAll;
   App.commit = App.commit || commit;
