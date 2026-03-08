@@ -284,7 +284,8 @@
           </div>
         </div>
       `;
-
+      
+     
       loc.marker.bindPopup(html, {
         closeButton: true,
         autoPan: true,
@@ -1088,23 +1089,24 @@
      EXPORT MAP MODULE
   ========================= */
   App.map = {
-    initMap,
-    rebuildLocationMarkers,
-    renderMap,
-    recomputeNearbyEvents,
-    filterEventsByDistance,
-    setUserLocation,
-    prepareEventCreation,
-    clearEventCreationMarker,
-    useMyLocation,
-    searchNearbyFromInputs,
-    bindAdminCategoryChips,
-    bindPlaceSearchUI,
-    createEventFromAdminForm,
-    focusEventById,
-    clearAllEvents
-  };
+  ...(App.map || {}),
+  initMap,
+  rebuildLocationMarkers,
+  renderMap,
+  recomputeNearbyEvents,
+  filterEventsByDistance,
+  setUserLocation,
+  prepareEventCreation,
+  clearEventCreationMarker,
+  useMyLocation,
+  searchNearbyFromInputs,
+  bindAdminCategoryChips,
+  bindPlaceSearchUI,
+  createEventFromAdminForm,
+  focusEventById,
+  clearAllEvents
+};
 
   App.map.bindPlaceSearchUI();
-  App.ui?.bootAfterMapReady?.();
+  App.init?.bootAfterMapReady?.();
 })();

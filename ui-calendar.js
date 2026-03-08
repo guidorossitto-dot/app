@@ -799,10 +799,15 @@ if (nextMonthBtn) {
   }
 
   function commit(opts = {}) {
-    storage.purgePastEvents();
-    storage.saveEvents();
-    renderAll(opts);
+  if (App.commit) {
+    App.commit(opts);
+    return;
   }
+
+  storage.purgePastEvents();
+  storage.saveEvents();
+  renderAll(opts);
+}
 
   /* =========================
      BIND: login + public + admin
@@ -1084,17 +1089,26 @@ App.renderAll?.({ rebuildMarkers: true, recomputeNearby: true });
      EXPORT UI MODULE
   ========================= */
     
-    App.ui = {
-  renderAppShell,
-  renderList,
-  renderEvents,
-  renderNearbyEvents,
-  renderTodayEvents,
-  renderEventsIntoUl,
-  renderCalendar,
-  updateNearbyCount,
-  bootAfterMapReady
-};
+  App.ui = {
+    renderAppShell,
+    renderList,
+    renderEvents,
+    renderNearbyEvents,
+    renderTodayEvents,
+    renderEventsIntoUl,
+    renderCalendar,
+    updateNearbyCount,
+
+    bindLoginUI,
+    bindPublicUI,
+    bindAdminUI,
+    bindCalendarUI,
+    bindCategoryUI,
+    bindDeleteEventUI,
+    bindSidebarUI,
+
+    processQueuedDeepLink
+  };
 
   App.renderAll = App.renderAll || renderAll;
   App.commit = App.commit || commit;
