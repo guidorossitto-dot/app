@@ -206,7 +206,7 @@
           ev.preventDefault();
           ev.stopPropagation();
 
-          if (btn.classList.contains("popupCenterBtn")) {
+                    if (btn.classList.contains("popupCenterBtn")) {
             const lat = parseFloat(btn.dataset.lat);
             const lng = parseFloat(btn.dataset.lng);
 
@@ -239,6 +239,34 @@
               }
             }
 
+            return;
+          }
+
+          if (btn.classList.contains("popupRouteBtn")) {
+            const toLat = Number(btn.dataset.lat);
+            const toLng = Number(btn.dataset.lng);
+            const place = decodeURIComponent((btn.dataset.place || "").trim());
+
+            const fromLat = state.nearbyCenter?.lat;
+            const fromLng = state.nearbyCenter?.lng;
+
+            if (!Number.isFinite(fromLat) || !Number.isFinite(fromLng)) {
+              alert("Primero marcá tu ubicación o usá “Eventos cerca mío”.");
+              return;
+            }
+
+            if (!Number.isFinite(toLat) || !Number.isFinite(toLng)) {
+              alert("No se pudo resolver el destino.");
+              return;
+            }
+
+            const url =
+              `https://www.google.com/maps/dir/?api=1` +
+              `&origin=${encodeURIComponent(`${fromLat},${fromLng}`)}` +
+              `&destination=${encodeURIComponent(`${toLat},${toLng}`)}` +
+              `&travelmode=walking`;
+
+            window.open(url, "_blank", "noopener");
             return;
           }
 
@@ -697,21 +725,19 @@
     state.map.addLayer(state.markerCluster);
     state.deepLinkLayer = L.layerGroup().addTo(state.map);
 
-    state.map.on("click", (e) => {
-      const t = e.originalEvent?.target;
-      if (t && (t.closest?.(".leaflet-marker-icon") || t.closest?.(".leaflet-popup"))) return;
+   state.map.on("click", (e) => {
+  const t = e.originalEvent?.target;
+  if (t && (t.closest?.(".leaflet-marker-icon") || t.closest?.(".leaflet-popup"))) return;
 
-      const clat = e.latlng.lat;
-      const clng = e.latlng.lng;
+  const clat = e.latlng.lat;
+  const clng = e.latlng.lng;
 
-      setUserLocation(clat, clng);
-      recomputeNearbyEvents(clat, clng);
-      state.map.setView([clat, clng], 15);
+  setUserLocation(clat, clng);
+  recomputeNearbyEvents(clat, clng);
+  state.map.setView([clat, clng], 15);
 
-      if (state.isLoggedIn) prepareEventCreation(clat, clng);
-
-      App.renderAll?.({ rebuildMarkers: false });
-    });
+  App.renderAll?.({ rebuildMarkers: false });
+});
 
     state.map.on("dragstart", () => {
       if (state._uiPanZoomInProgress) return;

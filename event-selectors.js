@@ -13,6 +13,13 @@
     return Number.isFinite(m) ? m : null;
   }
 
+  function isFeaturedEvent(ev) {
+    const m = safeMinutesToStart(ev);
+    if (m === null) return false;
+
+    return (m > 0 && m <= 60) || (m <= 0 && m >= -15);
+  }
+
   function getPlaceBadge(events) {
     const cands = (events || [])
       .map((ev) => ({ ev, min: safeMinutesToStart(ev) }))
@@ -27,7 +34,7 @@
     if (soon) return `🔥 Empieza en ${soon.min} min`;
 
     const inProg = cands
-      .filter((x) => x.min <= 0 && x.min > -180)
+      .filter((x) => x.min <= 0 && x.min >= -15)
       .sort((a, b) => Math.abs(a.min) - Math.abs(b.min))[0];
 
     if (inProg) return "🔴 En curso";
@@ -38,10 +45,14 @@
   function getFeaturedRank(ev) {
     const m = safeMinutesToStart(ev);
     if (m === null) return 999999;
-    if (m <= 0 && m > -180) return Math.abs(m) / 1000;
-    if (m > 0 && m <= 60) return 10 + m;
-    if (m > 60) return 100 + m;
-    return 900000 + Math.abs(m);
+
+    // primero los que ya empezaron hace hasta 15 min
+    if (m <= 0 && m >= -15) return Math.abs(m);
+
+    // después los que empiezan pronto
+    if (m > 0 && m <= 60) return 100 + m;
+
+    return 999999;
   }
 
   /* =========================
@@ -81,14 +92,18 @@
       const aMin = Math.min(
         ...ga.events.map((e) => {
           const m = safeMinutesToStart(e);
-          return m === null ? 999999 : m > 0 ? m : 100000 + Math.abs(m);
+          if (m === null) return 999999;
+          if ((m > 0 && m <= 60) || (m <= 0 && m >= -15)) return getFeaturedRank(e);
+          return 100000 + Math.abs(m);
         })
       );
 
       const bMin = Math.min(
         ...gb.events.map((e) => {
           const m = safeMinutesToStart(e);
-          return m === null ? 999999 : m > 0 ? m : 100000 + Math.abs(m);
+          if (m === null) return 999999;
+          if ((m > 0 && m <= 60) || (m <= 0 && m >= -15)) return getFeaturedRank(e);
+          return 100000 + Math.abs(m);
         })
       );
 
@@ -147,11 +162,18 @@
     return (list || []).filter((ev) => (ev?.date || "").slice(0, 10) === today);
   }
 
-  function getFeaturedNearbyEvent(list = state.nearbyEvents) {
+  function getFeaturedNearbyEvents(list = state.nearbyEvents) {
     const todayList = getTodayNearbyEvents(list);
-    if (!todayList.length) return null;
+    if (!todayList.length) return [];
 
-    return [...todayList].sort((a, b) => getFeaturedRank(a) - getFeaturedRank(b))[0] || null;
+    return [...todayList]
+      .filter(isFeaturedEvent)
+      .sort((a, b) => getFeaturedRank(a) - getFeaturedRank(b));
+  }
+
+  // compatibilidad temporal, por si otra parte de la app todavía espera uno solo
+  function getFeaturedNearbyEvent(list = state.nearbyEvents) {
+    return getFeaturedNearbyEvents(list)[0] || null;
   }
 
   /* =========================
@@ -159,6 +181,7 @@
   ========================= */
   App.selectors = {
     safeMinutesToStart,
+    isFeaturedEvent,
     getPlaceBadge,
     getFeaturedRank,
 
@@ -175,6 +198,7 @@
     getGroupedNearbyEvents,
 
     getTodayNearbyEvents,
+    getFeaturedNearbyEvents,
     getFeaturedNearbyEvent
   };
 })();

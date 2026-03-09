@@ -1479,3 +1479,36 @@ button:active {
     white-space: nowrap;
   }
 }
+
+.featuredStack {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.featuredFire {
+  margin-right: 4px;
+}
+
+.featuredAccordion {
+  background: #fff7e8;
+  border: 1px solid #f1d39a;
+  border-radius: 10px;
+  padding: 6px 10px;
+}
+
+.featuredAccordionSummary {
+  cursor: pointer;
+  font-weight: 600;
+  list-style: none;
+}
+
+.featuredAccordionSummary::-webkit-details-marker {
+  display: none;
+}
+
+.featuredAccordionBody {
+  display: grid;
+  gap: 10px;
+  margin-top: 10px;
+}

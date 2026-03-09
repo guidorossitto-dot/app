@@ -46,12 +46,19 @@
             ${util.formatDateDisplay(ev.date)}
           </div>
 
-          <div style="margin-top:4px;display:flex;gap:10px;font-size:.85em;align-items:center;flex-wrap:wrap">
+                   <div style="margin-top:4px;display:flex;gap:10px;font-size:.85em;align-items:center;flex-wrap:wrap">
             <button class="linkBtn"
               data-lat="${ev.lat}"
               data-lng="${ev.lng}"
               data-key="${util.smartLocationKey(ev, state.events || [])}">
               Ver en mapa
+            </button>
+
+            <button class="linkBtn routeBtn"
+              data-lat="${ev.lat}"
+              data-lng="${ev.lng}"
+              data-place="${encodeURIComponent(ev.title || ev.placeName || "")}">
+              Cómo llegar
             </button>
 
             <button class="linkBtn shareBtn"
@@ -222,12 +229,19 @@
             </div>
             <div class="eventPlace">
               ${ev.placeName ? `<div>${util.shortPlaceName(ev.placeName)}</div>` : ""}
-              <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+               <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
                 <button class="linkBtn"
                   data-lat="${ev.lat}"
                   data-lng="${ev.lng}"
                   data-key="${util.smartLocationKey(ev, state.events || [])}">
                   Ver en mapa
+                </button>
+
+                <button class="linkBtn routeBtn"
+                  data-lat="${ev.lat}"
+                  data-lng="${ev.lng}"
+                  data-place="${encodeURIComponent(ev.title || ev.placeName || "")}">
+                  Cómo llegar
                 </button>
 
                 <button class="linkBtn shareBtn"
@@ -255,143 +269,158 @@
   }
 
   function updateNearbyCount(list = state.nearbyEvents) {
-    const topEl = document.getElementById("nearbyCount");
-    const bottomEl = document.getElementById("nearbySummaryBlock");
+  const topEl = document.getElementById("nearbyCount");
+  const bottomEl = document.getElementById("nearbySummaryBlock");
 
-    if (topEl) topEl.innerHTML = "";
-    if (bottomEl) bottomEl.innerHTML = "";
+  if (topEl) topEl.innerHTML = "";
+  if (bottomEl) bottomEl.innerHTML = "";
 
-    if (!topEl && !bottomEl) return;
+  if (!topEl && !bottomEl) return;
 
-    if (!list || list.length === 0) {
-      if (topEl) {
-        topEl.innerHTML = `
-          <div class="mapActionBar mapActionBar--insideNearby">
-            <button id="autoLocationBtnInline" class="primaryMapActionBtn">📍 Eventos cerca mío</button>
-          </div>
-          <div class="nearbyInlineEmpty">
-            No hay eventos cerca tuyo hoy
-          </div>
-        `;
-      }
-
-      if (bottomEl) {
-        bottomEl.innerHTML = `
-          <div class="nearbyInlineEmpty">
-            No hay eventos cerca tuyo hoy
-          </div>
-        `;
-      }
-
-      const inlineBtn = document.getElementById("autoLocationBtnInline");
-      if (inlineBtn) inlineBtn.addEventListener("click", () => App.map?.useMyLocation?.());
-
-      return;
-    }
-
-    const today = util.todayStrYYYYMMDD();
-    const todayList = (list || []).filter((ev) => (ev?.date || "").slice(0, 10) === today);
-
-    if (todayList.length === 0) {
-      if (topEl) {
-        topEl.innerHTML = `
-          <div class="mapActionBar mapActionBar--insideNearby">
-            <button id="autoLocationBtnInline" class="primaryMapActionBtn">📍 Eventos cerca mío</button>
-          </div>
-          <div class="nearbyInlineEmpty">
-            No hay eventos cerca tuyo hoy
-          </div>
-        `;
-      }
-
-      if (bottomEl) {
-        bottomEl.innerHTML = `
-          <div class="nearbyInlineEmpty">
-            No hay eventos cerca tuyo hoy
-          </div>
-        `;
-      }
-
-      const inlineBtn = document.getElementById("autoLocationBtnInline");
-      if (inlineBtn) inlineBtn.addEventListener("click", () => App.map?.useMyLocation?.());
-
-      return;
-    }
-
-    const cat = state.activeCategory || "all";
-    const catChip = cat === "all" ? "" : `<span class="miniChip">${util.categoryLabel(cat)}</span>`;
-
-    function safeMinutesToStart(ev) {
-      const min = util.minutesToStart(ev);
-      return Number.isFinite(min) ? min : null;
-    }
-
-    function featuredRank(ev) {
-      const m = safeMinutesToStart(ev);
-      if (m === null) return 999999;
-      if (m <= 0 && m > -180) return Math.abs(m) / 1000;
-      if (m > 0 && m <= 60) return 10 + m;
-      if (m > 60) return 100 + m;
-      return 900000 + Math.abs(m);
-    }
-
-    const featured = [...todayList].sort((a, b) => featuredRank(a) - featuredRank(b))[0];
-    const featuredStatus = featured ? util.getEventStatus(featured) : "";
-    const featuredPlace = featured ? util.shortPlaceName(featured.placeName) || "Lugar sin nombre" : "";
-    const featuredKey = featured ? util.smartLocationKey(featured, state.events || []) : "";
-
-    const featuredHTML = featured
-      ? `
-        <div class="featuredBox">
-          <div class="featuredTop">
-            <div class="featuredKicker">DESTACADO ${catChip ? "· " + catChip : ""}</div>
-            <button class="linkBtn"
-              data-lat="${featured.lat}"
-              data-lng="${featured.lng}"
-              data-key="${featuredKey}">
-              Ver en mapa
-            </button>
-          </div>
-
-          <div class="featuredTitle">
-            ${util.formatTimeStart(featured) ? `<span style="opacity:.75;margin-right:6px">${util.formatTimeStart(featured)}</span>` : ""}
-            ${featured.title}
-            ${featuredStatus ? `<span style="opacity:.6;font-size:.85em;margin-left:6px">${featuredStatus}</span>` : ""}
-          </div>
-
-          <div class="featuredMeta">
-            ${featuredPlace} · ${util.formatDateDisplay(featured.date)}
-          </div>
-        </div>
-      `
-      : "";
-
-    const n = todayList.length;
-    const header = n === 1 ? "1 evento cerca" : `${n} eventos cerca`;
-
+  if (!list || list.length === 0) {
     if (topEl) {
       topEl.innerHTML = `
-        ${featuredHTML}
         <div class="mapActionBar mapActionBar--insideNearby">
           <button id="autoLocationBtnInline" class="primaryMapActionBtn">📍 Eventos cerca mío</button>
+        </div>
+        <div class="nearbyInlineEmpty">
+          No hay eventos cerca tuyo hoy
         </div>
       `;
     }
 
     if (bottomEl) {
       bottomEl.innerHTML = `
-        <div class="nearbyInlineHeader">
-          <span class="nearbyInlineCount">${header}</span>
-          ${catChip}
+        <div class="nearbyInlineEmpty">
+          No hay eventos cerca tuyo hoy
         </div>
       `;
     }
 
     const inlineBtn = document.getElementById("autoLocationBtnInline");
     if (inlineBtn) inlineBtn.addEventListener("click", () => App.map?.useMyLocation?.());
+
+    return;
   }
 
-  function renderList() {
+  const today = util.todayStrYYYYMMDD();
+  const todayList = (list || []).filter((ev) => (ev?.date || "").slice(0, 10) === today);
+
+  if (todayList.length === 0) {
+    if (topEl) {
+      topEl.innerHTML = `
+        <div class="mapActionBar mapActionBar--insideNearby">
+          <button id="autoLocationBtnInline" class="primaryMapActionBtn">📍 Eventos cerca mío</button>
+        </div>
+        <div class="nearbyInlineEmpty">
+          No hay eventos cerca tuyo hoy
+        </div>
+      `;
+    }
+
+    if (bottomEl) {
+      bottomEl.innerHTML = `
+        <div class="nearbyInlineEmpty">
+          No hay eventos cerca tuyo hoy
+        </div>
+      `;
+    }
+
+    const inlineBtn = document.getElementById("autoLocationBtnInline");
+    if (inlineBtn) inlineBtn.addEventListener("click", () => App.map?.useMyLocation?.());
+
+    return;
+  }
+
+  const cat = state.activeCategory || "all";
+  const catChip = cat === "all" ? "" : `<span class="miniChip">${util.categoryLabel(cat)}</span>`;
+
+  const featuredList = selectors.getFeaturedNearbyEvents(todayList);
+  const mainFeatured = featuredList[0] || null;
+  const extraFeatured = featuredList.slice(1);
+
+  function renderFeaturedCard(featured) {
+    const featuredStatus = util.getEventStatus(featured);
+    const featuredPlace = util.shortPlaceName(featured.placeName) || "Lugar sin nombre";
+    const featuredKey = util.smartLocationKey(featured, state.events || []);
+
+    return `
+      <div class="featuredBox">
+        <div class="featuredTop">
+          <div class="featuredKicker">
+            <span class="featuredFire">🔥</span>
+            <span>DESTACADO ${catChip ? "· " + catChip : ""}</span>
+          </div>
+          <button class="linkBtn"
+            data-lat="${featured.lat}"
+            data-lng="${featured.lng}"
+            data-key="${featuredKey}">
+            Ver en mapa
+          </button>
+        </div>
+
+        <div class="featuredTitle">
+          ${util.formatTimeStart(featured) ? `<span style="opacity:.75;margin-right:6px">${util.formatTimeStart(featured)}</span>` : ""}
+          ${featured.title}
+          ${featuredStatus ? `<span style="opacity:.6;font-size:.85em;margin-left:6px">${featuredStatus}</span>` : ""}
+        </div>
+
+        <div class="featuredMeta">
+          ${featuredPlace} · ${util.formatDateDisplay(featured.date)}
+        </div>
+      </div>
+    `;
+  }
+
+  const featuredHTML = mainFeatured
+    ? `
+      <div class="featuredStack">
+        ${renderFeaturedCard(mainFeatured)}
+
+        ${
+          extraFeatured.length
+            ? `
+              <details class="featuredAccordion">
+                <summary class="featuredAccordionSummary">
+                  🔥 Ver otros ${extraFeatured.length} destacado${extraFeatured.length === 1 ? "" : "s"}
+                </summary>
+                <div class="featuredAccordionBody">
+                  ${extraFeatured.map(renderFeaturedCard).join("")}
+                </div>
+              </details>
+            `
+            : ""
+        }
+      </div>
+    `
+    : "";
+
+  const n = todayList.length;
+  const header = n === 1 ? "1 evento cerca" : `${n} eventos cerca`;
+
+  if (topEl) {
+    topEl.innerHTML = `
+      ${featuredHTML}
+      <div class="mapActionBar mapActionBar--insideNearby">
+        <button id="autoLocationBtnInline" class="primaryMapActionBtn">📍 Eventos cerca mío</button>
+      </div>
+    `;
+  }
+
+  if (bottomEl) {
+    bottomEl.innerHTML = `
+      <div class="nearbyInlineHeader">
+        <span class="nearbyInlineCount">${header}</span>
+        ${catChip}
+      </div>
+    `;
+  }
+
+  const inlineBtn = document.getElementById("autoLocationBtnInline");
+  if (inlineBtn) inlineBtn.addEventListener("click", () => App.map?.useMyLocation?.());
+}
+
+    function renderList() {
     renderTodayEvents();
     renderEvents();
     renderNearbyEvents(state.nearbyEvents);
@@ -1014,38 +1043,36 @@
     processQueuedDeepLink();
   });
 
-  document.addEventListener("click", async (e) => {
-    const btn = e.target.closest(".shareBtn");
+    document.addEventListener("click", (e) => {
+    const btn = e.target.closest(".routeBtn");
     if (!btn) return;
 
-    const eventId = decodeURIComponent((btn.dataset.eid || "").trim());
-    if (!eventId) return;
+    const toLat = Number(btn.dataset.lat);
+    const toLng = Number(btn.dataset.lng);
+    const place = decodeURIComponent((btn.dataset.place || "").trim());
 
-    const title = decodeURIComponent((btn.dataset.title || "").trim());
-    const url = `${location.origin}${location.pathname}#e=${encodeURIComponent(eventId)}`;
-    const shareText = title ? `Evento: ${title}\n${url}` : url;
+    const fromLat = state.nearbyCenter?.lat;
+    const fromLng = state.nearbyCenter?.lng;
 
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: title || "Evento",
-          text: shareText,
-          url
-        });
-        return;
-      } catch {}
+    if (!Number.isFinite(fromLat) || !Number.isFinite(fromLng)) {
+      alert("Primero marcá tu ubicación o usá “Eventos cerca mío”.");
+      return;
     }
 
-    try {
-      await navigator.clipboard.writeText(shareText);
-      const prev = btn.textContent;
-      btn.textContent = "Link copiado ✅";
-      setTimeout(() => (btn.textContent = prev || "Compartir"), 1200);
-    } catch {
-      window.prompt("Copiá este link:", shareText);
+    if (!Number.isFinite(toLat) || !Number.isFinite(toLng)) {
+      alert("No se pudo resolver el destino.");
+      return;
     }
+
+    const url =
+      `https://www.google.com/maps/dir/?api=1` +
+      `&origin=${encodeURIComponent(`${fromLat},${fromLng}`)}` +
+      `&destination=${encodeURIComponent(`${toLat},${toLng}`)}` +
+      `&travelmode=walking`;
+
+    window.open(url, "_blank", "noopener");
   });
-
+  
   /* =========================
      EXPORT UI MODULE
   ========================= */

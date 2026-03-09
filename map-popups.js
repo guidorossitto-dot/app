@@ -38,6 +38,15 @@
       </button>
     `;
 
+    const routeBtn = `
+      <button class="popupBtn popupRouteBtn"
+        data-lat="${loc.lat}"
+        data-lng="${loc.lng}"
+        data-place="${encodeURIComponent(placeTitle || "")}">
+        Cómo llegar
+      </button>
+    `;
+
     let html = `
       <div class="popupCard">
         <div class="popupHeader">
@@ -49,6 +58,7 @@
 
         <div class="popupActions">
           ${centerBtn}
+          ${routeBtn}
           ${actionBtn}
         </div>
 
@@ -81,6 +91,13 @@
                     data-title="${encodeURIComponent(e.title || "")}"
                     title="Copiar link de este evento">
                     Compartir
+                  </button>
+
+                  <button class="popupBtn popupRouteBtn"
+                    data-lat="${e.lat}"
+                    data-lng="${e.lng}"
+                    data-place="${encodeURIComponent(e.title || placeTitle || "")}">
+                    Cómo llegar
                   </button>
 
                   ${
