@@ -1049,7 +1049,8 @@
   /* =========================
      EXPORT UI MODULE
   ========================= */
-  App.ui = {
+   
+    App.ui = {
     renderAppShell,
     renderList,
     renderEvents,
@@ -1069,7 +1070,4 @@
 
     processQueuedDeepLink
   };
-
-  App.renderAll = App.renderAll || renderAll;
-  App.commit = App.commit || commit;
 })();

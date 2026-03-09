@@ -1,4 +1,3 @@
-// event-service.js
 (() => {
   "use strict";
 
@@ -153,20 +152,29 @@
       return;
     }
 
-    storage.saveEvents();
+    const {
+      persist = true,
+      purgePast = true,
+      rebuildMarkers = true,
+      recomputeNearby = true
+    } = opts;
 
-    if (state.nearbyCenter && App.map?.recomputeNearbyEvents) {
+    if (purgePast) {
+      storage.purgePastEvents();
+    }
+
+    if (persist) {
+      storage.saveEvents();
+    }
+
+    if (recomputeNearby && state.nearbyCenter && App.map?.recomputeNearbyEvents) {
       App.map.recomputeNearbyEvents(
         state.nearbyCenter.lat,
         state.nearbyCenter.lng
       );
     }
 
-    App.ui?.renderAll?.({
-      rebuildMarkers: true,
-      recomputeNearby: false,
-      ...opts
-    });
+    App.renderAll?.({ rebuildMarkers });
   }
 
   function saveAndRefresh(opts = {}) {
