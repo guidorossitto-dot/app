@@ -6,6 +6,8 @@
   const { state, storage } = App;
 
   function bootAfterMapReady() {
+    if (state._bootReady) return;
+
     storage.loadEvents();
     storage.loadLoginState();
     if (storage.purgePastEvents()) storage.saveEvents();
@@ -22,11 +24,11 @@
 
     App.map?.bindAdminCategoryChips?.();
 
-    App.map.initMap(App.CFG.DEFAULT_LAT, App.CFG.DEFAULT_LNG);
-    App.map.setUserLocation(App.CFG.DEFAULT_LAT, App.CFG.DEFAULT_LNG);
-    App.map.recomputeNearbyEvents(App.CFG.DEFAULT_LAT, App.CFG.DEFAULT_LNG);
+    App.map?.initMap?.(App.CFG.DEFAULT_LAT, App.CFG.DEFAULT_LNG);
+    App.map?.setUserLocation?.(App.CFG.DEFAULT_LAT, App.CFG.DEFAULT_LNG);
+    App.map?.recomputeNearbyEvents?.(App.CFG.DEFAULT_LAT, App.CFG.DEFAULT_LNG);
 
-    App.renderAll?.({ rebuildMarkers: true, recomputeNearby: false });
+    App.renderAll?.({ rebuildMarkers: true });
 
     state._bootReady = true;
     App.ui?.processQueuedDeepLink?.();
@@ -34,13 +36,16 @@
     setInterval(() => {
       if (state.nearbyCenter && App.map?.recomputeNearbyEvents) {
         App.map.recomputeNearbyEvents(state.nearbyCenter.lat, state.nearbyCenter.lng);
-        App.renderAll?.({ rebuildMarkers: false, recomputeNearby: false });
-      } else {
-        App.renderAll?.({ rebuildMarkers: false, recomputeNearby: false });
       }
+
+      App.renderAll?.({ rebuildMarkers: false });
     }, App.CFG.REFRESH_MS);
   }
 
   App.init = App.init || {};
   App.init.bootAfterMapReady = bootAfterMapReady;
+
+  document.addEventListener("DOMContentLoaded", () => {
+    App.init?.bootAfterMapReady?.();
+  });
 })();

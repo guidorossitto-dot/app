@@ -174,7 +174,7 @@
 
           if (state.isLoggedIn) prepareEventCreation(lat, lng);
 
-          App.renderAll?.({ rebuildMarkers: false, recomputeNearby: false });
+          App.renderAll?.({ rebuildMarkers: false });
         });
       }
 
@@ -284,8 +284,7 @@
           </div>
         </div>
       `;
-      
-     
+
       loc.marker.bindPopup(html, {
         closeButton: true,
         autoPan: true,
@@ -477,7 +476,7 @@
             const titleEl = document.getElementById("eventTitle");
             if (titleEl) titleEl.focus();
 
-            App.renderAll?.({ rebuildMarkers: false, recomputeNearby: false });
+            App.renderAll?.({ rebuildMarkers: false });
             return;
           }
         };
@@ -507,23 +506,23 @@
      NEARBY STATE
   ========================= */
   function recomputeNearbyEvents(lat, lng) {
-  if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
-    App.events?.setNearbyCenter?.(null);
-    App.events?.setNearbyEvents?.([]);
-    return [];
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+      App.events?.setNearbyCenter?.(null);
+      App.events?.setNearbyEvents?.([]);
+      return [];
+    }
+
+    App.events?.setNearbyCenter?.({ lat, lng });
+
+    const nearby = util.getNearbyTodayEvents(lat, lng, state.events);
+    App.events?.setNearbyEvents?.(nearby);
+
+    return state.nearbyEvents;
   }
-
-  App.events?.setNearbyCenter?.({ lat, lng });
-
-  const nearby = util.getNearbyTodayEvents(lat, lng, state.events);
-  App.events?.setNearbyEvents?.(nearby);
-
-  return state.nearbyEvents;
-}
 
   function filterEventsByDistance(lat, lng) {
     const filtered = recomputeNearbyEvents(lat, lng);
-    App.renderAll?.({ rebuildMarkers: false, recomputeNearby: false });
+    App.renderAll?.({ rebuildMarkers: false });
     return filtered;
   }
 
@@ -554,7 +553,7 @@
         const pos = e.target.getLatLng();
         setUserInputs(pos.lat, pos.lng);
         recomputeNearbyEvents(pos.lat, pos.lng);
-        App.renderAll?.({ rebuildMarkers: false, recomputeNearby: false });
+        App.renderAll?.({ rebuildMarkers: false });
       });
     }
   }
@@ -598,38 +597,38 @@
       .replace(/[\u0300-\u036f]/g, "");
   }
 
- function findCanonicalPlace(placeName, lat, lng) {
-  const targetName = normalizePlaceText(util.shortPlaceName(placeName));
-  const all = state.events || [];
+  function findCanonicalPlace(placeName, lat, lng) {
+    const targetName = normalizePlaceText(util.shortPlaceName(placeName));
+    const all = state.events || [];
 
-  if (!util.isValidCoord(lat) || !util.isValidCoord(lng)) return null;
-  if (!targetName) return null;
+    if (!util.isValidCoord(lat) || !util.isValidCoord(lng)) return null;
+    if (!targetName) return null;
 
-  let best = null;
+    let best = null;
 
-  for (const ev of all) {
-    if (!ev || !util.isValidCoord(ev.lat) || !util.isValidCoord(ev.lng)) continue;
+    for (const ev of all) {
+      if (!ev || !util.isValidCoord(ev.lat) || !util.isValidCoord(ev.lng)) continue;
 
-    const evName = normalizePlaceText(util.shortPlaceName(ev.placeName));
-    const dist = util.distanceKm(lat, lng, ev.lat, ev.lng);
+      const evName = normalizePlaceText(util.shortPlaceName(ev.placeName));
+      const dist = util.distanceKm(lat, lng, ev.lat, ev.lng);
 
-    const sameName = !!evName && targetName === evName;
-    const nearAndSameName = sameName && dist <= 0.12; // 120 m
+      const sameName = !!evName && targetName === evName;
+      const nearAndSameName = sameName && dist <= 0.12; // 120 m
 
-    if (!nearAndSameName) continue;
+      if (!nearAndSameName) continue;
 
-    if (!best || dist < best.dist) {
-      best = {
-        lat: ev.lat,
-        lng: ev.lng,
-        placeName: ev.placeName || placeName,
-        dist
-      };
+      if (!best || dist < best.dist) {
+        best = {
+          lat: ev.lat,
+          lng: ev.lng,
+          placeName: ev.placeName || placeName,
+          dist
+        };
+      }
     }
-  }
 
-  return best;
-}
+    return best;
+  }
 
   /* =========================
      ADMIN EVENTS
@@ -679,10 +678,10 @@
     if (state.editingEventId) {
       const result = events.replaceEvent(state.editingEventId, patch);
 
-    if (!result.ok) {
+      if (!result.ok) {
         alert("No se pudo guardar la edición.");
         return;
-     }
+      }
 
       App.events?.setEditingEventId?.(null);
     } else {
@@ -750,7 +749,7 @@
 
         if (state.isLoggedIn) prepareEventCreation(lat, lng);
 
-        App.renderAll?.({ rebuildMarkers: false, recomputeNearby: false });
+        App.renderAll?.({ rebuildMarkers: false });
       },
       (err) => {
         alert("No se pudo obtener la ubicación: " + err.message);
@@ -776,7 +775,7 @@
     recomputeNearbyEvents(lat, lng);
     state.map.setView([lat, lng], 15);
 
-    App.renderAll?.({ rebuildMarkers: false, recomputeNearby: false });
+    App.renderAll?.({ rebuildMarkers: false });
   }
 
   /* =========================
@@ -812,7 +811,7 @@
 
       if (state.isLoggedIn) prepareEventCreation(clat, clng);
 
-      App.renderAll?.({ rebuildMarkers: false, recomputeNearby: false });
+      App.renderAll?.({ rebuildMarkers: false });
     });
 
     state.map.on("dragstart", () => {
@@ -1089,24 +1088,23 @@
      EXPORT MAP MODULE
   ========================= */
   App.map = {
-  ...(App.map || {}),
-  initMap,
-  rebuildLocationMarkers,
-  renderMap,
-  recomputeNearbyEvents,
-  filterEventsByDistance,
-  setUserLocation,
-  prepareEventCreation,
-  clearEventCreationMarker,
-  useMyLocation,
-  searchNearbyFromInputs,
-  bindAdminCategoryChips,
-  bindPlaceSearchUI,
-  createEventFromAdminForm,
-  focusEventById,
-  clearAllEvents
-};
+    ...(App.map || {}),
+    initMap,
+    rebuildLocationMarkers,
+    renderMap,
+    recomputeNearbyEvents,
+    filterEventsByDistance,
+    setUserLocation,
+    prepareEventCreation,
+    clearEventCreationMarker,
+    useMyLocation,
+    searchNearbyFromInputs,
+    bindAdminCategoryChips,
+    bindPlaceSearchUI,
+    createEventFromAdminForm,
+    focusEventById,
+    clearAllEvents
+  };
 
   App.map.bindPlaceSearchUI();
-  App.init?.bootAfterMapReady?.();
 })();

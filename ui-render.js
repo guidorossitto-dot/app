@@ -1,19 +1,16 @@
-// ui-render.js
 (() => {
   "use strict";
 
-  const App = window.App = window.App || {};
+  const App = (window.App = window.App || {});
 
   function renderAll(opts = {}) {
+    const rebuildMarkers = opts.rebuildMarkers ?? true;
+
     App.ui?.renderAppShell?.();
     App.ui?.renderList?.();
     App.ui?.renderCalendar?.();
 
-    if (App.map?.renderMap) {
-      App.map.renderMap({
-        rebuildMarkers: opts.rebuildMarkers ?? true
-      });
-    }
+    App.map?.renderMap?.({ rebuildMarkers });
   }
 
   function commit(opts = {}) {

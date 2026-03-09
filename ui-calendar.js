@@ -421,7 +421,7 @@
     return mapObj;
   }
 
-    function removeCalendarPopover() {
+  function removeCalendarPopover() {
     const old = document.getElementById("calendarEventPopover");
     if (old) old.remove();
   }
@@ -515,7 +515,7 @@
     });
   }
 
-    function showCalendarDayPopover(anchorEl, dateStr, events) {
+  function showCalendarDayPopover(anchorEl, dateStr, events) {
     if (!anchorEl) return;
 
     removeCalendarPopover();
@@ -600,7 +600,7 @@
     });
   }
 
-      function openCalendarDay(dateStr, anchorEl = null) {
+  function openCalendarDay(dateStr, anchorEl = null) {
     const dayEvents = util.getEventsOnDate(dateStr, state.events);
     const today = util.todayStrYYYYMMDD();
 
@@ -620,7 +620,7 @@
     }
   }
 
-    function renderCalendar() {
+  function renderCalendar() {
     const cal = document.getElementById("calendar");
     const label = document.getElementById("monthLabel");
     if (!cal) return;
@@ -689,7 +689,7 @@
         cell.appendChild(b);
       });
 
-            if (evs.length > 3) {
+      if (evs.length > 3) {
         const more = document.createElement("div");
         more.className = "event event-more";
         more.textContent = `+${evs.length - 3} más`;
@@ -749,31 +749,31 @@
     const prevMonthBtn = document.getElementById("prevMonthBtn");
     const nextMonthBtn = document.getElementById("nextMonthBtn");
 
-   if (prevMonthBtn) {
-  prevMonthBtn.addEventListener("click", () => {
-    App.events?.setCalendarCursor?.(
-      new Date(
-        state.calendarCursor.getFullYear(),
-        state.calendarCursor.getMonth() - 1,
-        1
-      )
-    );
-    App.renderAll?.({ rebuildMarkers: false, recomputeNearby: false });
-  });
-}
+    if (prevMonthBtn) {
+      prevMonthBtn.addEventListener("click", () => {
+        App.events?.setCalendarCursor?.(
+          new Date(
+            state.calendarCursor.getFullYear(),
+            state.calendarCursor.getMonth() - 1,
+            1
+          )
+        );
+        App.renderAll?.({ rebuildMarkers: false });
+      });
+    }
 
-if (nextMonthBtn) {
-  nextMonthBtn.addEventListener("click", () => {
-    App.events?.setCalendarCursor?.(
-      new Date(
-        state.calendarCursor.getFullYear(),
-        state.calendarCursor.getMonth() + 1,
-        1
-      )
-    );
-    App.renderAll?.({ rebuildMarkers: false, recomputeNearby: false });
-  });
-}
+    if (nextMonthBtn) {
+      nextMonthBtn.addEventListener("click", () => {
+        App.events?.setCalendarCursor?.(
+          new Date(
+            state.calendarCursor.getFullYear(),
+            state.calendarCursor.getMonth() + 1,
+            1
+          )
+        );
+        App.renderAll?.({ rebuildMarkers: false });
+      });
+    }
   }
 
   /* =========================
@@ -799,15 +799,15 @@ if (nextMonthBtn) {
   }
 
   function commit(opts = {}) {
-  if (App.commit) {
-    App.commit(opts);
-    return;
-  }
+    if (App.commit) {
+      App.commit(opts);
+      return;
+    }
 
-  storage.purgePastEvents();
-  storage.saveEvents();
-  renderAll(opts);
-}
+    storage.purgePastEvents();
+    storage.saveEvents();
+    renderAll(opts);
+  }
 
   /* =========================
      BIND: login + public + admin
@@ -885,8 +885,8 @@ if (nextMonthBtn) {
     if (clearBtn) clearBtn.addEventListener("click", () => App.map?.clearAllEvents?.());
 
     if (cancelBtn) {
-    cancelBtn.addEventListener("click", () => {
-      App.events?.setEditingEventId?.(null);
+      cancelBtn.addEventListener("click", () => {
+        App.events?.setEditingEventId?.(null);
 
         const titleEl = document.getElementById("eventTitle");
         const dateEl = document.getElementById("eventDate");
@@ -930,8 +930,8 @@ if (nextMonthBtn) {
     chips.forEach((btn) => {
       btn.addEventListener("click", () => {
         App.events?.setActiveCategory?.(btn.dataset.cat || "all");
-paintActive();
-App.renderAll?.({ rebuildMarkers: true, recomputeNearby: true });
+        paintActive();
+        App.renderAll?.({ rebuildMarkers: false });
       });
     });
   }
@@ -1003,45 +1003,6 @@ App.renderAll?.({ rebuildMarkers: true, recomputeNearby: true });
   }
 
   /* =========================
-     BOOT
-  ========================= */
-  function bootAfterMapReady() {
-    storage.loadEvents();
-    storage.loadLoginState();
-    if (storage.purgePastEvents()) storage.saveEvents();
-
-    App.events?.setCalendarCursor?.(new Date());
-
-    bindLoginUI();
-    bindPublicUI();
-    bindAdminUI();
-    bindCalendarUI();
-    bindCategoryUI();
-    bindDeleteEventUI();
-    bindSidebarUI();
-
-    App.map?.bindAdminCategoryChips?.();
-
-    App.map.initMap(App.CFG.DEFAULT_LAT, App.CFG.DEFAULT_LNG);
-    App.map.setUserLocation(App.CFG.DEFAULT_LAT, App.CFG.DEFAULT_LNG);
-    App.map.recomputeNearbyEvents(App.CFG.DEFAULT_LAT, App.CFG.DEFAULT_LNG);
-
-    renderAll({ rebuildMarkers: true, recomputeNearby: false });
-
-    state._bootReady = true;
-    processQueuedDeepLink();
-
-    setInterval(() => {
-      if (state.nearbyCenter && App.map?.recomputeNearbyEvents) {
-        App.map.recomputeNearbyEvents(state.nearbyCenter.lat, state.nearbyCenter.lng);
-        renderAll({ rebuildMarkers: false, recomputeNearby: false });
-      } else {
-        renderAll({ rebuildMarkers: false, recomputeNearby: false });
-      }
-    }, App.CFG.REFRESH_MS);
-  }
-
-  /* =========================
      LISTENERS DE HASH
   ========================= */
   document.addEventListener("DOMContentLoaded", () => {
@@ -1088,7 +1049,6 @@ App.renderAll?.({ rebuildMarkers: true, recomputeNearby: true });
   /* =========================
      EXPORT UI MODULE
   ========================= */
-    
   App.ui = {
     renderAppShell,
     renderList,
