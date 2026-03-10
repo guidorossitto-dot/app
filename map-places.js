@@ -50,15 +50,15 @@
   }
 
   function uiSetView(lat, lng, zoom) {
-    if (!state.map) return;
+  if (!state.runtime.map) return;
 
-    state._uiPanZoomInProgress = true;
-    try {
-      state.map.setView([lat, lng], zoom, { animate: true });
-    } finally {
-      setTimeout(() => (state._uiPanZoomInProgress = false), 250);
-    }
+  state.runtime.uiPanZoomInProgress = true;
+  try {
+    state.runtime.map.setView([lat, lng], zoom, { animate: true });
+  } finally {
+    setTimeout(() => (state.runtime.uiPanZoomInProgress = false), 250);
   }
+}
 
   function glowMarker(marker) {
     try {
@@ -73,34 +73,34 @@
      MARKERS HELPERS
   ========================= */
   function clearEventMarkers() {
-    if (state.markerCluster) state.markerCluster.clearLayers();
-  }
+  if (state.runtime.markerCluster) state.runtime.markerCluster.clearLayers();
+}
 
   function findLocationMarkerByEvent(ev, { rebuildIfMissing = true } = {}) {
-    if (!ev) return null;
+  if (!ev) return null;
 
-    let key = util.smartLocationKey(ev, state.events || []);
-    let loc = state.locationMarkers?.[key] || null;
+  let key = util.smartLocationKey(ev, state.logic.events || []);
+  let loc = state.runtime.locationMarkers?.[key] || null;
 
-    if (!loc && rebuildIfMissing) {
-      rebuildLocationMarkers(state.events);
-      key = util.smartLocationKey(ev, state.events || []);
-      loc = state.locationMarkers?.[key] || null;
-    }
-
-    return loc;
+  if (!loc && rebuildIfMissing) {
+    rebuildLocationMarkers(state.logic.events);
+    key = util.smartLocationKey(ev, state.logic.events || []);
+    loc = state.runtime.locationMarkers?.[key] || null;
   }
 
-  function highlightNearbyMarkers(filteredEvents) {
-    const nearbyKeys = new Set(
-      (filteredEvents || []).map((ev) => util.smartLocationKey(ev, state.events))
-    );
+  return loc;
+}
 
-    Object.entries(state.locationMarkers || {}).forEach(([key, loc]) => {
-      const isNear = nearbyKeys.has(key);
-      if (loc?.marker?.setOpacity) loc.marker.setOpacity(isNear ? 1 : 0.35);
-    });
-  }
+ function highlightNearbyMarkers(filteredEvents) {
+  const nearbyKeys = new Set(
+    (filteredEvents || []).map((ev) => util.smartLocationKey(ev, state.logic.events || []))
+  );
+
+  Object.entries(state.runtime.locationMarkers || {}).forEach(([key, loc]) => {
+    const isNear = nearbyKeys.has(key);
+    if (loc?.marker?.setOpacity) loc.marker.setOpacity(isNear ? 1 : 0.35);
+  });
+}
 
   /* =========================
      REBUILD LOCATION MARKERS
@@ -476,87 +476,87 @@ function rebuildLocationMarkers(list = state.events) {
      NEARBY STATE
   ========================= */
   function recomputeNearbyEvents(lat, lng) {
-    if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
-      App.events?.setNearbyCenter?.(null);
-      App.events?.setNearbyEvents?.([]);
-      return [];
-    }
-
-    App.events?.setNearbyCenter?.({ lat, lng });
-
-    const nearby = util.getNearbyTodayEvents(lat, lng, state.events);
-    App.events?.setNearbyEvents?.(nearby);
-
-    return state.nearbyEvents;
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+    App.events?.setNearbyCenter?.(null);
+    App.events?.setNearbyEvents?.([]);
+    return [];
   }
+
+  App.events?.setNearbyCenter?.({ lat, lng });
+
+  const nearby = util.getNearbyTodayEvents(lat, lng, state.logic.events || []);
+  App.events?.setNearbyEvents?.(nearby);
+
+  return state.logic.nearbyEvents;
+}
 
   function filterEventsByDistance(lat, lng) {
-    const filtered = recomputeNearbyEvents(lat, lng);
-    App.renderAll?.({ rebuildMarkers: false });
-    return filtered;
-  }
+  const filtered = recomputeNearbyEvents(lat, lng);
+  App.renderAll?.({ rebuildMarkers: false });
+  return filtered;
+}
 
   function renderMap(opts = {}) {
-    const { rebuildMarkers = true } = opts;
+  const { rebuildMarkers = true } = opts;
 
-    if (rebuildMarkers) {
-      rebuildLocationMarkers(state.events);
-    }
-
-    highlightNearbyMarkers(state.nearbyEvents || []);
+  if (rebuildMarkers) {
+    rebuildLocationMarkers(state.logic.events);
   }
+
+  highlightNearbyMarkers(state.logic.nearbyEvents || []);
+}
 
   /* =========================
      USER LOCATION + EVENT CREATION
   ========================= */
   function setUserLocation(lat, lng) {
-    if (!state.map) return;
+  if (!state.runtime.map) return;
 
-    setUserInputs(lat, lng);
+  setUserInputs(lat, lng);
 
-    if (state.userMarker) {
-      state.userMarker.setLatLng([lat, lng]);
-    } else {
-      state.userMarker = L.marker([lat, lng], { draggable: true }).addTo(state.map);
+  if (state.runtime.userMarker) {
+    state.runtime.userMarker.setLatLng([lat, lng]);
+  } else {
+    state.runtime.userMarker = L.marker([lat, lng], { draggable: true }).addTo(state.runtime.map);
 
-      state.userMarker.on("dragend", (e) => {
-        const pos = e.target.getLatLng();
-        setUserInputs(pos.lat, pos.lng);
-        recomputeNearbyEvents(pos.lat, pos.lng);
-        App.renderAll?.({ rebuildMarkers: false });
-      });
-    }
+    state.runtime.userMarker.on("dragend", (e) => {
+      const pos = e.target.getLatLng();
+      setUserInputs(pos.lat, pos.lng);
+      recomputeNearbyEvents(pos.lat, pos.lng);
+      App.renderAll?.({ rebuildMarkers: false });
+    });
   }
+}
 
   function prepareEventCreation(lat, lng) {
-    const eLat = document.getElementById("eventLat");
-    const eLng = document.getElementById("eventLng");
-    if (eLat) eLat.value = Number(lat).toFixed(6);
-    if (eLng) eLng.value = Number(lng).toFixed(6);
+  const eLat = document.getElementById("eventLat");
+  const eLng = document.getElementById("eventLng");
+  if (eLat) eLat.value = Number(lat).toFixed(6);
+  if (eLng) eLng.value = Number(lng).toFixed(6);
 
-    if (!state.map) return;
+  if (!state.runtime.map) return;
 
-    if (state.eventCreationMarker) {
-      state.eventCreationMarker.setLatLng([lat, lng]);
-    } else {
-      state.eventCreationMarker = L.marker([lat, lng], { draggable: true }).addTo(state.map);
+  if (state.runtime.eventCreationMarker) {
+    state.runtime.eventCreationMarker.setLatLng([lat, lng]);
+  } else {
+    state.runtime.eventCreationMarker = L.marker([lat, lng], { draggable: true }).addTo(state.runtime.map);
 
-      state.eventCreationMarker.on("dragend", (e) => {
-        const pos = e.target.getLatLng();
-        const eLat2 = document.getElementById("eventLat");
-        const eLng2 = document.getElementById("eventLng");
-        if (eLat2) eLat2.value = pos.lat.toFixed(6);
-        if (eLng2) eLng2.value = pos.lng.toFixed(6);
-      });
-    }
+    state.runtime.eventCreationMarker.on("dragend", (e) => {
+      const pos = e.target.getLatLng();
+      const eLat2 = document.getElementById("eventLat");
+      const eLng2 = document.getElementById("eventLng");
+      if (eLat2) eLat2.value = pos.lat.toFixed(6);
+      if (eLng2) eLng2.value = pos.lng.toFixed(6);
+    });
   }
+}
 
   function clearEventCreationMarker() {
-    if (state.eventCreationMarker) {
-      state.eventCreationMarker.remove();
-      state.eventCreationMarker = null;
-    }
+  if (state.runtime.eventCreationMarker) {
+    state.runtime.eventCreationMarker.remove();
+    state.runtime.eventCreationMarker = null;
   }
+}
 
   function normalizePlaceText(s) {
     return (s || "")
@@ -703,95 +703,95 @@ function rebuildLocationMarkers(list = state.events) {
      GEOLOCATION + INPUT SEARCH
   ========================= */
   function useMyLocation() {
-    if (!navigator.geolocation) {
-      alert("Tu navegador no soporta geolocalización.");
-      return;
-    }
-
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        const lat = pos.coords.latitude;
-        const lng = pos.coords.longitude;
-
-        setUserLocation(lat, lng);
-        recomputeNearbyEvents(lat, lng);
-        state.map.setView([lat, lng], 15);
-
-        if (state.isLoggedIn) prepareEventCreation(lat, lng);
-
-        App.renderAll?.({ rebuildMarkers: false });
-      },
-      (err) => {
-        alert("No se pudo obtener la ubicación: " + err.message);
-      },
-      { enableHighAccuracy: true, timeout: 10000 }
-    );
+  if (!navigator.geolocation) {
+    alert("Tu navegador no soporta geolocalización.");
+    return;
   }
+
+  navigator.geolocation.getCurrentPosition(
+    (pos) => {
+      const lat = pos.coords.latitude;
+      const lng = pos.coords.longitude;
+
+      setUserLocation(lat, lng);
+      recomputeNearbyEvents(lat, lng);
+      state.runtime.map.setView([lat, lng], 15);
+
+      if (state.logic.isLoggedIn) prepareEventCreation(lat, lng);
+
+      App.renderAll?.({ rebuildMarkers: false });
+    },
+    (err) => {
+      alert("No se pudo obtener la ubicación: " + err.message);
+    },
+    { enableHighAccuracy: true, timeout: 10000 }
+  );
+}
 
   function searchNearbyFromInputs() {
-    const latEl = document.getElementById("userLat");
-    const lngEl = document.getElementById("userLng");
-    if (!latEl || !lngEl) return;
+  const latEl = document.getElementById("userLat");
+  const lngEl = document.getElementById("userLng");
+  if (!latEl || !lngEl) return;
 
-    const lat = Number(latEl.value);
-    const lng = Number(lngEl.value);
+  const lat = Number(latEl.value);
+  const lng = Number(lngEl.value);
 
-    if (!util.isValidCoord(lat) || !util.isValidCoord(lng)) {
-      alert("Ingresá latitud y longitud válidas.");
-      return;
-    }
-
-    setUserLocation(lat, lng);
-    recomputeNearbyEvents(lat, lng);
-    state.map.setView([lat, lng], 15);
-
-    App.renderAll?.({ rebuildMarkers: false });
+  if (!util.isValidCoord(lat) || !util.isValidCoord(lng)) {
+    alert("Ingresá latitud y longitud válidas.");
+    return;
   }
+
+  setUserLocation(lat, lng);
+  recomputeNearbyEvents(lat, lng);
+  state.runtime.map.setView([lat, lng], 15);
+
+  App.renderAll?.({ rebuildMarkers: false });
+}
 
   /* =========================
      MAP INIT
   ========================= */
   function initMap(lat, lng) {
-    state.map = L.map("map").setView([lat, lng], 15);
-    state.map.doubleClickZoom.disable();
+  state.runtime.map = L.map("map").setView([lat, lng], 15);
+  state.runtime.map.doubleClickZoom.disable();
 
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      attribution: "© OpenStreetMap contributors"
-    }).addTo(state.map);
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    attribution: "© OpenStreetMap contributors"
+  }).addTo(state.runtime.map);
 
-    state.markerCluster = L.markerClusterGroup({
-      showCoverageOnHover: false,
-      spiderfyOnMaxZoom: true,
-      disableClusteringAtZoom: 16
-    });
+  state.runtime.markerCluster = L.markerClusterGroup({
+    showCoverageOnHover: false,
+    spiderfyOnMaxZoom: true,
+    disableClusteringAtZoom: 16
+  });
 
-    state.map.addLayer(state.markerCluster);
-    state.deepLinkLayer = L.layerGroup().addTo(state.map);
+  state.runtime.map.addLayer(state.runtime.markerCluster);
+  state.runtime.deepLinkLayer = L.layerGroup().addTo(state.runtime.map);
 
-   state.map.on("click", (e) => {
-  const t = e.originalEvent?.target;
-  if (t && (t.closest?.(".leaflet-marker-icon") || t.closest?.(".leaflet-popup"))) return;
+  state.runtime.map.on("click", (e) => {
+    const t = e.originalEvent?.target;
+    if (t && (t.closest?.(".leaflet-marker-icon") || t.closest?.(".leaflet-popup"))) return;
 
-  const clat = e.latlng.lat;
-  const clng = e.latlng.lng;
+    const clat = e.latlng.lat;
+    const clng = e.latlng.lng;
 
-  setUserLocation(clat, clng);
-  recomputeNearbyEvents(clat, clng);
-  state.map.setView([clat, clng], 15);
+    setUserLocation(clat, clng);
+    recomputeNearbyEvents(clat, clng);
+    state.runtime.map.setView([clat, clng], 15);
 
-  App.renderAll?.({ rebuildMarkers: false });
-});
+    App.renderAll?.({ rebuildMarkers: false });
+  });
 
-    state.map.on("dragstart", () => {
-      if (state._uiPanZoomInProgress) return;
-      state.map.closePopup();
-    });
+  state.runtime.map.on("dragstart", () => {
+    if (state.runtime.uiPanZoomInProgress) return;
+    state.runtime.map.closePopup();
+  });
 
-    state.map.on("zoomstart", () => {
-      if (state._uiPanZoomInProgress) return;
-      state.map.closePopup();
-    });
-  }
+  state.runtime.map.on("zoomstart", () => {
+    if (state.runtime.uiPanZoomInProgress) return;
+    state.runtime.map.closePopup();
+  });
+}
 
   /* =========================
      LISTENER: Ver en mapa
