@@ -21,7 +21,7 @@
     const sorted = [...(loc.events || [])].sort(util.sortEventsByStatusThenTime);
     const total = sorted.length;
 
-    const actionBtn = state.isLoggedIn
+    const actionBtn = state.logic.isLoggedIn
       ? `<button class="popupBtn popupBtnPrimary popupAddBtn"
             data-lat="${loc.lat}"
             data-lng="${loc.lng}"
@@ -101,7 +101,7 @@
                   </button>
 
                   ${
-                    state.isLoggedIn
+                    state.logic.isLoggedIn
                       ? `<button class="popupBtn popupEditBtn"
                           data-edit-eid="${encodeURIComponent(eid)}"
                           title="Editar este evento">
@@ -111,7 +111,7 @@
                   }
 
                   ${
-                    state.isLoggedIn
+                    state.logic.isLoggedIn
                       ? `<button class="popupBtn popupDeleteBtn"
                           data-delete-eid="${encodeURIComponent(eid)}"
                           data-delete-title="${encodeURIComponent(e.title || "")}"

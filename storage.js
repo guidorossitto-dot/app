@@ -32,7 +32,7 @@
   /* =========================
      EVENTS
   ========================= */
-  function saveEvents(list = state.events) {
+  function saveEvents(list = state.logic.events) {
     const safeList = Array.isArray(list) ? list : [];
     localStorage.setItem(STORAGE_KEYS.EVENTS, JSON.stringify(safeList));
   }
@@ -45,14 +45,14 @@
     return sanitizeLoadedEvents(parsed);
   }
 
-  function purgePastEvents(list = state.events) {
+  function purgePastEvents(list = state.logic.events) {
     const today = util.todayStrYYYYMMDD();
     const safeList = Array.isArray(list) ? list : [];
 
     return safeList.filter((ev) => ev?.date && ev.date >= today);
   }
 
-  function hasPastEvents(list = state.events) {
+  function hasPastEvents(list = state.logic.events) {
     const safeList = Array.isArray(list) ? list : [];
     const purged = purgePastEvents(safeList);
     return purged.length !== safeList.length;
@@ -61,7 +61,7 @@
   /* =========================
      LOGIN
   ========================= */
-  function saveLoginState(value = state.isLoggedIn) {
+  function saveLoginState(value = state.logic.isLoggedIn) {
     localStorage.setItem(STORAGE_KEYS.LOGIN, JSON.stringify(!!value));
   }
 

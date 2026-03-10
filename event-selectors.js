@@ -46,10 +46,7 @@
     const m = safeMinutesToStart(ev);
     if (m === null) return 999999;
 
-    // primero los que ya empezaron hace hasta 15 min
     if (m <= 0 && m >= -15) return Math.abs(m);
-
-    // después los que empiezan pronto
     if (m > 0 && m <= 60) return 100 + m;
 
     return 999999;
@@ -130,39 +127,39 @@
   /* =========================
      FILTERED VIEWS
   ========================= */
-  function getVisibleTodayEvents(list = state.events) {
+  function getVisibleTodayEvents(list = state.logic.events) {
     return util.filterByActiveCategory(util.getTodayEvents(list));
   }
 
-  function getVisibleFutureEvents(list = state.events) {
+  function getVisibleFutureEvents(list = state.logic.events) {
     return util.filterByActiveCategory(util.getFutureEvents(list));
   }
 
-  function getVisibleEventsOnDate(dateStr, list = state.events) {
+  function getVisibleEventsOnDate(dateStr, list = state.logic.events) {
     return util.filterByActiveCategory(util.getEventsOnDate(dateStr, list));
   }
 
-  function getGroupedTodayEvents(list = state.events) {
+  function getGroupedTodayEvents(list = state.logic.events) {
     return getGroupedEvents(getVisibleTodayEvents(list));
   }
 
-  function getGroupedFutureEvents(list = state.events) {
+  function getGroupedFutureEvents(list = state.logic.events) {
     return getGroupedEvents(getVisibleFutureEvents(list));
   }
 
-  function getGroupedNearbyEvents(list = state.nearbyEvents) {
+  function getGroupedNearbyEvents(list = state.logic.nearbyEvents) {
     return getGroupedEvents(list || []);
   }
 
   /* =========================
      FEATURED / NEARBY
   ========================= */
-  function getTodayNearbyEvents(list = state.nearbyEvents) {
+  function getTodayNearbyEvents(list = state.logic.nearbyEvents) {
     const today = util.todayStrYYYYMMDD();
     return (list || []).filter((ev) => (ev?.date || "").slice(0, 10) === today);
   }
 
-  function getFeaturedNearbyEvents(list = state.nearbyEvents) {
+  function getFeaturedNearbyEvents(list = state.logic.nearbyEvents) {
     const todayList = getTodayNearbyEvents(list);
     if (!todayList.length) return [];
 
@@ -171,8 +168,7 @@
       .sort((a, b) => getFeaturedRank(a) - getFeaturedRank(b));
   }
 
-  // compatibilidad temporal, por si otra parte de la app todavía espera uno solo
-  function getFeaturedNearbyEvent(list = state.nearbyEvents) {
+  function getFeaturedNearbyEvent(list = state.logic.nearbyEvents) {
     return getFeaturedNearbyEvents(list)[0] || null;
   }
 

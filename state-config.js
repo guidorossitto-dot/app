@@ -23,139 +23,33 @@
      APP STATE
      - logic: app/domain/ui logical state
      - runtime: map refs / ephemeral runtime
-     - compatibility aliases kept for gradual migration
   ========================= */
-  const logic = {
-    isLoggedIn: false,
-    events: [],
-    calendarCursor: new Date(),
-    activeCategory: App.CFG.CATEGORY_ALL,
-    editingEventId: null,
-    nearbyCenter: null, // { lat, lng } | null
-    nearbyEvents: []
-  };
-
-  const runtime = {
-    map: null,
-    userMarker: null,
-    eventCreationMarker: null,
-    markerCluster: null,
-    deepLinkLayer: null,
-    locationMarkers: {},
-    eventMarkers: [],
-
-    pendingOpenEventId: null,
-    pendingDeepLinkEventId: null,
-    bootReady: false,
-    uiPanZoomInProgress: false
-  };
-
-  const state = {
-    logic,
-    runtime
-  };
-
-  /* =========================
-     COMPATIBILITY ALIASES
-     Keep old state.foo access working while
-     we migrate files gradually.
-  ========================= */
-  Object.defineProperties(state, {
-    isLoggedIn: {
-      get() { return logic.isLoggedIn; },
-      set(v) { logic.isLoggedIn = !!v; },
-      enumerable: true
-    },
-    events: {
-      get() { return logic.events; },
-      set(v) { logic.events = Array.isArray(v) ? v : []; },
-      enumerable: true
-    },
-    calendarCursor: {
-      get() { return logic.calendarCursor; },
-      set(v) { logic.calendarCursor = v instanceof Date ? v : new Date(); },
-      enumerable: true
-    },
-    activeCategory: {
-      get() { return logic.activeCategory; },
-      set(v) { logic.activeCategory = v; },
-      enumerable: true
-    },
-    editingEventId: {
-      get() { return logic.editingEventId; },
-      set(v) { logic.editingEventId = v ? String(v).trim() : null; },
-      enumerable: true
-    },
-    nearbyCenter: {
-      get() { return logic.nearbyCenter; },
-      set(v) { logic.nearbyCenter = v; },
-      enumerable: true
-    },
-    nearbyEvents: {
-      get() { return logic.nearbyEvents; },
-      set(v) { logic.nearbyEvents = Array.isArray(v) ? v : []; },
-      enumerable: true
+  App.state = {
+    logic: {
+      isLoggedIn: false,
+      events: [],
+      calendarCursor: new Date(),
+      activeCategory: App.CFG.CATEGORY_ALL,
+      editingEventId: null,
+      nearbyCenter: null, // { lat, lng } | null
+      nearbyEvents: []
     },
 
-    map: {
-      get() { return runtime.map; },
-      set(v) { runtime.map = v; },
-      enumerable: true
-    },
-    userMarker: {
-      get() { return runtime.userMarker; },
-      set(v) { runtime.userMarker = v; },
-      enumerable: true
-    },
-    eventCreationMarker: {
-      get() { return runtime.eventCreationMarker; },
-      set(v) { runtime.eventCreationMarker = v; },
-      enumerable: true
-    },
-    markerCluster: {
-      get() { return runtime.markerCluster; },
-      set(v) { runtime.markerCluster = v; },
-      enumerable: true
-    },
-    deepLinkLayer: {
-      get() { return runtime.deepLinkLayer; },
-      set(v) { runtime.deepLinkLayer = v; },
-      enumerable: true
-    },
-    locationMarkers: {
-      get() { return runtime.locationMarkers; },
-      set(v) { runtime.locationMarkers = v || {}; },
-      enumerable: true
-    },
-    eventMarkers: {
-      get() { return runtime.eventMarkers; },
-      set(v) { runtime.eventMarkers = Array.isArray(v) ? v : []; },
-      enumerable: true
-    },
+    runtime: {
+      map: null,
+      userMarker: null,
+      eventCreationMarker: null,
+      markerCluster: null,
+      deepLinkLayer: null,
+      locationMarkers: {},
+      eventMarkers: [],
 
-    _pendingOpenEventId: {
-      get() { return runtime.pendingOpenEventId; },
-      set(v) { runtime.pendingOpenEventId = v ? String(v).trim() : null; },
-      enumerable: true
-    },
-    _pendingDeepLinkEventId: {
-      get() { return runtime.pendingDeepLinkEventId; },
-      set(v) { runtime.pendingDeepLinkEventId = v ? String(v).trim() : null; },
-      enumerable: true
-    },
-    _bootReady: {
-      get() { return runtime.bootReady; },
-      set(v) { runtime.bootReady = !!v; },
-      enumerable: true
-    },
-    _uiPanZoomInProgress: {
-      get() { return runtime.uiPanZoomInProgress; },
-      set(v) { runtime.uiPanZoomInProgress = !!v; },
-      enumerable: true
+      pendingOpenEventId: null,
+      pendingDeepLinkEventId: null,
+      bootReady: false,
+      uiPanZoomInProgress: false
     }
-  });
-
-  App.state = state;
+  };
 
   /* =========================
      BASIC HELPERS
@@ -385,12 +279,12 @@
   /* =========================
      COLLECTION HELPERS / SELECTORS
   ========================= */
-  function getAllEvents(list = App.state.events) {
+  function getAllEvents(list = App.state.logic.events) {
     return Array.isArray(list) ? list : [];
   }
 
   function filterByActiveCategory(list = getAllEvents()) {
-    const cat = App.state.activeCategory;
+    const cat = App.state.logic.activeCategory;
     if (!cat || cat === App.CFG.CATEGORY_ALL) return list;
     return getAllEvents(list).filter((ev) => ev?.category === cat);
   }
@@ -421,7 +315,7 @@
   /* =========================
      PLACE GROUPING / KEYS
   ========================= */
-  function findPlaceAnchor(ev, list = App.state.events) {
+  function findPlaceAnchor(ev, list = App.state.logic.events) {
     if (!ev) return null;
     if (!isValidCoord(ev.lat) || !isValidCoord(ev.lng)) return null;
 
@@ -455,7 +349,7 @@
     return best;
   }
 
-  function smartLocationKey(ev, list = App.state.events) {
+  function smartLocationKey(ev, list = App.state.logic.events) {
     if (!ev) return "";
     if (!isValidCoord(ev.lat) || !isValidCoord(ev.lng)) return "";
 
