@@ -6,8 +6,8 @@
   const { state, util, storage } = App;
 
   function ensureEventsArray() {
-    if (!Array.isArray(state.events)) state.events = [];
-    return state.events;
+    if (!Array.isArray(state.logic.events)) state.logic.events = [];
+    return state.logic.events;
   }
 
   function sanitizeEventsList(list) {
@@ -39,14 +39,14 @@
      HYDRATION / PERSISTENCE BRIDGE
   ========================= */
   function setAllEvents(list) {
-    state.events = sanitizeEventsList(list);
-    return state.events;
+    state.logic.events = sanitizeEventsList(list);
+    return state.logic.events;
   }
 
   function hydrateEventsFromStorage() {
     const loaded = storage?.readEvents?.() || [];
-    state.events = sanitizeEventsList(loaded);
-    return state.events;
+    state.logic.events = sanitizeEventsList(loaded);
+    return state.logic.events;
   }
 
   function purgePastEventsInState() {
@@ -54,31 +54,31 @@
     const purged = storage?.purgePastEvents?.(current) || [];
     const changed = purged.length !== current.length;
 
-    state.events = sanitizeEventsList(purged);
+    state.logic.events = sanitizeEventsList(purged);
     return {
       changed,
-      events: state.events
+      events: state.logic.events
     };
   }
 
   function persistEvents() {
-    storage?.saveEvents?.(state.events);
-    return state.events;
+    storage?.saveEvents?.(state.logic.events);
+    return state.logic.events;
   }
 
   function setLoginState(isLoggedIn) {
-    state.isLoggedIn = !!isLoggedIn;
-    return state.isLoggedIn;
+    state.logic.isLoggedIn = !!isLoggedIn;
+    return state.logic.isLoggedIn;
   }
 
   function hydrateLoginFromStorage() {
-    state.isLoggedIn = !!storage?.readLoginState?.();
-    return state.isLoggedIn;
+    state.logic.isLoggedIn = !!storage?.readLoginState?.();
+    return state.logic.isLoggedIn;
   }
 
   function persistLoginState() {
-    storage?.saveLoginState?.(state.isLoggedIn);
-    return state.isLoggedIn;
+    storage?.saveLoginState?.(state.logic.isLoggedIn);
+    return state.logic.isLoggedIn;
   }
 
   /* =========================
@@ -142,7 +142,7 @@
       return { ok: false, error: "NOT_FOUND", removedEvent: null };
     }
 
-    state.events = ensureEventsArray().filter((ev) => String(ev.id) !== id);
+    state.logic.events = ensureEventsArray().filter((ev) => String(ev.id) !== id);
 
     return {
       ok: true,
@@ -152,7 +152,7 @@
   }
 
   function clearAllEvents() {
-    state.events = [];
+    state.logic.events = [];
     return { ok: true, error: null };
   }
 
@@ -168,71 +168,71 @@
   }
 
   function setActiveCategory(category) {
-    state.activeCategory =
+    state.logic.activeCategory =
       category === App.CFG.CATEGORY_ALL
         ? App.CFG.CATEGORY_ALL
         : util.normalizeCategory(category);
 
-    return state.activeCategory;
+    return state.logic.activeCategory;
   }
 
   function setCalendarCursor(date) {
-    state.calendarCursor = date instanceof Date ? date : new Date();
-    return state.calendarCursor;
+    state.logic.calendarCursor = date instanceof Date ? date : new Date();
+    return state.logic.calendarCursor;
   }
 
   function setEditingEventId(eventId) {
-    state.editingEventId = eventId ? String(eventId).trim() : null;
-    return state.editingEventId;
+    state.logic.editingEventId = eventId ? String(eventId).trim() : null;
+    return state.logic.editingEventId;
   }
 
   function setNearbyCenter(center) {
     if (!center || !util.isValidCoord(center.lat) || !util.isValidCoord(center.lng)) {
-      state.nearbyCenter = null;
-      return state.nearbyCenter;
+      state.logic.nearbyCenter = null;
+      return state.logic.nearbyCenter;
     }
 
-    state.nearbyCenter = {
+    state.logic.nearbyCenter = {
       lat: Number(center.lat),
       lng: Number(center.lng)
     };
 
-    return state.nearbyCenter;
+    return state.logic.nearbyCenter;
   }
 
   function setNearbyEvents(list) {
-    state.nearbyEvents = sanitizeEventsList(list);
-    return state.nearbyEvents;
+    state.logic.nearbyEvents = sanitizeEventsList(list);
+    return state.logic.nearbyEvents;
   }
 
   function setPendingOpenEventId(eventId) {
-    state._pendingOpenEventId = eventId ? String(eventId).trim() : null;
-    return state._pendingOpenEventId;
+    state.runtime.pendingOpenEventId = eventId ? String(eventId).trim() : null;
+    return state.runtime.pendingOpenEventId;
   }
 
   function clearPendingOpenEventId() {
-    state._pendingOpenEventId = null;
-    return state._pendingOpenEventId;
+    state.runtime.pendingOpenEventId = null;
+    return state.runtime.pendingOpenEventId;
   }
 
   function setPendingDeepLinkEventId(eventId) {
-    state._pendingDeepLinkEventId = eventId ? String(eventId).trim() : null;
-    return state._pendingDeepLinkEventId;
+    state.runtime.pendingDeepLinkEventId = eventId ? String(eventId).trim() : null;
+    return state.runtime.pendingDeepLinkEventId;
   }
 
   function clearPendingDeepLinkEventId() {
-    state._pendingDeepLinkEventId = null;
-    return state._pendingDeepLinkEventId;
+    state.runtime.pendingDeepLinkEventId = null;
+    return state.runtime.pendingDeepLinkEventId;
   }
 
   function setBootReady(flag) {
-    state._bootReady = !!flag;
-    return state._bootReady;
+    state.runtime.bootReady = !!flag;
+    return state.runtime.bootReady;
   }
 
   function setUiPanZoomInProgress(flag) {
-    state._uiPanZoomInProgress = !!flag;
-    return state._uiPanZoomInProgress;
+    state.runtime.uiPanZoomInProgress = !!flag;
+    return state.runtime.uiPanZoomInProgress;
   }
 
   /* =========================

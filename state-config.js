@@ -21,20 +21,21 @@
 
   /* =========================
      APP STATE
-     - persistable / app-level
-     - runtime / map-level
+     - logic: app/domain/ui logical state
+     - runtime: map refs / ephemeral runtime
+     - compatibility aliases kept for gradual migration
   ========================= */
-  App.state = {
-    // App/domain state
+  const logic = {
     isLoggedIn: false,
     events: [],
     calendarCursor: new Date(),
     activeCategory: App.CFG.CATEGORY_ALL,
     editingEventId: null,
     nearbyCenter: null, // { lat, lng } | null
-    nearbyEvents: [],
+    nearbyEvents: []
+  };
 
-    // Runtime map state
+  const runtime = {
     map: null,
     userMarker: null,
     eventCreationMarker: null,
@@ -43,12 +44,118 @@
     locationMarkers: {},
     eventMarkers: [],
 
-    // UI/runtime flags
-    _pendingOpenEventId: null,
-    _pendingDeepLinkEventId: null,
-    _bootReady: false,
-    _uiPanZoomInProgress: false
+    pendingOpenEventId: null,
+    pendingDeepLinkEventId: null,
+    bootReady: false,
+    uiPanZoomInProgress: false
   };
+
+  const state = {
+    logic,
+    runtime
+  };
+
+  /* =========================
+     COMPATIBILITY ALIASES
+     Keep old state.foo access working while
+     we migrate files gradually.
+  ========================= */
+  Object.defineProperties(state, {
+    isLoggedIn: {
+      get() { return logic.isLoggedIn; },
+      set(v) { logic.isLoggedIn = !!v; },
+      enumerable: true
+    },
+    events: {
+      get() { return logic.events; },
+      set(v) { logic.events = Array.isArray(v) ? v : []; },
+      enumerable: true
+    },
+    calendarCursor: {
+      get() { return logic.calendarCursor; },
+      set(v) { logic.calendarCursor = v instanceof Date ? v : new Date(); },
+      enumerable: true
+    },
+    activeCategory: {
+      get() { return logic.activeCategory; },
+      set(v) { logic.activeCategory = v; },
+      enumerable: true
+    },
+    editingEventId: {
+      get() { return logic.editingEventId; },
+      set(v) { logic.editingEventId = v ? String(v).trim() : null; },
+      enumerable: true
+    },
+    nearbyCenter: {
+      get() { return logic.nearbyCenter; },
+      set(v) { logic.nearbyCenter = v; },
+      enumerable: true
+    },
+    nearbyEvents: {
+      get() { return logic.nearbyEvents; },
+      set(v) { logic.nearbyEvents = Array.isArray(v) ? v : []; },
+      enumerable: true
+    },
+
+    map: {
+      get() { return runtime.map; },
+      set(v) { runtime.map = v; },
+      enumerable: true
+    },
+    userMarker: {
+      get() { return runtime.userMarker; },
+      set(v) { runtime.userMarker = v; },
+      enumerable: true
+    },
+    eventCreationMarker: {
+      get() { return runtime.eventCreationMarker; },
+      set(v) { runtime.eventCreationMarker = v; },
+      enumerable: true
+    },
+    markerCluster: {
+      get() { return runtime.markerCluster; },
+      set(v) { runtime.markerCluster = v; },
+      enumerable: true
+    },
+    deepLinkLayer: {
+      get() { return runtime.deepLinkLayer; },
+      set(v) { runtime.deepLinkLayer = v; },
+      enumerable: true
+    },
+    locationMarkers: {
+      get() { return runtime.locationMarkers; },
+      set(v) { runtime.locationMarkers = v || {}; },
+      enumerable: true
+    },
+    eventMarkers: {
+      get() { return runtime.eventMarkers; },
+      set(v) { runtime.eventMarkers = Array.isArray(v) ? v : []; },
+      enumerable: true
+    },
+
+    _pendingOpenEventId: {
+      get() { return runtime.pendingOpenEventId; },
+      set(v) { runtime.pendingOpenEventId = v ? String(v).trim() : null; },
+      enumerable: true
+    },
+    _pendingDeepLinkEventId: {
+      get() { return runtime.pendingDeepLinkEventId; },
+      set(v) { runtime.pendingDeepLinkEventId = v ? String(v).trim() : null; },
+      enumerable: true
+    },
+    _bootReady: {
+      get() { return runtime.bootReady; },
+      set(v) { runtime.bootReady = !!v; },
+      enumerable: true
+    },
+    _uiPanZoomInProgress: {
+      get() { return runtime.uiPanZoomInProgress; },
+      set(v) { runtime.uiPanZoomInProgress = !!v; },
+      enumerable: true
+    }
+  });
+
+  App.state = state;
 
   /* =========================
      BASIC HELPERS

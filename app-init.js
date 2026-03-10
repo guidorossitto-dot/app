@@ -6,7 +6,7 @@
   const { state } = App;
 
   function bootAfterMapReady() {
-    if (state._bootReady) return;
+    if (state.runtime.bootReady) return;
 
     App.events?.hydrateEventsFromStorage?.();
     App.events?.hydrateLoginFromStorage?.();
@@ -38,8 +38,11 @@
     App.ui?.processQueuedDeepLink?.();
 
     setInterval(() => {
-      if (state.nearbyCenter && App.map?.recomputeNearbyEvents) {
-        App.map.recomputeNearbyEvents(state.nearbyCenter.lat, state.nearbyCenter.lng);
+      if (state.logic.nearbyCenter && App.map?.recomputeNearbyEvents) {
+        App.map.recomputeNearbyEvents(
+          state.logic.nearbyCenter.lat,
+          state.logic.nearbyCenter.lng
+        );
       }
 
       App.renderAll?.({ rebuildMarkers: false });

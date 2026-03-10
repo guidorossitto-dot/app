@@ -10,12 +10,12 @@
 
     if (
       recomputeNearby &&
-      App.state?.nearbyCenter &&
+      App.state?.logic?.nearbyCenter &&
       App.map?.recomputeNearbyEvents
     ) {
       App.map.recomputeNearbyEvents(
-        App.state.nearbyCenter.lat,
-        App.state.nearbyCenter.lng
+        App.state.logic.nearbyCenter.lat,
+        App.state.logic.nearbyCenter.lng
       );
     }
 
