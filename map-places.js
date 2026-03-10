@@ -454,6 +454,22 @@ function rebuildLocationMarkers(list = state.events) {
 
     loc.marker.setOpacity(1);
   });
+
+  if (state.markerCluster && typeof state.markerCluster.refreshClusters === "function") {
+    try {
+      state.markerCluster.refreshClusters();
+    } catch {}
+  }
+
+  setTimeout(() => {
+    try {
+      state.map.invalidateSize();
+    } catch {}
+
+    try {
+      state.map.panBy([0, 0], { animate: false });
+    } catch {}
+  }, 80);
 }
 
   /* =========================
