@@ -39,13 +39,23 @@
      HYDRATION / PERSISTENCE BRIDGE
   ========================= */
   function setAllEvents(list) {
-    state.logic.events = sanitizeEventsList(list);
+    const safe = sanitizeEventsList(list);
+    App.store?.dispatch?.({
+      type: "SET_ALL_EVENTS",
+      events: safe
+    });
     return state.logic.events;
   }
 
   function hydrateEventsFromStorage() {
     const loaded = storage?.readEvents?.() || [];
-    state.logic.events = sanitizeEventsList(loaded);
+    const safe = sanitizeEventsList(loaded);
+
+    App.store?.dispatch?.({
+      type: "SET_ALL_EVENTS",
+      events: safe
+    });
+
     return state.logic.events;
   }
 
@@ -53,8 +63,13 @@
     const current = ensureEventsArray();
     const purged = storage?.purgePastEvents?.(current) || [];
     const changed = purged.length !== current.length;
+    const safe = sanitizeEventsList(purged);
 
-    state.logic.events = sanitizeEventsList(purged);
+    App.store?.dispatch?.({
+      type: "SET_ALL_EVENTS",
+      events: safe
+    });
+
     return {
       changed,
       events: state.logic.events
@@ -67,12 +82,19 @@
   }
 
   function setLoginState(isLoggedIn) {
-    state.logic.isLoggedIn = !!isLoggedIn;
+    App.store?.dispatch?.({
+      type: "SET_LOGIN_STATE",
+      value: !!isLoggedIn
+    });
     return state.logic.isLoggedIn;
   }
 
   function hydrateLoginFromStorage() {
-    state.logic.isLoggedIn = !!storage?.readLoginState?.();
+    const value = !!storage?.readLoginState?.();
+    App.store?.dispatch?.({
+      type: "SET_LOGIN_STATE",
+      value
+    });
     return state.logic.isLoggedIn;
   }
 
@@ -99,7 +121,15 @@
       return { ok: false, error: "DUPLICATE_ID", event: null };
     }
 
-    ensureEventsArray().push(ev);
+    const out = App.store?.dispatch?.({
+      type: "ADD_EVENT",
+      event: ev
+    });
+
+    if (!out?.ok) {
+      return { ok: false, error: out?.error || "STORE_ERROR", event: null };
+    }
+
     return { ok: true, error: null, event: ev };
   }
 
@@ -127,7 +157,16 @@
       return { ok: false, error: "INVALID_EVENT", event: null };
     }
 
-    list[idx] = merged;
+    const out = App.store?.dispatch?.({
+      type: "REPLACE_EVENT",
+      eventId: id,
+      event: merged
+    });
+
+    if (!out?.ok) {
+      return { ok: false, error: out?.error || "STORE_ERROR", event: null };
+    }
+
     return { ok: true, error: null, event: merged };
   }
 
@@ -142,7 +181,14 @@
       return { ok: false, error: "NOT_FOUND", removedEvent: null };
     }
 
-    state.logic.events = ensureEventsArray().filter((ev) => String(ev.id) !== id);
+    const out = App.store?.dispatch?.({
+      type: "REMOVE_EVENT",
+      eventId: id
+    });
+
+    if (!out?.ok) {
+      return { ok: false, error: out?.error || "STORE_ERROR", removedEvent: null };
+    }
 
     return {
       ok: true,
@@ -152,8 +198,11 @@
   }
 
   function clearAllEvents() {
-    state.logic.events = [];
-    return { ok: true, error: null };
+    const out = App.store?.dispatch?.({
+      type: "CLEAR_ALL_EVENTS"
+    });
+
+    return { ok: !!out?.ok, error: out?.ok ? null : out?.error || "STORE_ERROR" };
   }
 
   /* =========================
@@ -168,70 +217,111 @@
   }
 
   function setActiveCategory(category) {
-    state.logic.activeCategory =
+    const value =
       category === App.CFG.CATEGORY_ALL
         ? App.CFG.CATEGORY_ALL
         : util.normalizeCategory(category);
+
+    App.store?.dispatch?.({
+      type: "SET_ACTIVE_CATEGORY",
+      value
+    });
 
     return state.logic.activeCategory;
   }
 
   function setCalendarCursor(date) {
-    state.logic.calendarCursor = date instanceof Date ? date : new Date();
+    App.store?.dispatch?.({
+      type: "SET_CALENDAR_CURSOR",
+      value: date
+    });
+
     return state.logic.calendarCursor;
   }
 
   function setEditingEventId(eventId) {
-    state.logic.editingEventId = eventId ? String(eventId).trim() : null;
+    App.store?.dispatch?.({
+      type: "SET_EDITING_EVENT_ID",
+      value: eventId
+    });
+
     return state.logic.editingEventId;
   }
 
   function setNearbyCenter(center) {
     if (!center || !util.isValidCoord(center.lat) || !util.isValidCoord(center.lng)) {
-      state.logic.nearbyCenter = null;
+      App.store?.dispatch?.({
+        type: "SET_NEARBY_CENTER",
+        value: null
+      });
       return state.logic.nearbyCenter;
     }
 
-    state.logic.nearbyCenter = {
-      lat: Number(center.lat),
-      lng: Number(center.lng)
-    };
+    App.store?.dispatch?.({
+      type: "SET_NEARBY_CENTER",
+      value: {
+        lat: Number(center.lat),
+        lng: Number(center.lng)
+      }
+    });
 
     return state.logic.nearbyCenter;
   }
 
   function setNearbyEvents(list) {
-    state.logic.nearbyEvents = sanitizeEventsList(list);
+    const safe = sanitizeEventsList(list);
+
+    App.store?.dispatch?.({
+      type: "SET_NEARBY_EVENTS",
+      value: safe
+    });
+
     return state.logic.nearbyEvents;
   }
 
   function setPendingOpenEventId(eventId) {
-    state.runtime.pendingOpenEventId = eventId ? String(eventId).trim() : null;
+    App.store?.dispatch?.({
+      type: "SET_PENDING_OPEN_EVENT_ID",
+      value: eventId
+    });
     return state.runtime.pendingOpenEventId;
   }
 
   function clearPendingOpenEventId() {
-    state.runtime.pendingOpenEventId = null;
+    App.store?.dispatch?.({
+      type: "CLEAR_PENDING_OPEN_EVENT_ID"
+    });
     return state.runtime.pendingOpenEventId;
   }
 
   function setPendingDeepLinkEventId(eventId) {
-    state.runtime.pendingDeepLinkEventId = eventId ? String(eventId).trim() : null;
+    App.store?.dispatch?.({
+      type: "SET_PENDING_DEEP_LINK_EVENT_ID",
+      value: eventId
+    });
     return state.runtime.pendingDeepLinkEventId;
   }
 
   function clearPendingDeepLinkEventId() {
-    state.runtime.pendingDeepLinkEventId = null;
+    App.store?.dispatch?.({
+      type: "CLEAR_PENDING_DEEP_LINK_EVENT_ID"
+    });
     return state.runtime.pendingDeepLinkEventId;
   }
 
   function setBootReady(flag) {
-    state.runtime.bootReady = !!flag;
+    App.store?.dispatch?.({
+      type: "SET_BOOT_READY",
+      value: flag
+    });
     return state.runtime.bootReady;
   }
 
   function setUiPanZoomInProgress(flag) {
-    state.runtime.uiPanZoomInProgress = !!flag;
+    App.store?.dispatch?.({
+      type: "SET_UI_PAN_ZOOM_IN_PROGRESS",
+      value: flag
+    });
     return state.runtime.uiPanZoomInProgress;
   }
 
