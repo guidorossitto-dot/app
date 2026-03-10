@@ -1,3 +1,4 @@
+// map-places.js
 (() => {
   "use strict";
 
@@ -19,11 +20,16 @@
   ========================= */
   function categoryEmoji(cat) {
     switch (cat) {
-      case "music": return "🎵";
-      case "dance": return "💃";
-      case "theatre": return "🎭";
-      case "visual_arts": return "🖼️";
-      default: return "📍";
+      case "music":
+        return "🎵";
+      case "dance":
+        return "💃";
+      case "theatre":
+        return "🎭";
+      case "visual_arts":
+        return "🖼️";
+      default:
+        return "📍";
     }
   }
 
@@ -50,15 +56,15 @@
   }
 
   function uiSetView(lat, lng, zoom) {
-  if (!state.runtime.map) return;
+    if (!state.runtime.map) return;
 
-  state.runtime.uiPanZoomInProgress = true;
-  try {
-    state.runtime.map.setView([lat, lng], zoom, { animate: true });
-  } finally {
-    setTimeout(() => (state.runtime.uiPanZoomInProgress = false), 250);
+    state.runtime.uiPanZoomInProgress = true;
+    try {
+      state.runtime.map.setView([lat, lng], zoom, { animate: true });
+    } finally {
+      setTimeout(() => (state.runtime.uiPanZoomInProgress = false), 250);
+    }
   }
-}
 
   function glowMarker(marker) {
     try {
@@ -73,490 +79,496 @@
      MARKERS HELPERS
   ========================= */
   function clearEventMarkers() {
-  if (state.runtime.markerCluster) state.runtime.markerCluster.clearLayers();
-}
-
-  function findLocationMarkerByEvent(ev, { rebuildIfMissing = true } = {}) {
-  if (!ev) return null;
-
-  let key = util.smartLocationKey(ev, state.logic.events || []);
-  let loc = state.runtime.locationMarkers?.[key] || null;
-
-  if (!loc && rebuildIfMissing) {
-    rebuildLocationMarkers(state.logic.events);
-    key = util.smartLocationKey(ev, state.logic.events || []);
-    loc = state.runtime.locationMarkers?.[key] || null;
+    if (state.runtime.markerCluster) state.runtime.markerCluster.clearLayers();
   }
 
-  return loc;
-}
+  function findLocationMarkerByEvent(ev, { rebuildIfMissing = true } = {}) {
+    if (!ev) return null;
 
- function highlightNearbyMarkers(filteredEvents) {
-  const nearbyKeys = new Set(
-    (filteredEvents || []).map((ev) => util.smartLocationKey(ev, state.logic.events || []))
-  );
+    let key = util.smartLocationKey(ev, state.logic.events || []);
+    let loc = state.runtime.locationMarkers?.[key] || null;
 
-  Object.entries(state.runtime.locationMarkers || {}).forEach(([key, loc]) => {
-    const isNear = nearbyKeys.has(key);
-    if (loc?.marker?.setOpacity) loc.marker.setOpacity(isNear ? 1 : 0.35);
-  });
-}
+    if (!loc && rebuildIfMissing) {
+      rebuildLocationMarkers(state.logic.events);
+      key = util.smartLocationKey(ev, state.logic.events || []);
+      loc = state.runtime.locationMarkers?.[key] || null;
+    }
+
+    return loc;
+  }
+
+  function highlightNearbyMarkers(filteredEvents) {
+    const nearbyKeys = new Set(
+      (filteredEvents || []).map((ev) => util.smartLocationKey(ev, state.logic.events || []))
+    );
+
+    Object.entries(state.runtime.locationMarkers || {}).forEach(([key, loc]) => {
+      const isNear = nearbyKeys.has(key);
+      if (loc?.marker?.setOpacity) loc.marker.setOpacity(isNear ? 1 : 0.35);
+    });
+  }
 
   /* =========================
      REBUILD LOCATION MARKERS
   ========================= */
   function openMarkerPopupStable(marker, lat, lng, zoom = 17) {
-  if (!marker || !state.map) return;
+    if (!marker || !state.runtime.map) return;
 
-  const targetZoom = Math.max(state.map.getZoom(), zoom);
+    const targetZoom = Math.max(state.runtime.map.getZoom(), zoom);
 
-  const doOpen = () => {
-    state._uiPanZoomInProgress = true;
+    const doOpen = () => {
+      state.runtime.uiPanZoomInProgress = true;
 
-    try {
-      state.map.setView([lat, lng], targetZoom, { animate: true });
-
-      setTimeout(() => {
-        try {
-          marker.openPopup();
-        } catch {}
-
-        try {
-          if (typeof glowMarker === "function") glowMarker(marker);
-        } catch {}
-      }, 120);
-    } finally {
-      setTimeout(() => {
-        state._uiPanZoomInProgress = false;
-      }, 300);
-    }
-  };
-
-  if (
-    state.markerCluster &&
-    typeof state.markerCluster.zoomToShowLayer === "function"
-  ) {
-    state.markerCluster.zoomToShowLayer(marker, doOpen);
-  } else {
-    doOpen();
-  }
-}
-
-function rebuildLocationMarkers(list = state.events) {
-  if (!state.map || !state.markerCluster) return;
-
-  clearEventMarkers();
-  state.locationMarkers = {};
-
-  const today = util.todayStrYYYYMMDD();
-
-  for (const ev of list || []) {
-    if ((ev.date || "").slice(0, 10) !== today) continue;
-
-    const active = state.activeCategory;
-    if (active && active !== "all" && ev.category !== active) continue;
-
-    if (!util.isValidCoord(ev.lat) || !util.isValidCoord(ev.lng)) continue;
-
-    const key = util.smartLocationKey(ev, list);
-
-    if (!state.locationMarkers[key]) {
-      const anchor = util.findPlaceAnchor(ev, list) || {
-        lat: ev.lat,
-        lng: ev.lng,
-        placeName: ev.placeName || ""
-      };
-
-      const marker = L.marker([anchor.lat, anchor.lng], {
-        bubblingMouseEvents: false,
-        icon: getCategoryIcon(ev.category || "music")
-      });
-
-      state.markerCluster.addLayer(marker);
-
-      state.locationMarkers[key] = {
-        marker,
-        events: [],
-        lat: anchor.lat,
-        lng: anchor.lng,
-        placeName: anchor.placeName
-      };
-
-      let clickTimer = null;
-
-      marker.on("click", (e) => {
-        if (e?.originalEvent) L.DomEvent.stop(e.originalEvent);
-
-        if (clickTimer) clearTimeout(clickTimer);
-        clickTimer = setTimeout(() => {
-          marker.openPopup();
-          clickTimer = null;
-        }, 180);
-      });
-
-      marker.on("dblclick", (e) => {
-        if (e?.originalEvent) L.DomEvent.stop(e.originalEvent);
-
-        if (clickTimer) {
-          clearTimeout(clickTimer);
-          clickTimer = null;
-        }
-
-        const { lat, lng } = state.locationMarkers[key];
-
-        setUserLocation(lat, lng);
-        recomputeNearbyEvents(lat, lng);
-        state.map.setView([lat, lng], 15);
+      try {
+        state.runtime.map.setView([lat, lng], targetZoom, { animate: true });
 
         setTimeout(() => {
           try {
             marker.openPopup();
           } catch {}
-        }, 120);
-
-        if (state.isLoggedIn) prepareEventCreation(lat, lng);
-
-        App.renderAll?.({ rebuildMarkers: false });
-      });
-    }
-
-    state.locationMarkers[key].events.push(ev);
-  }
-
-  Object.values(state.locationMarkers).forEach((loc) => {
-    const html = App.map?.buildPlacePopupHTML?.(loc) || "";
-
-    loc.marker.bindPopup(html, {
-      closeButton: true,
-      autoPan: true,
-      keepInView: true,
-      autoPanPadding: [16, 16],
-      offset: [0, -10],
-      maxWidth: 260,
-      minWidth: 180
-    });
-
-    loc.marker.off("popupopen");
-    loc.marker.on("popupopen", (evt) => {
-      const root = evt.popup.getElement();
-      if (!root) return;
-
-      L.DomEvent.disableClickPropagation(root);
-      L.DomEvent.disableScrollPropagation(root);
-
-      const onClick = async (ev) => {
-        const btn = ev.target.closest("button");
-        if (!btn) return;
-
-        ev.preventDefault();
-        ev.stopPropagation();
-
-        if (btn.classList.contains("popupCenterBtn")) {
-          const lat = parseFloat(btn.dataset.lat);
-          const lng = parseFloat(btn.dataset.lng);
-
-          if (!Number.isFinite(lat) || !Number.isFinite(lng) || !state.map) return;
-
-          const marker = loc?.marker;
-          if (!marker) return;
-
-          openMarkerPopupStable(marker, lat, lng, 17);
-          return;
-        }
-
-        if (btn.classList.contains("popupRouteBtn")) {
-          const toLat = Number(btn.dataset.lat);
-          const toLng = Number(btn.dataset.lng);
-
-          const fromLat = state.nearbyCenter?.lat;
-          const fromLng = state.nearbyCenter?.lng;
-
-          if (!Number.isFinite(fromLat) || !Number.isFinite(fromLng)) {
-            alert("Primero marcá tu ubicación o usá “Eventos cerca mío”.");
-            return;
-          }
-
-          if (!Number.isFinite(toLat) || !Number.isFinite(toLng)) {
-            alert("No se pudo resolver el destino.");
-            return;
-          }
-
-          const url =
-            `https://www.google.com/maps/dir/?api=1` +
-            `&origin=${encodeURIComponent(`${fromLat},${fromLng}`)}` +
-            `&destination=${encodeURIComponent(`${toLat},${toLng}`)}` +
-            `&travelmode=walking`;
-
-          window.open(url, "_blank", "noopener");
-          return;
-        }
-
-        if (btn.classList.contains("popupShareBtn")) {
-          const eventId = decodeURIComponent((btn.dataset.eid || "").trim());
-          if (!eventId) return;
-
-          const title = decodeURIComponent((btn.dataset.title || "").trim());
-          const url = `${location.origin}${location.pathname}#e=${encodeURIComponent(eventId)}`;
-          const shareText = title ? `Evento: ${title}\n${url}` : url;
-
-          if (navigator.share) {
-            try {
-              await navigator.share({
-                title: title || "Evento",
-                text: shareText,
-                url
-              });
-              return;
-            } catch {}
-          }
 
           try {
-            await navigator.clipboard.writeText(shareText);
-            const prev = btn.textContent;
-            btn.textContent = "Link copiado ✅";
-            setTimeout(() => {
-              btn.textContent = prev || "Compartir";
-            }, 1200);
-          } catch {
-            window.prompt("Copiá este link:", shareText);
+            if (typeof glowMarker === "function") glowMarker(marker);
+          } catch {}
+        }, 120);
+      } finally {
+        setTimeout(() => {
+          state.runtime.uiPanZoomInProgress = false;
+        }, 300);
+      }
+    };
+
+    if (
+      state.runtime.markerCluster &&
+      typeof state.runtime.markerCluster.zoomToShowLayer === "function"
+    ) {
+      state.runtime.markerCluster.zoomToShowLayer(marker, doOpen);
+    } else {
+      doOpen();
+    }
+  }
+
+  function rebuildLocationMarkers(list = state.logic.events) {
+    if (!state.runtime.map || !state.runtime.markerCluster) return;
+
+    clearEventMarkers();
+    state.runtime.locationMarkers = {};
+
+    const today = util.todayStrYYYYMMDD();
+
+    for (const ev of list || []) {
+      if ((ev.date || "").slice(0, 10) !== today) continue;
+
+      const active = state.logic.activeCategory;
+      if (active && active !== "all" && ev.category !== active) continue;
+
+      if (!util.isValidCoord(ev.lat) || !util.isValidCoord(ev.lng)) continue;
+
+      const key = util.smartLocationKey(ev, list);
+
+      if (!state.runtime.locationMarkers[key]) {
+        const anchor = util.findPlaceAnchor(ev, list) || {
+          lat: ev.lat,
+          lng: ev.lng,
+          placeName: ev.placeName || ""
+        };
+
+        const marker = L.marker([anchor.lat, anchor.lng], {
+          bubblingMouseEvents: false,
+          icon: getCategoryIcon(ev.category || "music")
+        });
+
+        state.runtime.markerCluster.addLayer(marker);
+
+        state.runtime.locationMarkers[key] = {
+          marker,
+          events: [],
+          lat: anchor.lat,
+          lng: anchor.lng,
+          placeName: anchor.placeName
+        };
+
+        let clickTimer = null;
+
+        marker.on("click", (e) => {
+          if (e?.originalEvent) L.DomEvent.stop(e.originalEvent);
+
+          if (clickTimer) clearTimeout(clickTimer);
+          clickTimer = setTimeout(() => {
+            marker.openPopup();
+            clickTimer = null;
+          }, 180);
+        });
+
+        marker.on("dblclick", (e) => {
+          if (e?.originalEvent) L.DomEvent.stop(e.originalEvent);
+
+          if (clickTimer) {
+            clearTimeout(clickTimer);
+            clickTimer = null;
           }
 
-          return;
-        }
-
-        if (btn.classList.contains("popupEditBtn")) {
-          const eventId = decodeURIComponent((btn.dataset.editEid || "").trim());
-          if (!eventId) return;
-
-          const evData = App.events?.findEventById?.(eventId);
-          if (!evData) {
-            alert("No se encontró el evento.");
-            return;
-          }
-
-          App.events?.setEditingEventId?.(eventId);
-
-          const titleEl = document.getElementById("eventTitle");
-          const dateEl = document.getElementById("eventDate");
-          const latEl = document.getElementById("eventLat");
-          const lngEl = document.getElementById("eventLng");
-          const placeEl = document.getElementById("eventPlace");
-          const startEl = document.getElementById("eventStart");
-          const catEl = document.getElementById("eventCategory");
-          const addBtn = document.getElementById("addEventBtn");
-          const cancelBtn = document.getElementById("cancelEditBtn");
-
-          if (titleEl) titleEl.value = evData.title || "";
-          if (dateEl) dateEl.value = evData.date || "";
-          if (latEl) latEl.value = Number(evData.lat).toFixed(6);
-          if (lngEl) lngEl.value = Number(evData.lng).toFixed(6);
-          if (placeEl) placeEl.value = evData.placeName || "";
-          if (startEl) startEl.value = evData.startTime || "";
-          if (catEl) catEl.value = evData.category || "music";
-
-          const adminRow = document.getElementById("adminCategoryChips");
-          if (adminRow) {
-            const chips = [...adminRow.querySelectorAll(".chip[data-cat]")];
-            chips.forEach((b) =>
-              b.classList.toggle("isActive", b.dataset.cat === (evData.category || "music"))
-            );
-          }
-
-          if (addBtn) addBtn.textContent = "Guardar cambios";
-          if (cancelBtn) cancelBtn.hidden = false;
-
-          if (state.map) {
-            prepareEventCreation(evData.lat, evData.lng);
-            state.map.setView([evData.lat, evData.lng], 15);
-          }
-
-          const adminView = document.getElementById("adminView");
-          if (adminView) adminView.hidden = false;
-
-          const titleTarget = document.getElementById("eventTitle");
-          if (titleTarget) {
-            titleTarget.scrollIntoView({ behavior: "smooth", block: "center" });
-            titleTarget.focus();
-          }
-
-          return;
-        }
-
-        if (btn.classList.contains("popupDeleteBtn")) {
-          const eventId = decodeURIComponent((btn.dataset.deleteEid || "").trim());
-          if (!eventId) return;
-
-          const title = decodeURIComponent((btn.dataset.deleteTitle || "").trim());
-          const msg = title
-            ? `¿Seguro que querés borrar "${title}"?`
-            : "¿Seguro que querés borrar este evento?";
-
-          if (!confirm(msg)) return;
-
-          const result = App.events?.removeEvent?.(eventId);
-          if (!result?.ok) {
-            alert("No se pudo borrar el evento.");
-            return;
-          }
-
-          if (state.deepLinkLayer && typeof state.deepLinkLayer.clearLayers === "function") {
-            state.deepLinkLayer.clearLayers();
-          }
-
-          App.events.saveAndRefresh({ rebuildMarkers: true });
-          return;
-        }
-
-        if (btn.classList.contains("popupAddBtn")) {
-          const lat = Number(btn.dataset.lat);
-          const lng = Number(btn.dataset.lng);
-          const place = decodeURIComponent(btn.dataset.place || "");
-
-          if (!Number.isFinite(lat) || !Number.isFinite(lng) || !state.map) return;
+          const { lat, lng } = state.runtime.locationMarkers[key];
 
           setUserLocation(lat, lng);
           recomputeNearbyEvents(lat, lng);
-          state.map.setView([lat, lng], 15);
+          state.runtime.map.setView([lat, lng], 15);
 
-          prepareEventCreation(lat, lng);
+          setTimeout(() => {
+            try {
+              marker.openPopup();
+            } catch {}
+          }, 120);
 
-          const placeEl = document.getElementById("eventPlace");
-          if (placeEl && place && !placeEl.value.trim()) placeEl.value = place;
-
-          const titleEl = document.getElementById("eventTitle");
-          if (titleEl) titleEl.focus();
+          if (state.logic.isLoggedIn) prepareEventCreation(lat, lng);
 
           App.renderAll?.({ rebuildMarkers: false });
-          return;
-        }
-      };
+        });
+      }
 
-      root.addEventListener("click", onClick, true);
+      state.runtime.locationMarkers[key].events.push(ev);
+    }
 
-      evt.popup.once("remove", () => {
-        root.removeEventListener("click", onClick, true);
+    Object.values(state.runtime.locationMarkers).forEach((loc) => {
+      const html = App.map?.buildPlacePopupHTML?.(loc) || "";
+
+      loc.marker.bindPopup(html, {
+        closeButton: true,
+        autoPan: true,
+        keepInView: true,
+        autoPanPadding: [16, 16],
+        offset: [0, -10],
+        maxWidth: 260,
+        minWidth: 180
       });
 
-      const pending = state._pendingOpenEventId;
-      if (pending) {
-        const sel = `[data-eid="${encodeURIComponent(String(pending))}"]`;
-        const row = root.querySelector(sel);
+      loc.marker.off("popupopen");
+      loc.marker.on("popupopen", (evt) => {
+        const root = evt.popup.getElement();
+        if (!root) return;
 
-        if (row) {
-          row.classList.add("popupItemHighlight");
-          row.scrollIntoView({ block: "center", behavior: "smooth" });
-          setTimeout(() => row.classList.remove("popupItemHighlight"), 1600);
+        L.DomEvent.disableClickPropagation(root);
+        L.DomEvent.disableScrollPropagation(root);
+
+        const onClick = async (ev) => {
+          const btn = ev.target.closest("button");
+          if (!btn) return;
+
+          ev.preventDefault();
+          ev.stopPropagation();
+
+          if (btn.classList.contains("popupCenterBtn")) {
+            const lat = parseFloat(btn.dataset.lat);
+            const lng = parseFloat(btn.dataset.lng);
+
+            if (!Number.isFinite(lat) || !Number.isFinite(lng) || !state.runtime.map) return;
+
+            const marker = loc?.marker;
+            if (!marker) return;
+
+            openMarkerPopupStable(marker, lat, lng, 17);
+            return;
+          }
+
+          if (btn.classList.contains("popupRouteBtn")) {
+            const toLat = Number(btn.dataset.lat);
+            const toLng = Number(btn.dataset.lng);
+
+            const fromLat = state.logic.nearbyCenter?.lat;
+            const fromLng = state.logic.nearbyCenter?.lng;
+
+            if (!Number.isFinite(fromLat) || !Number.isFinite(fromLng)) {
+              alert("Primero marcá tu ubicación o usá “Eventos cerca mío”.");
+              return;
+            }
+
+            if (!Number.isFinite(toLat) || !Number.isFinite(toLng)) {
+              alert("No se pudo resolver el destino.");
+              return;
+            }
+
+            const url =
+              `https://www.google.com/maps/dir/?api=1` +
+              `&origin=${encodeURIComponent(`${fromLat},${fromLng}`)}` +
+              `&destination=${encodeURIComponent(`${toLat},${toLng}`)}` +
+              `&travelmode=walking`;
+
+            window.open(url, "_blank", "noopener");
+            return;
+          }
+
+          if (btn.classList.contains("popupShareBtn")) {
+            const eventId = decodeURIComponent((btn.dataset.eid || "").trim());
+            if (!eventId) return;
+
+            const title = decodeURIComponent((btn.dataset.title || "").trim());
+            const url = `${location.origin}${location.pathname}#e=${encodeURIComponent(eventId)}`;
+            const shareText = title ? `Evento: ${title}\n${url}` : url;
+
+            if (navigator.share) {
+              try {
+                await navigator.share({
+                  title: title || "Evento",
+                  text: shareText,
+                  url
+                });
+                return;
+              } catch {}
+            }
+
+            try {
+              await navigator.clipboard.writeText(shareText);
+              const prev = btn.textContent;
+              btn.textContent = "Link copiado ✅";
+              setTimeout(() => {
+                btn.textContent = prev || "Compartir";
+              }, 1200);
+            } catch {
+              window.prompt("Copiá este link:", shareText);
+            }
+
+            return;
+          }
+
+          if (btn.classList.contains("popupEditBtn")) {
+            const eventId = decodeURIComponent((btn.dataset.editEid || "").trim());
+            if (!eventId) return;
+
+            const evData = App.events?.findEventById?.(eventId);
+            if (!evData) {
+              alert("No se encontró el evento.");
+              return;
+            }
+
+            App.events?.setEditingEventId?.(eventId);
+
+            const titleEl = document.getElementById("eventTitle");
+            const dateEl = document.getElementById("eventDate");
+            const latEl = document.getElementById("eventLat");
+            const lngEl = document.getElementById("eventLng");
+            const placeEl = document.getElementById("eventPlace");
+            const startEl = document.getElementById("eventStart");
+            const catEl = document.getElementById("eventCategory");
+            const addBtn = document.getElementById("addEventBtn");
+            const cancelBtn = document.getElementById("cancelEditBtn");
+
+            if (titleEl) titleEl.value = evData.title || "";
+            if (dateEl) dateEl.value = evData.date || "";
+            if (latEl) latEl.value = Number(evData.lat).toFixed(6);
+            if (lngEl) lngEl.value = Number(evData.lng).toFixed(6);
+            if (placeEl) placeEl.value = evData.placeName || "";
+            if (startEl) startEl.value = evData.startTime || "";
+            if (catEl) catEl.value = evData.category || "music";
+
+            const adminRow = document.getElementById("adminCategoryChips");
+            if (adminRow) {
+              const chips = [...adminRow.querySelectorAll(".chip[data-cat]")];
+              chips.forEach((b) =>
+                b.classList.toggle("isActive", b.dataset.cat === (evData.category || "music"))
+              );
+            }
+
+            if (addBtn) addBtn.textContent = "Guardar cambios";
+            if (cancelBtn) cancelBtn.hidden = false;
+
+            if (state.runtime.map) {
+              prepareEventCreation(evData.lat, evData.lng);
+              state.runtime.map.setView([evData.lat, evData.lng], 15);
+            }
+
+            const adminView = document.getElementById("adminView");
+            if (adminView) adminView.hidden = false;
+
+            const titleTarget = document.getElementById("eventTitle");
+            if (titleTarget) {
+              titleTarget.scrollIntoView({ behavior: "smooth", block: "center" });
+              titleTarget.focus();
+            }
+
+            return;
+          }
+
+          if (btn.classList.contains("popupDeleteBtn")) {
+            const eventId = decodeURIComponent((btn.dataset.deleteEid || "").trim());
+            if (!eventId) return;
+
+            const title = decodeURIComponent((btn.dataset.deleteTitle || "").trim());
+            const msg = title
+              ? `¿Seguro que querés borrar "${title}"?`
+              : "¿Seguro que querés borrar este evento?";
+
+            if (!confirm(msg)) return;
+
+            const result = App.events?.removeEvent?.(eventId);
+            if (!result?.ok) {
+              alert("No se pudo borrar el evento.");
+              return;
+            }
+
+            if (
+              state.runtime.deepLinkLayer &&
+              typeof state.runtime.deepLinkLayer.clearLayers === "function"
+            ) {
+              state.runtime.deepLinkLayer.clearLayers();
+            }
+
+            App.events.saveAndRefresh({ rebuildMarkers: true });
+            return;
+          }
+
+          if (btn.classList.contains("popupAddBtn")) {
+            const lat = Number(btn.dataset.lat);
+            const lng = Number(btn.dataset.lng);
+            const place = decodeURIComponent(btn.dataset.place || "");
+
+            if (!Number.isFinite(lat) || !Number.isFinite(lng) || !state.runtime.map) return;
+
+            setUserLocation(lat, lng);
+            recomputeNearbyEvents(lat, lng);
+            state.runtime.map.setView([lat, lng], 15);
+
+            prepareEventCreation(lat, lng);
+
+            const placeEl = document.getElementById("eventPlace");
+            if (placeEl && place && !placeEl.value.trim()) placeEl.value = place;
+
+            const titleEl = document.getElementById("eventTitle");
+            if (titleEl) titleEl.focus();
+
+            App.renderAll?.({ rebuildMarkers: false });
+            return;
+          }
+        };
+
+        root.addEventListener("click", onClick, true);
+
+        evt.popup.once("remove", () => {
+          root.removeEventListener("click", onClick, true);
+        });
+
+        const pending = state.runtime.pendingOpenEventId;
+        if (pending) {
+          const sel = `[data-eid="${encodeURIComponent(String(pending))}"]`;
+          const row = root.querySelector(sel);
+
+          if (row) {
+            row.classList.add("popupItemHighlight");
+            row.scrollIntoView({ block: "center", behavior: "smooth" });
+            setTimeout(() => row.classList.remove("popupItemHighlight"), 1600);
+          }
+
+          App.events?.clearPendingOpenEventId?.();
         }
+      });
 
-        App.events?.clearPendingOpenEventId?.();
-      }
+      loc.marker.setOpacity(1);
     });
 
-    loc.marker.setOpacity(1);
-  });
+    if (
+      state.runtime.markerCluster &&
+      typeof state.runtime.markerCluster.refreshClusters === "function"
+    ) {
+      try {
+        state.runtime.markerCluster.refreshClusters();
+      } catch {}
+    }
 
-  if (state.markerCluster && typeof state.markerCluster.refreshClusters === "function") {
-    try {
-      state.markerCluster.refreshClusters();
-    } catch {}
+    setTimeout(() => {
+      try {
+        state.runtime.map.invalidateSize();
+      } catch {}
+
+      try {
+        state.runtime.map.panBy([0, 0], { animate: false });
+      } catch {}
+    }, 80);
   }
-
-  setTimeout(() => {
-    try {
-      state.map.invalidateSize();
-    } catch {}
-
-    try {
-      state.map.panBy([0, 0], { animate: false });
-    } catch {}
-  }, 80);
-}
 
   /* =========================
      NEARBY STATE
   ========================= */
   function recomputeNearbyEvents(lat, lng) {
-  if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
-    App.events?.setNearbyCenter?.(null);
-    App.events?.setNearbyEvents?.([]);
-    return [];
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+      App.events?.setNearbyCenter?.(null);
+      App.events?.setNearbyEvents?.([]);
+      return [];
+    }
+
+    App.events?.setNearbyCenter?.({ lat, lng });
+
+    const nearby = util.getNearbyTodayEvents(lat, lng, state.logic.events || []);
+    App.events?.setNearbyEvents?.(nearby);
+
+    return state.logic.nearbyEvents;
   }
-
-  App.events?.setNearbyCenter?.({ lat, lng });
-
-  const nearby = util.getNearbyTodayEvents(lat, lng, state.logic.events || []);
-  App.events?.setNearbyEvents?.(nearby);
-
-  return state.logic.nearbyEvents;
-}
 
   function filterEventsByDistance(lat, lng) {
-  const filtered = recomputeNearbyEvents(lat, lng);
-  App.renderAll?.({ rebuildMarkers: false });
-  return filtered;
-}
-
-  function renderMap(opts = {}) {
-  const { rebuildMarkers = true } = opts;
-
-  if (rebuildMarkers) {
-    rebuildLocationMarkers(state.logic.events);
+    const filtered = recomputeNearbyEvents(lat, lng);
+    App.renderAll?.({ rebuildMarkers: false });
+    return filtered;
   }
 
-  highlightNearbyMarkers(state.logic.nearbyEvents || []);
-}
+  function renderMap(opts = {}) {
+    const { rebuildMarkers = true } = opts;
+
+    if (rebuildMarkers) {
+      rebuildLocationMarkers(state.logic.events);
+    }
+
+    highlightNearbyMarkers(state.logic.nearbyEvents || []);
+  }
 
   /* =========================
      USER LOCATION + EVENT CREATION
   ========================= */
   function setUserLocation(lat, lng) {
-  if (!state.runtime.map) return;
+    if (!state.runtime.map) return;
 
-  setUserInputs(lat, lng);
+    setUserInputs(lat, lng);
 
-  if (state.runtime.userMarker) {
-    state.runtime.userMarker.setLatLng([lat, lng]);
-  } else {
-    state.runtime.userMarker = L.marker([lat, lng], { draggable: true }).addTo(state.runtime.map);
+    if (state.runtime.userMarker) {
+      state.runtime.userMarker.setLatLng([lat, lng]);
+    } else {
+      state.runtime.userMarker = L.marker([lat, lng], { draggable: true }).addTo(state.runtime.map);
 
-    state.runtime.userMarker.on("dragend", (e) => {
-      const pos = e.target.getLatLng();
-      setUserInputs(pos.lat, pos.lng);
-      recomputeNearbyEvents(pos.lat, pos.lng);
-      App.renderAll?.({ rebuildMarkers: false });
-    });
+      state.runtime.userMarker.on("dragend", (e) => {
+        const pos = e.target.getLatLng();
+        setUserInputs(pos.lat, pos.lng);
+        recomputeNearbyEvents(pos.lat, pos.lng);
+        App.renderAll?.({ rebuildMarkers: false });
+      });
+    }
   }
-}
 
   function prepareEventCreation(lat, lng) {
-  const eLat = document.getElementById("eventLat");
-  const eLng = document.getElementById("eventLng");
-  if (eLat) eLat.value = Number(lat).toFixed(6);
-  if (eLng) eLng.value = Number(lng).toFixed(6);
+    const eLat = document.getElementById("eventLat");
+    const eLng = document.getElementById("eventLng");
+    if (eLat) eLat.value = Number(lat).toFixed(6);
+    if (eLng) eLng.value = Number(lng).toFixed(6);
 
-  if (!state.runtime.map) return;
+    if (!state.runtime.map) return;
 
-  if (state.runtime.eventCreationMarker) {
-    state.runtime.eventCreationMarker.setLatLng([lat, lng]);
-  } else {
-    state.runtime.eventCreationMarker = L.marker([lat, lng], { draggable: true }).addTo(state.runtime.map);
+    if (state.runtime.eventCreationMarker) {
+      state.runtime.eventCreationMarker.setLatLng([lat, lng]);
+    } else {
+      state.runtime.eventCreationMarker = L.marker([lat, lng], { draggable: true }).addTo(state.runtime.map);
 
-    state.runtime.eventCreationMarker.on("dragend", (e) => {
-      const pos = e.target.getLatLng();
-      const eLat2 = document.getElementById("eventLat");
-      const eLng2 = document.getElementById("eventLng");
-      if (eLat2) eLat2.value = pos.lat.toFixed(6);
-      if (eLng2) eLng2.value = pos.lng.toFixed(6);
-    });
+      state.runtime.eventCreationMarker.on("dragend", (e) => {
+        const pos = e.target.getLatLng();
+        const eLat2 = document.getElementById("eventLat");
+        const eLng2 = document.getElementById("eventLng");
+        if (eLat2) eLat2.value = pos.lat.toFixed(6);
+        if (eLng2) eLng2.value = pos.lng.toFixed(6);
+      });
+    }
   }
-}
 
   function clearEventCreationMarker() {
-  if (state.runtime.eventCreationMarker) {
-    state.runtime.eventCreationMarker.remove();
-    state.runtime.eventCreationMarker = null;
+    if (state.runtime.eventCreationMarker) {
+      state.runtime.eventCreationMarker.remove();
+      state.runtime.eventCreationMarker = null;
+    }
   }
-}
 
   function normalizePlaceText(s) {
     return (s || "")
@@ -569,7 +581,7 @@ function rebuildLocationMarkers(list = state.events) {
 
   function findCanonicalPlace(placeName, lat, lng) {
     const targetName = normalizePlaceText(util.shortPlaceName(placeName));
-    const all = state.events || [];
+    const all = state.logic.events || [];
 
     if (!util.isValidCoord(lat) || !util.isValidCoord(lng)) return null;
     if (!targetName) return null;
@@ -645,8 +657,8 @@ function rebuildLocationMarkers(list = state.events) {
       category
     };
 
-    if (state.editingEventId) {
-      const result = events.replaceEvent(state.editingEventId, patch);
+    if (state.logic.editingEventId) {
+      const result = events.replaceEvent(state.logic.editingEventId, patch);
 
       if (!result.ok) {
         alert("No se pudo guardar la edición.");
@@ -703,95 +715,95 @@ function rebuildLocationMarkers(list = state.events) {
      GEOLOCATION + INPUT SEARCH
   ========================= */
   function useMyLocation() {
-  if (!navigator.geolocation) {
-    alert("Tu navegador no soporta geolocalización.");
-    return;
+    if (!navigator.geolocation) {
+      alert("Tu navegador no soporta geolocalización.");
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const lat = pos.coords.latitude;
+        const lng = pos.coords.longitude;
+
+        setUserLocation(lat, lng);
+        recomputeNearbyEvents(lat, lng);
+        state.runtime.map.setView([lat, lng], 15);
+
+        if (state.logic.isLoggedIn) prepareEventCreation(lat, lng);
+
+        App.renderAll?.({ rebuildMarkers: false });
+      },
+      (err) => {
+        alert("No se pudo obtener la ubicación: " + err.message);
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
   }
-
-  navigator.geolocation.getCurrentPosition(
-    (pos) => {
-      const lat = pos.coords.latitude;
-      const lng = pos.coords.longitude;
-
-      setUserLocation(lat, lng);
-      recomputeNearbyEvents(lat, lng);
-      state.runtime.map.setView([lat, lng], 15);
-
-      if (state.logic.isLoggedIn) prepareEventCreation(lat, lng);
-
-      App.renderAll?.({ rebuildMarkers: false });
-    },
-    (err) => {
-      alert("No se pudo obtener la ubicación: " + err.message);
-    },
-    { enableHighAccuracy: true, timeout: 10000 }
-  );
-}
 
   function searchNearbyFromInputs() {
-  const latEl = document.getElementById("userLat");
-  const lngEl = document.getElementById("userLng");
-  if (!latEl || !lngEl) return;
+    const latEl = document.getElementById("userLat");
+    const lngEl = document.getElementById("userLng");
+    if (!latEl || !lngEl) return;
 
-  const lat = Number(latEl.value);
-  const lng = Number(lngEl.value);
+    const lat = Number(latEl.value);
+    const lng = Number(lngEl.value);
 
-  if (!util.isValidCoord(lat) || !util.isValidCoord(lng)) {
-    alert("Ingresá latitud y longitud válidas.");
-    return;
+    if (!util.isValidCoord(lat) || !util.isValidCoord(lng)) {
+      alert("Ingresá latitud y longitud válidas.");
+      return;
+    }
+
+    setUserLocation(lat, lng);
+    recomputeNearbyEvents(lat, lng);
+    state.runtime.map.setView([lat, lng], 15);
+
+    App.renderAll?.({ rebuildMarkers: false });
   }
-
-  setUserLocation(lat, lng);
-  recomputeNearbyEvents(lat, lng);
-  state.runtime.map.setView([lat, lng], 15);
-
-  App.renderAll?.({ rebuildMarkers: false });
-}
 
   /* =========================
      MAP INIT
   ========================= */
   function initMap(lat, lng) {
-  state.runtime.map = L.map("map").setView([lat, lng], 15);
-  state.runtime.map.doubleClickZoom.disable();
+    state.runtime.map = L.map("map").setView([lat, lng], 15);
+    state.runtime.map.doubleClickZoom.disable();
 
-  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-    attribution: "© OpenStreetMap contributors"
-  }).addTo(state.runtime.map);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution: "© OpenStreetMap contributors"
+    }).addTo(state.runtime.map);
 
-  state.runtime.markerCluster = L.markerClusterGroup({
-    showCoverageOnHover: false,
-    spiderfyOnMaxZoom: true,
-    disableClusteringAtZoom: 16
-  });
+    state.runtime.markerCluster = L.markerClusterGroup({
+      showCoverageOnHover: false,
+      spiderfyOnMaxZoom: true,
+      disableClusteringAtZoom: 16
+    });
 
-  state.runtime.map.addLayer(state.runtime.markerCluster);
-  state.runtime.deepLinkLayer = L.layerGroup().addTo(state.runtime.map);
+    state.runtime.map.addLayer(state.runtime.markerCluster);
+    state.runtime.deepLinkLayer = L.layerGroup().addTo(state.runtime.map);
 
-  state.runtime.map.on("click", (e) => {
-    const t = e.originalEvent?.target;
-    if (t && (t.closest?.(".leaflet-marker-icon") || t.closest?.(".leaflet-popup"))) return;
+    state.runtime.map.on("click", (e) => {
+      const t = e.originalEvent?.target;
+      if (t && (t.closest?.(".leaflet-marker-icon") || t.closest?.(".leaflet-popup"))) return;
 
-    const clat = e.latlng.lat;
-    const clng = e.latlng.lng;
+      const clat = e.latlng.lat;
+      const clng = e.latlng.lng;
 
-    setUserLocation(clat, clng);
-    recomputeNearbyEvents(clat, clng);
-    state.runtime.map.setView([clat, clng], 15);
+      setUserLocation(clat, clng);
+      recomputeNearbyEvents(clat, clng);
+      state.runtime.map.setView([clat, clng], 15);
 
-    App.renderAll?.({ rebuildMarkers: false });
-  });
+      App.renderAll?.({ rebuildMarkers: false });
+    });
 
-  state.runtime.map.on("dragstart", () => {
-    if (state.runtime.uiPanZoomInProgress) return;
-    state.runtime.map.closePopup();
-  });
+    state.runtime.map.on("dragstart", () => {
+      if (state.runtime.uiPanZoomInProgress) return;
+      state.runtime.map.closePopup();
+    });
 
-  state.runtime.map.on("zoomstart", () => {
-    if (state.runtime.uiPanZoomInProgress) return;
-    state.runtime.map.closePopup();
-  });
-}
+    state.runtime.map.on("zoomstart", () => {
+      if (state.runtime.uiPanZoomInProgress) return;
+      state.runtime.map.closePopup();
+    });
+  }
 
   /* =========================
      LISTENER: Ver en mapa
@@ -807,27 +819,30 @@ function rebuildLocationMarkers(list = state.events) {
     const lng = parseFloat(linkBtn.dataset.lng);
     const key = linkBtn.dataset.key || util.locationKey(lat, lng);
 
-    if (!Number.isFinite(lat) || !Number.isFinite(lng) || !state.map) return;
+    if (!Number.isFinite(lat) || !Number.isFinite(lng) || !state.runtime.map) return;
 
     const mapEl = document.getElementById("map");
     if (mapEl) mapEl.scrollIntoView({ behavior: "smooth", block: "start" });
 
-    state.map.closePopup();
+    state.runtime.map.closePopup();
 
-    let loc = state.locationMarkers?.[key];
+    let loc = state.runtime.locationMarkers?.[key];
 
     if (!loc) {
-      rebuildLocationMarkers(state.events);
-      loc = state.locationMarkers?.[key];
+      rebuildLocationMarkers(state.logic.events);
+      loc = state.runtime.locationMarkers?.[key];
     }
 
-    const targetZoom = Math.max(state.map.getZoom(), 16);
+    const targetZoom = Math.max(state.runtime.map.getZoom(), 16);
 
     uiSetView(lat, lng, targetZoom);
 
     if (loc?.marker) {
-      if (state.markerCluster && typeof state.markerCluster.zoomToShowLayer === "function") {
-        state.markerCluster.zoomToShowLayer(loc.marker, () => {
+      if (
+        state.runtime.markerCluster &&
+        typeof state.runtime.markerCluster.zoomToShowLayer === "function"
+      ) {
+        state.runtime.markerCluster.zoomToShowLayer(loc.marker, () => {
           uiSetView(lat, lng, Math.max(targetZoom, 17));
           loc.marker.openPopup();
           glowMarker(loc.marker);
@@ -868,10 +883,10 @@ function rebuildLocationMarkers(list = state.events) {
         const lat = Number(r.lat);
         const lng = Number(r.lon);
 
-        if (state.map) state.map.closePopup();
+        if (state.runtime.map) state.runtime.map.closePopup();
 
-        if (state.map && Number.isFinite(lat) && Number.isFinite(lng)) {
-          state.map.setView([lat, lng], 16);
+        if (state.runtime.map && Number.isFinite(lat) && Number.isFinite(lng)) {
+          state.runtime.map.setView([lat, lng], 16);
         }
 
         const latEl = document.getElementById("eventLat");
@@ -887,7 +902,7 @@ function rebuildLocationMarkers(list = state.events) {
           titleEl.value = r.name || r.display_name.split(",")[0];
         }
 
-        if (state.isLoggedIn) prepareEventCreation(lat, lng);
+        if (state.logic.isLoggedIn) prepareEventCreation(lat, lng);
 
         const resultsUl = document.getElementById("placeResults");
         if (resultsUl) resultsUl.innerHTML = "";
@@ -947,94 +962,97 @@ function rebuildLocationMarkers(list = state.events) {
   /* =========================
      DEEP LINK TARGET
   ========================= */
- function focusEventById(eventId) {
-  const id = String(eventId || "").trim();
-  if (!id) return false;
+  function focusEventById(eventId) {
+    const id = String(eventId || "").trim();
+    if (!id) return false;
 
-  const ev = App.events?.findEventById?.(id) || null;
-  if (!ev || !state.map) return false;
+    const ev = App.events?.findEventById?.(id) || null;
+    if (!ev || !state.runtime.map) return false;
 
-  if (state.deepLinkLayer && typeof state.deepLinkLayer.clearLayers === "function") {
-    state.deepLinkLayer.clearLayers();
-  }
+    if (
+      state.runtime.deepLinkLayer &&
+      typeof state.runtime.deepLinkLayer.clearLayers === "function"
+    ) {
+      state.runtime.deepLinkLayer.clearLayers();
+    }
 
-  let key = util.smartLocationKey(ev, state.events || []);
-  let loc = state.locationMarkers?.[key];
+    let key = util.smartLocationKey(ev, state.logic.events || []);
+    let loc = state.runtime.locationMarkers?.[key];
 
-  if (!loc) {
-    rebuildLocationMarkers(state.events);
-    key = util.smartLocationKey(ev, state.events || []);
-    loc = state.locationMarkers?.[key];
-  }
+    if (!loc) {
+      rebuildLocationMarkers(state.logic.events);
+      key = util.smartLocationKey(ev, state.logic.events || []);
+      loc = state.runtime.locationMarkers?.[key];
+    }
 
-  if (loc?.marker) {
-    App.events?.setPendingOpenEventId?.(id);
-    openMarkerPopupStable(loc.marker, ev.lat, ev.lng, 17);
+    if (loc?.marker) {
+      App.events?.setPendingOpenEventId?.(id);
+      openMarkerPopupStable(loc.marker, ev.lat, ev.lng, 17);
+      return true;
+    }
+
+    const placeTitle = util.shortPlaceName(ev.placeName) || "Lugar sin nombre";
+    const st = util.formatTimeStart(ev);
+    const status = util.getEventStatus(ev);
+
+    const html = `
+      <div class="popupCard">
+        <div class="popupHeader">
+          <div>
+            <div class="popupPlace">${placeTitle}</div>
+            <div class="popupSub">Evento (link compartido)</div>
+          </div>
+        </div>
+
+        <div class="popupList">
+          <div class="popupItem popupItemHighlight">
+            <div class="popupItemTitle">
+              ${st ? `<span style="opacity:.75;margin-right:6px">${st}</span>` : ""}
+              ${ev.title}
+              ${status ? `<span style="opacity:.6;font-size:.85em;margin-left:6px">${status}</span>` : ""}
+            </div>
+            <div class="popupItemMeta">${util.formatDateDisplay(ev.date)}</div>
+          </div>
+        </div>
+      </div>
+    `;
+
+    const markerOpts = {};
+    try {
+      markerOpts.icon = getCategoryIcon(ev.category || "music");
+      markerOpts.bubblingMouseEvents = false;
+    } catch {}
+
+    const m = L.marker([ev.lat, ev.lng], markerOpts);
+
+    m.bindPopup(html, {
+      closeButton: true,
+      autoPan: true,
+      keepInView: true,
+      autoPanPadding: [16, 16],
+      offset: [0, -10],
+      maxWidth: 260,
+      minWidth: 180
+    });
+
+    if (state.runtime.deepLinkLayer) {
+      m.addTo(state.runtime.deepLinkLayer);
+    } else {
+      m.addTo(state.runtime.map);
+    }
+
+    openMarkerPopupStable(m, ev.lat, ev.lng, 17);
+
+    setTimeout(() => {
+      const el = m.getElement?.();
+      if (el) {
+        el.classList.add("marker-highlight");
+        setTimeout(() => el.classList.remove("marker-highlight"), 900);
+      }
+    }, 50);
+
     return true;
   }
-
-  const placeTitle = util.shortPlaceName(ev.placeName) || "Lugar sin nombre";
-  const st = util.formatTimeStart(ev);
-  const status = util.getEventStatus(ev);
-
-  const html = `
-    <div class="popupCard">
-      <div class="popupHeader">
-        <div>
-          <div class="popupPlace">${placeTitle}</div>
-          <div class="popupSub">Evento (link compartido)</div>
-        </div>
-      </div>
-
-      <div class="popupList">
-        <div class="popupItem popupItemHighlight">
-          <div class="popupItemTitle">
-            ${st ? `<span style="opacity:.75;margin-right:6px">${st}</span>` : ""}
-            ${ev.title}
-            ${status ? `<span style="opacity:.6;font-size:.85em;margin-left:6px">${status}</span>` : ""}
-          </div>
-          <div class="popupItemMeta">${util.formatDateDisplay(ev.date)}</div>
-        </div>
-      </div>
-    </div>
-  `;
-
-  const markerOpts = {};
-  try {
-    markerOpts.icon = getCategoryIcon(ev.category || "music");
-    markerOpts.bubblingMouseEvents = false;
-  } catch {}
-
-  const m = L.marker([ev.lat, ev.lng], markerOpts);
-
-  m.bindPopup(html, {
-    closeButton: true,
-    autoPan: true,
-    keepInView: true,
-    autoPanPadding: [16, 16],
-    offset: [0, -10],
-    maxWidth: 260,
-    minWidth: 180
-  });
-
-  if (state.deepLinkLayer) {
-    m.addTo(state.deepLinkLayer);
-  } else {
-    m.addTo(state.map);
-  }
-
-  openMarkerPopupStable(m, ev.lat, ev.lng, 17);
-
-  setTimeout(() => {
-    const el = m.getElement?.();
-    if (el) {
-      el.classList.add("marker-highlight");
-      setTimeout(() => el.classList.remove("marker-highlight"), 900);
-    }
-  }, 50);
-
-  return true;
-}
 
   /* =========================
      EXPORT MAP MODULE
