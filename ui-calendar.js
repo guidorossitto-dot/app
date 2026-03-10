@@ -161,18 +161,18 @@
      LISTAS
   ========================= */
   function renderEvents(list = state.logic.events) {
-    const ul = document.getElementById("eventList");
-    if (!ul) return;
+  const ul = document.getElementById("eventList");
+  if (!ul) return;
 
-    const onlyFuture = util.filterByActiveCategory(util.getFutureEvents(list));
+  const onlyFuture = selectors.getVisibleFutureEvents(list);
 
-    if (!onlyFuture || onlyFuture.length === 0) {
-      ul.innerHTML = "<li>No hay próximos eventos</li>";
-      return;
-    }
-
-    renderGroupedList(ul, onlyFuture);
+  if (!onlyFuture || onlyFuture.length === 0) {
+    ul.innerHTML = "<li>No hay próximos eventos</li>";
+    return;
   }
+
+  renderGroupedList(ul, onlyFuture);
+}
 
   function renderNearbyEvents(list = state.logic.nearbyEvents) {
     const ul = document.getElementById("nearbyList");
@@ -187,18 +187,18 @@
   }
 
   function renderTodayEvents(list = state.logic.events) {
-    const ul = document.getElementById("todayEvents");
-    if (!ul) return;
+  const ul = document.getElementById("todayEvents");
+  if (!ul) return;
 
-    const todayEvents = util.filterByActiveCategory(util.getTodayEvents(list));
+  const todayEvents = selectors.getVisibleTodayEvents(list);
 
-    if (!todayEvents || todayEvents.length === 0) {
-      ul.innerHTML = "<li>No hay eventos hoy</li>";
-      return;
-    }
-
-    renderGroupedList(ul, todayEvents);
+  if (!todayEvents || todayEvents.length === 0) {
+    ul.innerHTML = "<li>No hay eventos hoy</li>";
+    return;
   }
+
+  renderGroupedList(ul, todayEvents);
+}
 
   function renderEventsIntoUl(ulId, list, emptyMsg) {
     const ul = document.getElementById(ulId);
@@ -858,18 +858,13 @@
     }
   }
 
-  function bindPublicUI() {
-    const autoBtn = document.getElementById("autoLocationBtn");
-    const searchBtn = document.getElementById("searchNearbyBtn");
+ function bindPublicUI() {
+  const searchBtn = document.getElementById("searchNearbyBtn");
 
-    if (autoBtn) {
-      autoBtn.addEventListener("click", () => App.map?.useMyLocation?.());
-    }
-
-    if (searchBtn && !searchBtn.classList.contains("debugHidden")) {
-      searchBtn.addEventListener("click", () => App.map?.searchNearbyFromInputs?.());
-    }
+  if (searchBtn && !searchBtn.classList.contains("debugHidden")) {
+    searchBtn.addEventListener("click", () => App.map?.searchNearbyFromInputs?.());
   }
+}
 
   function bindDeleteEventUI() {
     document.addEventListener("click", (e) => {

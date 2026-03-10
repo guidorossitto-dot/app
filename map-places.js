@@ -52,7 +52,7 @@
   function uiSetView(lat, lng, zoom) {
   if (!state.runtime.map) return;
 
-  state.runtime.uiPanZoomInProgress = true;
+  App.events?.setUiPanZoomInProgress?.(true);
   try {
     state.runtime.map.setView([lat, lng], zoom, { animate: true });
   } finally {
@@ -111,7 +111,7 @@
   const targetZoom = Math.max(state.runtime.map.getZoom(), zoom);
 
   const doOpen = () => {
-    state.runtime.uiPanZoomInProgress = true;
+    App.events?.setUiPanZoomInProgress?.(true);
 
     try {
       state.runtime.map.setView([lat, lng], targetZoom, { animate: true });
@@ -127,7 +127,7 @@
       }, 120);
     } finally {
       setTimeout(() => {
-        state.runtime.uiPanZoomInProgress = false;
+        App.events?.setUiPanZoomInProgress?.(false);
       }, 300);
     }
   };
@@ -500,8 +500,8 @@ return;
 
   App.actions?.setNearbyCenter?.({ lat, lng });
 
-  const nearby = util.getNearbyTodayEvents(lat, lng, state.logic.events || []);
-  App.actions?.setNearbyEvents?.(nearby);;
+const nearby = util.getNearbyTodayEvents(lat, lng, state.logic.events || []);
+App.actions?.setNearbyEvents?.(nearby);
 
   return state.logic.nearbyEvents;
 }
@@ -585,7 +585,7 @@ return;
 
   function findCanonicalPlace(placeName, lat, lng) {
     const targetName = normalizePlaceText(util.shortPlaceName(placeName));
-    const all = state.events || [];
+    const all = state.logic.events || [];
 
     if (!util.isValidCoord(lat) || !util.isValidCoord(lng)) return null;
     if (!targetName) return null;
@@ -661,8 +661,8 @@ return;
       category
     };
 
-    if (state.editingEventId) {
-      const result = events.replaceEvent(state.editingEventId, patch);
+    if (state.logic.editingEventId) {
+  const result = events.replaceEvent(state.logic.editingEventId, patch);
 
       if (!result.ok) {
         alert("No se pudo guardar la edición.");
@@ -886,11 +886,11 @@ return;
         const lat = Number(r.lat);
         const lng = Number(r.lon);
 
-        if (state.map) state.map.closePopup();
+        if (state.runtime.map) state.runtime.map.closePopup();
 
-        if (state.map && Number.isFinite(lat) && Number.isFinite(lng)) {
-          state.map.setView([lat, lng], 16);
-        }
+        if (state.runtime.map && Number.isFinite(lat) && Number.isFinite(lng)) {
+        state.runtime.map.setView([lat, lng], 16);
+      }
 
         const latEl = document.getElementById("eventLat");
         const lngEl = document.getElementById("eventLng");
@@ -905,7 +905,7 @@ return;
           titleEl.value = r.name || r.display_name.split(",")[0];
         }
 
-        if (state.isLoggedIn) prepareEventCreation(lat, lng);
+        if (state.logic.isLoggedIn) prepareEventCreation(lat, lng);
 
         const resultsUl = document.getElementById("placeResults");
         if (resultsUl) resultsUl.innerHTML = "";
