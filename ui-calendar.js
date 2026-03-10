@@ -781,27 +781,26 @@
 
     if (prevMonthBtn) {
       prevMonthBtn.addEventListener("click", () => {
-        App.events?.setCalendarCursor?.(
-          new Date(
-            state.logic.calendarCursor.getFullYear(),
-            state.logic.calendarCursor.getMonth() - 1,
-            1
-          )
-        );
-
+        App.actions?.setCalendarMonth?.(
+  new Date(
+    state.logic.calendarCursor.getFullYear(),
+    state.logic.calendarCursor.getMonth() - 1,
+    1
+  )
+);
         renderAll({ rebuildMarkers: false, recomputeNearby: false });
       });
     }
 
     if (nextMonthBtn) {
       nextMonthBtn.addEventListener("click", () => {
-        App.events?.setCalendarCursor?.(
-          new Date(
-            state.logic.calendarCursor.getFullYear(),
-            state.logic.calendarCursor.getMonth() + 1,
-            1
-          )
-        );
+       App.actions?.setCalendarMonth?.(
+  new Date(
+    state.logic.calendarCursor.getFullYear(),
+    state.logic.calendarCursor.getMonth() + 1,
+    1
+  )
+);
 
         renderAll({ rebuildMarkers: false, recomputeNearby: false });
       });
@@ -828,7 +827,7 @@
 
     if (loginBtn) {
       loginBtn.addEventListener("click", () => {
-        App.events?.login?.();
+        App.actions?.login?.();
 
         if (state.runtime.map) state.runtime.map.closePopup();
 
@@ -843,7 +842,7 @@
 
     if (logoutBtn) {
       logoutBtn.addEventListener("click", () => {
-        App.events?.logout?.();
+        App.actions?.logout?.();
 
         if (state.runtime.map) state.runtime.map.closePopup();
 
@@ -888,12 +887,21 @@
       if (!confirm(msg)) return;
 
       const result = App.events?.removeEvent?.(eventId);
-      if (!result?.ok) {
-        alert("No se pudo borrar el evento.");
-        return;
-      }
+if (!result?.ok) {
+  alert("No se pudo borrar el evento.");
+  return;
+}
 
-      App.events.saveAndRefresh({ rebuildMarkers: true });
+if (state.logic.editingEventId === eventId) {
+  App.actions?.stopEditingEvent?.();
+}
+
+App.commit?.({
+  persist: true,
+  purgePast: false,
+  rebuildMarkers: true,
+  recomputeNearby: true
+});
     });
   }
 
@@ -907,7 +915,7 @@
 
     if (cancelBtn) {
       cancelBtn.addEventListener("click", () => {
-        App.events?.setEditingEventId?.(null);
+        App.actions?.stopEditingEvent?.();
 
         const titleEl = document.getElementById("eventTitle");
         const dateEl = document.getElementById("eventDate");
@@ -950,7 +958,7 @@
 
     chips.forEach((btn) => {
       btn.addEventListener("click", () => {
-        App.events?.setActiveCategory?.(btn.dataset.cat || "all");
+        App.actions?.selectCategory?.(btn.dataset.cat || "all");
         paintActive();
         renderAll({ rebuildMarkers: false, recomputeNearby: true });
       });
@@ -968,7 +976,7 @@
     const eventId = (params.get("e") || "").trim();
     if (!eventId) return;
 
-    App.events?.setPendingDeepLinkEventId?.(decodeURIComponent(eventId));
+    App.actions?.queueDeepLink?.(decodeURIComponent(eventId));
   }
 
   function processQueuedDeepLink() {
@@ -977,7 +985,7 @@
 
     const ev = App.events?.findEventById?.(eventId) || null;
     if (!ev) {
-      App.events?.clearPendingDeepLinkEventId?.();
+      App.actions?.clearQueuedDeepLink?.();
       return;
     }
 
@@ -990,7 +998,7 @@
       state.logic.activeCategory !== "all" &&
       state.logic.activeCategory !== ev.category
     ) {
-      App.events?.setActiveCategory?.("all");
+      App.actions?.selectCategory?.("all");
       categoryReset = true;
 
       const row = document.getElementById("categoryChips");
@@ -1020,7 +1028,7 @@
       if (!ok) setTimeout(() => App.map?.focusEventById?.(eventId), 250);
     }
 
-    App.events?.clearPendingDeepLinkEventId?.();
+    App.actions?.clearQueuedDeepLink?.();
   }
 
   /* =========================
