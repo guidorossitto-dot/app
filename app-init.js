@@ -3,14 +3,18 @@
   "use strict";
 
   const App = window.App;
-  const { state, storage } = App;
+  const { state } = App;
 
   function bootAfterMapReady() {
     if (state._bootReady) return;
 
-    storage.loadEvents();
-    storage.loadLoginState();
-    if (storage.purgePastEvents()) storage.saveEvents();
+    App.events?.hydrateEventsFromStorage?.();
+    App.events?.hydrateLoginFromStorage?.();
+
+    const purged = App.events?.purgePastEventsInState?.();
+    if (purged?.changed) {
+      App.events?.persistEvents?.();
+    }
 
     App.events?.setCalendarCursor?.(new Date());
 
@@ -30,7 +34,7 @@
 
     App.renderAll?.({ rebuildMarkers: true });
 
-    state._bootReady = true;
+    App.events?.setBootReady?.(true);
     App.ui?.processQueuedDeepLink?.();
 
     setInterval(() => {

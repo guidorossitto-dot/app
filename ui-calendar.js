@@ -1,8 +1,9 @@
+// ui-calendar.js
 (() => {
   "use strict";
 
   const App = window.App;
-  const { util, state, storage, selectors } = App;
+  const { util, state, selectors } = App;
 
   /* =========================
      CATEGORY HTML HELPERS
@@ -46,7 +47,7 @@
             ${util.formatDateDisplay(ev.date)}
           </div>
 
-                   <div style="margin-top:4px;display:flex;gap:10px;font-size:.85em;align-items:center;flex-wrap:wrap">
+          <div style="margin-top:4px;display:flex;gap:10px;font-size:.85em;align-items:center;flex-wrap:wrap">
             <button class="linkBtn"
               data-lat="${ev.lat}"
               data-lng="${ev.lng}"
@@ -229,7 +230,7 @@
             </div>
             <div class="eventPlace">
               ${ev.placeName ? `<div>${util.shortPlaceName(ev.placeName)}</div>` : ""}
-               <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+              <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
                 <button class="linkBtn"
                   data-lat="${ev.lat}"
                   data-lng="${ev.lng}"
@@ -269,158 +270,158 @@
   }
 
   function updateNearbyCount(list = state.nearbyEvents) {
-  const topEl = document.getElementById("nearbyCount");
-  const bottomEl = document.getElementById("nearbySummaryBlock");
+    const topEl = document.getElementById("nearbyCount");
+    const bottomEl = document.getElementById("nearbySummaryBlock");
 
-  if (topEl) topEl.innerHTML = "";
-  if (bottomEl) bottomEl.innerHTML = "";
+    if (topEl) topEl.innerHTML = "";
+    if (bottomEl) bottomEl.innerHTML = "";
 
-  if (!topEl && !bottomEl) return;
+    if (!topEl && !bottomEl) return;
 
-  if (!list || list.length === 0) {
-    if (topEl) {
-      topEl.innerHTML = `
-        <div class="mapActionBar mapActionBar--insideNearby">
-          <button id="autoLocationBtnInline" class="primaryMapActionBtn">📍 Eventos cerca mío</button>
-        </div>
-        <div class="nearbyInlineEmpty">
-          No hay eventos cerca tuyo hoy
-        </div>
-      `;
-    }
-
-    if (bottomEl) {
-      bottomEl.innerHTML = `
-        <div class="nearbyInlineEmpty">
-          No hay eventos cerca tuyo hoy
-        </div>
-      `;
-    }
-
-    const inlineBtn = document.getElementById("autoLocationBtnInline");
-    if (inlineBtn) inlineBtn.addEventListener("click", () => App.map?.useMyLocation?.());
-
-    return;
-  }
-
-  const today = util.todayStrYYYYMMDD();
-  const todayList = (list || []).filter((ev) => (ev?.date || "").slice(0, 10) === today);
-
-  if (todayList.length === 0) {
-    if (topEl) {
-      topEl.innerHTML = `
-        <div class="mapActionBar mapActionBar--insideNearby">
-          <button id="autoLocationBtnInline" class="primaryMapActionBtn">📍 Eventos cerca mío</button>
-        </div>
-        <div class="nearbyInlineEmpty">
-          No hay eventos cerca tuyo hoy
-        </div>
-      `;
-    }
-
-    if (bottomEl) {
-      bottomEl.innerHTML = `
-        <div class="nearbyInlineEmpty">
-          No hay eventos cerca tuyo hoy
-        </div>
-      `;
-    }
-
-    const inlineBtn = document.getElementById("autoLocationBtnInline");
-    if (inlineBtn) inlineBtn.addEventListener("click", () => App.map?.useMyLocation?.());
-
-    return;
-  }
-
-  const cat = state.activeCategory || "all";
-  const catChip = cat === "all" ? "" : `<span class="miniChip">${util.categoryLabel(cat)}</span>`;
-
-  const featuredList = selectors.getFeaturedNearbyEvents(todayList);
-  const mainFeatured = featuredList[0] || null;
-  const extraFeatured = featuredList.slice(1);
-
-  function renderFeaturedCard(featured) {
-    const featuredStatus = util.getEventStatus(featured);
-    const featuredPlace = util.shortPlaceName(featured.placeName) || "Lugar sin nombre";
-    const featuredKey = util.smartLocationKey(featured, state.events || []);
-
-    return `
-      <div class="featuredBox">
-        <div class="featuredTop">
-          <div class="featuredKicker">
-            <span class="featuredFire">🔥</span>
-            <span>DESTACADO ${catChip ? "· " + catChip : ""}</span>
+    if (!list || list.length === 0) {
+      if (topEl) {
+        topEl.innerHTML = `
+          <div class="mapActionBar mapActionBar--insideNearby">
+            <button id="autoLocationBtnInline" class="primaryMapActionBtn">📍 Eventos cerca mío</button>
           </div>
-          <button class="linkBtn"
-            data-lat="${featured.lat}"
-            data-lng="${featured.lng}"
-            data-key="${featuredKey}">
-            Ver en mapa
-          </button>
-        </div>
+          <div class="nearbyInlineEmpty">
+            No hay eventos cerca tuyo hoy
+          </div>
+        `;
+      }
 
-        <div class="featuredTitle">
-          ${util.formatTimeStart(featured) ? `<span style="opacity:.75;margin-right:6px">${util.formatTimeStart(featured)}</span>` : ""}
-          ${featured.title}
-          ${featuredStatus ? `<span style="opacity:.6;font-size:.85em;margin-left:6px">${featuredStatus}</span>` : ""}
-        </div>
+      if (bottomEl) {
+        bottomEl.innerHTML = `
+          <div class="nearbyInlineEmpty">
+            No hay eventos cerca tuyo hoy
+          </div>
+        `;
+      }
 
-        <div class="featuredMeta">
-          ${featuredPlace} · ${util.formatDateDisplay(featured.date)}
+      const inlineBtn = document.getElementById("autoLocationBtnInline");
+      if (inlineBtn) inlineBtn.addEventListener("click", () => App.map?.useMyLocation?.());
+
+      return;
+    }
+
+    const today = util.todayStrYYYYMMDD();
+    const todayList = (list || []).filter((ev) => (ev?.date || "").slice(0, 10) === today);
+
+    if (todayList.length === 0) {
+      if (topEl) {
+        topEl.innerHTML = `
+          <div class="mapActionBar mapActionBar--insideNearby">
+            <button id="autoLocationBtnInline" class="primaryMapActionBtn">📍 Eventos cerca mío</button>
+          </div>
+          <div class="nearbyInlineEmpty">
+            No hay eventos cerca tuyo hoy
+          </div>
+        `;
+      }
+
+      if (bottomEl) {
+        bottomEl.innerHTML = `
+          <div class="nearbyInlineEmpty">
+            No hay eventos cerca tuyo hoy
+          </div>
+        `;
+      }
+
+      const inlineBtn = document.getElementById("autoLocationBtnInline");
+      if (inlineBtn) inlineBtn.addEventListener("click", () => App.map?.useMyLocation?.());
+
+      return;
+    }
+
+    const cat = state.activeCategory || "all";
+    const catChip = cat === "all" ? "" : `<span class="miniChip">${util.categoryLabel(cat)}</span>`;
+
+    const featuredList = selectors.getFeaturedNearbyEvents(todayList);
+    const mainFeatured = featuredList[0] || null;
+    const extraFeatured = featuredList.slice(1);
+
+    function renderFeaturedCard(featured) {
+      const featuredStatus = util.getEventStatus(featured);
+      const featuredPlace = util.shortPlaceName(featured.placeName) || "Lugar sin nombre";
+      const featuredKey = util.smartLocationKey(featured, state.events || []);
+
+      return `
+        <div class="featuredBox">
+          <div class="featuredTop">
+            <div class="featuredKicker">
+              <span class="featuredFire">🔥</span>
+              <span>DESTACADO ${catChip ? "· " + catChip : ""}</span>
+            </div>
+            <button class="linkBtn"
+              data-lat="${featured.lat}"
+              data-lng="${featured.lng}"
+              data-key="${featuredKey}">
+              Ver en mapa
+            </button>
+          </div>
+
+          <div class="featuredTitle">
+            ${util.formatTimeStart(featured) ? `<span style="opacity:.75;margin-right:6px">${util.formatTimeStart(featured)}</span>` : ""}
+            ${featured.title}
+            ${featuredStatus ? `<span style="opacity:.6;font-size:.85em;margin-left:6px">${featuredStatus}</span>` : ""}
+          </div>
+
+          <div class="featuredMeta">
+            ${featuredPlace} · ${util.formatDateDisplay(featured.date)}
+          </div>
         </div>
-      </div>
-    `;
+      `;
+    }
+
+    const featuredHTML = mainFeatured
+      ? `
+        <div class="featuredStack">
+          ${renderFeaturedCard(mainFeatured)}
+
+          ${
+            extraFeatured.length
+              ? `
+                <details class="featuredAccordion">
+                  <summary class="featuredAccordionSummary">
+                    🔥 Ver otros ${extraFeatured.length} destacado${extraFeatured.length === 1 ? "" : "s"}
+                  </summary>
+                  <div class="featuredAccordionBody">
+                    ${extraFeatured.map(renderFeaturedCard).join("")}
+                  </div>
+                </details>
+              `
+              : ""
+          }
+        </div>
+      `
+      : "";
+
+    const n = todayList.length;
+    const header = n === 1 ? "1 evento cerca" : `${n} eventos cerca`;
+
+    if (topEl) {
+      topEl.innerHTML = `
+        ${featuredHTML}
+        <div class="mapActionBar mapActionBar--insideNearby">
+          <button id="autoLocationBtnInline" class="primaryMapActionBtn">📍 Eventos cerca mío</button>
+        </div>
+      `;
+    }
+
+    if (bottomEl) {
+      bottomEl.innerHTML = `
+        <div class="nearbyInlineHeader">
+          <span class="nearbyInlineCount">${header}</span>
+          ${catChip}
+        </div>
+      `;
+    }
+
+    const inlineBtn = document.getElementById("autoLocationBtnInline");
+    if (inlineBtn) inlineBtn.addEventListener("click", () => App.map?.useMyLocation?.());
   }
 
-  const featuredHTML = mainFeatured
-    ? `
-      <div class="featuredStack">
-        ${renderFeaturedCard(mainFeatured)}
-
-        ${
-          extraFeatured.length
-            ? `
-              <details class="featuredAccordion">
-                <summary class="featuredAccordionSummary">
-                  🔥 Ver otros ${extraFeatured.length} destacado${extraFeatured.length === 1 ? "" : "s"}
-                </summary>
-                <div class="featuredAccordionBody">
-                  ${extraFeatured.map(renderFeaturedCard).join("")}
-                </div>
-              </details>
-            `
-            : ""
-        }
-      </div>
-    `
-    : "";
-
-  const n = todayList.length;
-  const header = n === 1 ? "1 evento cerca" : `${n} eventos cerca`;
-
-  if (topEl) {
-    topEl.innerHTML = `
-      ${featuredHTML}
-      <div class="mapActionBar mapActionBar--insideNearby">
-        <button id="autoLocationBtnInline" class="primaryMapActionBtn">📍 Eventos cerca mío</button>
-      </div>
-    `;
-  }
-
-  if (bottomEl) {
-    bottomEl.innerHTML = `
-      <div class="nearbyInlineHeader">
-        <span class="nearbyInlineCount">${header}</span>
-        ${catChip}
-      </div>
-    `;
-  }
-
-  const inlineBtn = document.getElementById("autoLocationBtnInline");
-  if (inlineBtn) inlineBtn.addEventListener("click", () => App.map?.useMyLocation?.());
-}
-
-    function renderList() {
+  function renderList() {
     renderTodayEvents();
     renderEvents();
     renderNearbyEvents(state.nearbyEvents);
@@ -787,7 +788,8 @@
             1
           )
         );
-        App.renderAll?.({ rebuildMarkers: false });
+
+        renderAll({ rebuildMarkers: false, recomputeNearby: false });
       });
     }
 
@@ -800,42 +802,21 @@
             1
           )
         );
-        App.renderAll?.({ rebuildMarkers: false });
+
+        renderAll({ rebuildMarkers: false, recomputeNearby: false });
       });
     }
   }
 
   /* =========================
-     CORE: renderAll + commit
+     CORE WRAPPERS (compat SSOT)
   ========================= */
   function renderAll(opts = {}) {
-    const {
-      rebuildMarkers = true,
-      recomputeNearby = true
-    } = opts;
-
-    if (recomputeNearby && state.nearbyCenter && App.map?.recomputeNearbyEvents) {
-      App.map.recomputeNearbyEvents(state.nearbyCenter.lat, state.nearbyCenter.lng);
-    }
-
-    renderAppShell();
-    renderList();
-    renderCalendar();
-
-    if (App.map?.renderMap) {
-      App.map.renderMap({ rebuildMarkers });
-    }
+    return App.renderAll?.(opts);
   }
 
   function commit(opts = {}) {
-    if (App.commit) {
-      App.commit(opts);
-      return;
-    }
-
-    storage.purgePastEvents();
-    storage.saveEvents();
-    renderAll(opts);
+    return App.commit?.(opts);
   }
 
   /* =========================
@@ -847,24 +828,33 @@
 
     if (loginBtn) {
       loginBtn.addEventListener("click", () => {
-        state.isLoggedIn = true;
-        storage.saveLoginState();
+        App.events?.login?.();
 
         if (state.map) state.map.closePopup();
 
-        renderAll({ rebuildMarkers: true, recomputeNearby: true });
+        commit({
+          persist: true,
+          purgePast: false,
+          rebuildMarkers: true,
+          recomputeNearby: true
+        });
       });
     }
 
     if (logoutBtn) {
       logoutBtn.addEventListener("click", () => {
-        state.isLoggedIn = false;
-        storage.saveLoginState();
+        App.events?.logout?.();
 
         if (state.map) state.map.closePopup();
 
         App.map?.clearEventCreationMarker?.();
-        renderAll({ rebuildMarkers: true, recomputeNearby: true });
+
+        commit({
+          persist: true,
+          purgePast: false,
+          rebuildMarkers: true,
+          recomputeNearby: true
+        });
       });
     }
   }
@@ -873,7 +863,9 @@
     const autoBtn = document.getElementById("autoLocationBtn");
     const searchBtn = document.getElementById("searchNearbyBtn");
 
-    if (autoBtn) autoBtn.addEventListener("click", () => App.map?.useMyLocation?.());
+    if (autoBtn) {
+      autoBtn.addEventListener("click", () => App.map?.useMyLocation?.());
+    }
 
     if (searchBtn && !searchBtn.classList.contains("debugHidden")) {
       searchBtn.addEventListener("click", () => App.map?.searchNearbyFromInputs?.());
@@ -960,7 +952,7 @@
       btn.addEventListener("click", () => {
         App.events?.setActiveCategory?.(btn.dataset.cat || "all");
         paintActive();
-        App.renderAll?.({ rebuildMarkers: false });
+        renderAll({ rebuildMarkers: false, recomputeNearby: true });
       });
     });
   }
@@ -976,7 +968,7 @@
     const eventId = (params.get("e") || "").trim();
     if (!eventId) return;
 
-    state._pendingDeepLinkEventId = decodeURIComponent(eventId);
+    App.events?.setPendingDeepLinkEventId?.(decodeURIComponent(eventId));
   }
 
   function processQueuedDeepLink() {
@@ -985,7 +977,7 @@
 
     const ev = App.events?.findEventById?.(eventId) || null;
     if (!ev) {
-      state._pendingDeepLinkEventId = null;
+      App.events?.clearPendingDeepLinkEventId?.();
       return;
     }
 
@@ -1028,7 +1020,7 @@
       if (!ok) setTimeout(() => App.map?.focusEventById?.(eventId), 250);
     }
 
-    state._pendingDeepLinkEventId = null;
+    App.events?.clearPendingDeepLinkEventId?.();
   }
 
   /* =========================
@@ -1043,13 +1035,12 @@
     processQueuedDeepLink();
   });
 
-    document.addEventListener("click", (e) => {
+  document.addEventListener("click", (e) => {
     const btn = e.target.closest(".routeBtn");
     if (!btn) return;
 
     const toLat = Number(btn.dataset.lat);
     const toLng = Number(btn.dataset.lng);
-    const place = decodeURIComponent((btn.dataset.place || "").trim());
 
     const fromLat = state.nearbyCenter?.lat;
     const fromLng = state.nearbyCenter?.lng;
@@ -1072,12 +1063,11 @@
 
     window.open(url, "_blank", "noopener");
   });
-  
+
   /* =========================
      EXPORT UI MODULE
   ========================= */
-   
-    App.ui = {
+  App.ui = {
     renderAppShell,
     renderList,
     renderEvents,

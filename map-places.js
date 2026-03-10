@@ -448,7 +448,7 @@ function rebuildLocationMarkers(list = state.events) {
           setTimeout(() => row.classList.remove("popupItemHighlight"), 1600);
         }
 
-        state._pendingOpenEventId = null;
+        App.events?.clearPendingOpenEventId?.();
       }
     });
 
@@ -968,7 +968,7 @@ function rebuildLocationMarkers(list = state.events) {
   }
 
   if (loc?.marker) {
-    state._pendingOpenEventId = id;
+    App.events?.setPendingOpenEventId?.(id);
     openMarkerPopupStable(loc.marker, ev.lat, ev.lng, 17);
     return true;
   }

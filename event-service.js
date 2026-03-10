@@ -1,3 +1,4 @@
+// event-service.js
 (() => {
   "use strict";
 
@@ -21,6 +22,9 @@
     return ensureEventsArray().some((ev) => String(ev.id) === id);
   }
 
+  /* =========================
+     READ API
+  ========================= */
   function getAllEvents() {
     return ensureEventsArray();
   }
@@ -31,11 +35,55 @@
     return ensureEventsArray().find((ev) => String(ev.id) === id) || null;
   }
 
+  /* =========================
+     HYDRATION / PERSISTENCE BRIDGE
+  ========================= */
   function setAllEvents(list) {
     state.events = sanitizeEventsList(list);
     return state.events;
   }
 
+  function hydrateEventsFromStorage() {
+    const loaded = storage?.readEvents?.() || [];
+    state.events = sanitizeEventsList(loaded);
+    return state.events;
+  }
+
+  function purgePastEventsInState() {
+    const current = ensureEventsArray();
+    const purged = storage?.purgePastEvents?.(current) || [];
+    const changed = purged.length !== current.length;
+
+    state.events = sanitizeEventsList(purged);
+    return {
+      changed,
+      events: state.events
+    };
+  }
+
+  function persistEvents() {
+    storage?.saveEvents?.(state.events);
+    return state.events;
+  }
+
+  function setLoginState(isLoggedIn) {
+    state.isLoggedIn = !!isLoggedIn;
+    return state.isLoggedIn;
+  }
+
+  function hydrateLoginFromStorage() {
+    state.isLoggedIn = !!storage?.readLoginState?.();
+    return state.isLoggedIn;
+  }
+
+  function persistLoginState() {
+    storage?.saveLoginState?.(state.isLoggedIn);
+    return state.isLoggedIn;
+  }
+
+  /* =========================
+     EVENT WRITES
+  ========================= */
   function addEvent(rawEvent) {
     const ev = util.normalizeEvent(rawEvent);
 
@@ -108,6 +156,17 @@
     return { ok: true, error: null };
   }
 
+  /* =========================
+     UI / APP STATE WRITES
+  ========================= */
+  function login() {
+    return setLoginState(true);
+  }
+
+  function logout() {
+    return setLoginState(false);
+  }
+
   function setActiveCategory(category) {
     state.activeCategory =
       category === App.CFG.CATEGORY_ALL
@@ -146,35 +205,43 @@
     return state.nearbyEvents;
   }
 
+  function setPendingOpenEventId(eventId) {
+    state._pendingOpenEventId = eventId ? String(eventId).trim() : null;
+    return state._pendingOpenEventId;
+  }
+
+  function clearPendingOpenEventId() {
+    state._pendingOpenEventId = null;
+    return state._pendingOpenEventId;
+  }
+
+  function setPendingDeepLinkEventId(eventId) {
+    state._pendingDeepLinkEventId = eventId ? String(eventId).trim() : null;
+    return state._pendingDeepLinkEventId;
+  }
+
+  function clearPendingDeepLinkEventId() {
+    state._pendingDeepLinkEventId = null;
+    return state._pendingDeepLinkEventId;
+  }
+
+  function setBootReady(flag) {
+    state._bootReady = !!flag;
+    return state._bootReady;
+  }
+
+  function setUiPanZoomInProgress(flag) {
+    state._uiPanZoomInProgress = !!flag;
+    return state._uiPanZoomInProgress;
+  }
+
+  /* =========================
+     COMMIT / REFRESH
+  ========================= */
   function commit(opts = {}) {
-    if (App.commit) {
+    if (typeof App.commit === "function") {
       App.commit(opts);
-      return;
     }
-
-    const {
-      persist = true,
-      purgePast = true,
-      rebuildMarkers = true,
-      recomputeNearby = true
-    } = opts;
-
-    if (purgePast) {
-      storage.purgePastEvents();
-    }
-
-    if (persist) {
-      storage.saveEvents();
-    }
-
-    if (recomputeNearby && state.nearbyCenter && App.map?.recomputeNearbyEvents) {
-      App.map.recomputeNearbyEvents(
-        state.nearbyCenter.lat,
-        state.nearbyCenter.lng
-      );
-    }
-
-    App.renderAll?.({ rebuildMarkers });
   }
 
   function saveAndRefresh(opts = {}) {
@@ -189,18 +256,36 @@
 
   App.events = {
     getAllEvents,
-    setAllEvents,
     findEventById,
+
+    setAllEvents,
+    hydrateEventsFromStorage,
+    purgePastEventsInState,
+    persistEvents,
+
+    setLoginState,
+    hydrateLoginFromStorage,
+    persistLoginState,
+
     addEvent,
     replaceEvent,
     removeEvent,
     clearAllEvents,
 
+    login,
+    logout,
     setActiveCategory,
     setCalendarCursor,
     setEditingEventId,
     setNearbyCenter,
     setNearbyEvents,
+
+    setPendingOpenEventId,
+    clearPendingOpenEventId,
+    setPendingDeepLinkEventId,
+    clearPendingDeepLinkEventId,
+    setBootReady,
+    setUiPanZoomInProgress,
 
     commit,
     saveAndRefresh

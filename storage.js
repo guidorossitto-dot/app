@@ -32,54 +32,52 @@
   /* =========================
      EVENTS
   ========================= */
-  function saveEvents() {
-    const list = Array.isArray(state.events) ? state.events : [];
-    localStorage.setItem(STORAGE_KEYS.EVENTS, JSON.stringify(list));
+  function saveEvents(list = state.events) {
+    const safeList = Array.isArray(list) ? list : [];
+    localStorage.setItem(STORAGE_KEYS.EVENTS, JSON.stringify(safeList));
   }
 
-  function loadEvents() {
+  function readEvents() {
     const stored = localStorage.getItem(STORAGE_KEYS.EVENTS);
-
-    if (!stored) {
-      state.events = [];
-      return state.events;
-    }
+    if (!stored) return [];
 
     const parsed = safeParseJSON(stored, []);
-    state.events = sanitizeLoadedEvents(parsed);
-    return state.events;
+    return sanitizeLoadedEvents(parsed);
   }
 
-  function purgePastEvents() {
+  function purgePastEvents(list = state.events) {
     const today = util.todayStrYYYYMMDD();
-    const before = Array.isArray(state.events) ? state.events.length : 0;
+    const safeList = Array.isArray(list) ? list : [];
 
-    state.events = (Array.isArray(state.events) ? state.events : []).filter(
-      (ev) => ev?.date && ev.date >= today
-    );
+    return safeList.filter((ev) => ev?.date && ev.date >= today);
+  }
 
-    return state.events.length !== before;
+  function hasPastEvents(list = state.events) {
+    const safeList = Array.isArray(list) ? list : [];
+    const purged = purgePastEvents(safeList);
+    return purged.length !== safeList.length;
   }
 
   /* =========================
      LOGIN
   ========================= */
-  function saveLoginState() {
-    localStorage.setItem(STORAGE_KEYS.LOGIN, JSON.stringify(!!state.isLoggedIn));
+  function saveLoginState(value = state.isLoggedIn) {
+    localStorage.setItem(STORAGE_KEYS.LOGIN, JSON.stringify(!!value));
   }
 
-  function loadLoginState() {
+  function readLoginState() {
     const stored = localStorage.getItem(STORAGE_KEYS.LOGIN);
     const parsed = safeParseJSON(stored, false);
-    state.isLoggedIn = !!parsed;
-    return state.isLoggedIn;
+    return !!parsed;
   }
 
   App.storage = {
     saveEvents,
-    loadEvents,
+    readEvents,
+    purgePastEvents,
+    hasPastEvents,
+
     saveLoginState,
-    loadLoginState,
-    purgePastEvents
+    readLoginState
   };
 })();

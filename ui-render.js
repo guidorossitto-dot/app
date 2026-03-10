@@ -1,3 +1,4 @@
+// ui-render.js
 (() => {
   "use strict";
 
@@ -5,6 +6,18 @@
 
   function renderAll(opts = {}) {
     const rebuildMarkers = opts.rebuildMarkers ?? true;
+    const recomputeNearby = opts.recomputeNearby ?? true;
+
+    if (
+      recomputeNearby &&
+      App.state?.nearbyCenter &&
+      App.map?.recomputeNearbyEvents
+    ) {
+      App.map.recomputeNearbyEvents(
+        App.state.nearbyCenter.lat,
+        App.state.nearbyCenter.lng
+      );
+    }
 
     App.ui?.renderAppShell?.();
     App.ui?.renderList?.();
@@ -22,25 +35,18 @@
     } = opts;
 
     if (purgePast) {
-      App.storage?.purgePastEvents?.();
+      const purged = App.events?.purgePastEventsInState?.();
+      if (persist && purged?.changed) {
+        App.events?.persistEvents?.();
+      }
     }
 
     if (persist) {
-      App.storage?.saveEvents?.();
+      App.events?.persistEvents?.();
+      App.events?.persistLoginState?.();
     }
 
-    if (
-      recomputeNearby &&
-      App.state?.nearbyCenter &&
-      App.map?.recomputeNearbyEvents
-    ) {
-      App.map.recomputeNearbyEvents(
-        App.state.nearbyCenter.lat,
-        App.state.nearbyCenter.lng
-      );
-    }
-
-    renderAll({ rebuildMarkers });
+    renderAll({ rebuildMarkers, recomputeNearby });
   }
 
   App.renderAll = renderAll;
