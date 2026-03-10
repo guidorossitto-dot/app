@@ -1538,3 +1538,47 @@ button:active {
     overflow: hidden;
   }
 }
+
+.leaflet-popup-content {
+  margin: 10px 12px;
+}
+
+.leaflet-popup-content-wrapper {
+  border-radius: 12px;
+}
+
+.popupCard {
+  max-width: 240px;
+}
+
+.popupHeader {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: #fff;
+}
+
+.popupList {
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+@media (max-width: 768px) {
+  .popupCard {
+    max-width: 220px;
+    max-height: 260px;
+    overflow: hidden;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .popupList {
+    max-height: 170px;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .leaflet-popup-content {
+    max-height: 280px;
+    overflow: hidden;
+  }
+}

@@ -230,7 +230,7 @@ function rebuildLocationMarkers(list = state.events) {
       closeButton: true,
       autoPan: true,
       keepInView: true,
-      autoPanPadding: [30, 30],
+      autoPanPadding: [16, 16],
       offset: [0, -10],
       maxWidth: 260,
       minWidth: 180
@@ -995,7 +995,7 @@ function rebuildLocationMarkers(list = state.events) {
     closeButton: true,
     autoPan: true,
     keepInView: true,
-    autoPanPadding: [30, 30],
+    autoPanPadding: [16, 16],
     offset: [0, -10],
     maxWidth: 260,
     minWidth: 180
