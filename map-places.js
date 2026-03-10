@@ -105,329 +105,356 @@
   /* =========================
      REBUILD LOCATION MARKERS
   ========================= */
-  function rebuildLocationMarkers(list = state.events) {
-    if (!state.map || !state.markerCluster) return;
+  function openMarkerPopupStable(marker, lat, lng, zoom = 17) {
+  if (!marker || !state.map) return;
 
-    clearEventMarkers();
-    state.locationMarkers = {};
+  const targetZoom = Math.max(state.map.getZoom(), zoom);
 
-    const today = util.todayStrYYYYMMDD();
+  const doOpen = () => {
+    state._uiPanZoomInProgress = true;
 
-    for (const ev of list || []) {
-      if ((ev.date || "").slice(0, 10) !== today) continue;
+    try {
+      state.map.setView([lat, lng], targetZoom, { animate: true });
 
-      const active = state.activeCategory;
-      if (active && active !== "all" && ev.category !== active) continue;
+      setTimeout(() => {
+        try {
+          marker.openPopup();
+        } catch {}
 
-      if (!util.isValidCoord(ev.lat) || !util.isValidCoord(ev.lng)) continue;
+        try {
+          if (typeof glowMarker === "function") glowMarker(marker);
+        } catch {}
+      }, 120);
+    } finally {
+      setTimeout(() => {
+        state._uiPanZoomInProgress = false;
+      }, 300);
+    }
+  };
 
-      const key = util.smartLocationKey(ev, list);
+  if (
+    state.markerCluster &&
+    typeof state.markerCluster.zoomToShowLayer === "function"
+  ) {
+    state.markerCluster.zoomToShowLayer(marker, doOpen);
+  } else {
+    doOpen();
+  }
+}
 
-      if (!state.locationMarkers[key]) {
-        const anchor = util.findPlaceAnchor(ev, list) || {
-          lat: ev.lat,
-          lng: ev.lng,
-          placeName: ev.placeName || ""
-        };
+function rebuildLocationMarkers(list = state.events) {
+  if (!state.map || !state.markerCluster) return;
 
-        const marker = L.marker([anchor.lat, anchor.lng], {
-          bubblingMouseEvents: false,
-          icon: getCategoryIcon(ev.category || "music")
-        });
+  clearEventMarkers();
+  state.locationMarkers = {};
 
-        state.markerCluster.addLayer(marker);
+  const today = util.todayStrYYYYMMDD();
 
-        state.locationMarkers[key] = {
-          marker,
-          events: [],
-          lat: anchor.lat,
-          lng: anchor.lng,
-          placeName: anchor.placeName
-        };
+  for (const ev of list || []) {
+    if ((ev.date || "").slice(0, 10) !== today) continue;
 
-        let clickTimer = null;
+    const active = state.activeCategory;
+    if (active && active !== "all" && ev.category !== active) continue;
 
-        marker.on("click", (e) => {
-          if (e?.originalEvent) L.DomEvent.stop(e.originalEvent);
+    if (!util.isValidCoord(ev.lat) || !util.isValidCoord(ev.lng)) continue;
 
-          if (clickTimer) clearTimeout(clickTimer);
-          clickTimer = setTimeout(() => {
+    const key = util.smartLocationKey(ev, list);
+
+    if (!state.locationMarkers[key]) {
+      const anchor = util.findPlaceAnchor(ev, list) || {
+        lat: ev.lat,
+        lng: ev.lng,
+        placeName: ev.placeName || ""
+      };
+
+      const marker = L.marker([anchor.lat, anchor.lng], {
+        bubblingMouseEvents: false,
+        icon: getCategoryIcon(ev.category || "music")
+      });
+
+      state.markerCluster.addLayer(marker);
+
+      state.locationMarkers[key] = {
+        marker,
+        events: [],
+        lat: anchor.lat,
+        lng: anchor.lng,
+        placeName: anchor.placeName
+      };
+
+      let clickTimer = null;
+
+      marker.on("click", (e) => {
+        if (e?.originalEvent) L.DomEvent.stop(e.originalEvent);
+
+        if (clickTimer) clearTimeout(clickTimer);
+        clickTimer = setTimeout(() => {
+          marker.openPopup();
+          clickTimer = null;
+        }, 180);
+      });
+
+      marker.on("dblclick", (e) => {
+        if (e?.originalEvent) L.DomEvent.stop(e.originalEvent);
+
+        if (clickTimer) {
+          clearTimeout(clickTimer);
+          clickTimer = null;
+        }
+
+        const { lat, lng } = state.locationMarkers[key];
+
+        setUserLocation(lat, lng);
+        recomputeNearbyEvents(lat, lng);
+        state.map.setView([lat, lng], 15);
+
+        setTimeout(() => {
+          try {
             marker.openPopup();
-            clickTimer = null;
-          }, 180);
-        });
+          } catch {}
+        }, 120);
 
-        marker.on("dblclick", (e) => {
-          if (e?.originalEvent) L.DomEvent.stop(e.originalEvent);
+        if (state.isLoggedIn) prepareEventCreation(lat, lng);
 
-          if (clickTimer) {
-            clearTimeout(clickTimer);
-            clickTimer = null;
+        App.renderAll?.({ rebuildMarkers: false });
+      });
+    }
+
+    state.locationMarkers[key].events.push(ev);
+  }
+
+  Object.values(state.locationMarkers).forEach((loc) => {
+    const html = App.map?.buildPlacePopupHTML?.(loc) || "";
+
+    loc.marker.bindPopup(html, {
+      closeButton: true,
+      autoPan: true,
+      keepInView: true,
+      autoPanPadding: [30, 30],
+      offset: [0, -10],
+      maxWidth: 260,
+      minWidth: 180
+    });
+
+    loc.marker.off("popupopen");
+    loc.marker.on("popupopen", (evt) => {
+      const root = evt.popup.getElement();
+      if (!root) return;
+
+      L.DomEvent.disableClickPropagation(root);
+      L.DomEvent.disableScrollPropagation(root);
+
+      const onClick = async (ev) => {
+        const btn = ev.target.closest("button");
+        if (!btn) return;
+
+        ev.preventDefault();
+        ev.stopPropagation();
+
+        if (btn.classList.contains("popupCenterBtn")) {
+          const lat = parseFloat(btn.dataset.lat);
+          const lng = parseFloat(btn.dataset.lng);
+
+          if (!Number.isFinite(lat) || !Number.isFinite(lng) || !state.map) return;
+
+          const marker = loc?.marker;
+          if (!marker) return;
+
+          openMarkerPopupStable(marker, lat, lng, 17);
+          return;
+        }
+
+        if (btn.classList.contains("popupRouteBtn")) {
+          const toLat = Number(btn.dataset.lat);
+          const toLng = Number(btn.dataset.lng);
+
+          const fromLat = state.nearbyCenter?.lat;
+          const fromLng = state.nearbyCenter?.lng;
+
+          if (!Number.isFinite(fromLat) || !Number.isFinite(fromLng)) {
+            alert("Primero marcá tu ubicación o usá “Eventos cerca mío”.");
+            return;
           }
 
-          const { lat, lng } = state.locationMarkers[key];
+          if (!Number.isFinite(toLat) || !Number.isFinite(toLng)) {
+            alert("No se pudo resolver el destino.");
+            return;
+          }
+
+          const url =
+            `https://www.google.com/maps/dir/?api=1` +
+            `&origin=${encodeURIComponent(`${fromLat},${fromLng}`)}` +
+            `&destination=${encodeURIComponent(`${toLat},${toLng}`)}` +
+            `&travelmode=walking`;
+
+          window.open(url, "_blank", "noopener");
+          return;
+        }
+
+        if (btn.classList.contains("popupShareBtn")) {
+          const eventId = decodeURIComponent((btn.dataset.eid || "").trim());
+          if (!eventId) return;
+
+          const title = decodeURIComponent((btn.dataset.title || "").trim());
+          const url = `${location.origin}${location.pathname}#e=${encodeURIComponent(eventId)}`;
+          const shareText = title ? `Evento: ${title}\n${url}` : url;
+
+          if (navigator.share) {
+            try {
+              await navigator.share({
+                title: title || "Evento",
+                text: shareText,
+                url
+              });
+              return;
+            } catch {}
+          }
+
+          try {
+            await navigator.clipboard.writeText(shareText);
+            const prev = btn.textContent;
+            btn.textContent = "Link copiado ✅";
+            setTimeout(() => {
+              btn.textContent = prev || "Compartir";
+            }, 1200);
+          } catch {
+            window.prompt("Copiá este link:", shareText);
+          }
+
+          return;
+        }
+
+        if (btn.classList.contains("popupEditBtn")) {
+          const eventId = decodeURIComponent((btn.dataset.editEid || "").trim());
+          if (!eventId) return;
+
+          const evData = App.events?.findEventById?.(eventId);
+          if (!evData) {
+            alert("No se encontró el evento.");
+            return;
+          }
+
+          App.events?.setEditingEventId?.(eventId);
+
+          const titleEl = document.getElementById("eventTitle");
+          const dateEl = document.getElementById("eventDate");
+          const latEl = document.getElementById("eventLat");
+          const lngEl = document.getElementById("eventLng");
+          const placeEl = document.getElementById("eventPlace");
+          const startEl = document.getElementById("eventStart");
+          const catEl = document.getElementById("eventCategory");
+          const addBtn = document.getElementById("addEventBtn");
+          const cancelBtn = document.getElementById("cancelEditBtn");
+
+          if (titleEl) titleEl.value = evData.title || "";
+          if (dateEl) dateEl.value = evData.date || "";
+          if (latEl) latEl.value = Number(evData.lat).toFixed(6);
+          if (lngEl) lngEl.value = Number(evData.lng).toFixed(6);
+          if (placeEl) placeEl.value = evData.placeName || "";
+          if (startEl) startEl.value = evData.startTime || "";
+          if (catEl) catEl.value = evData.category || "music";
+
+          const adminRow = document.getElementById("adminCategoryChips");
+          if (adminRow) {
+            const chips = [...adminRow.querySelectorAll(".chip[data-cat]")];
+            chips.forEach((b) =>
+              b.classList.toggle("isActive", b.dataset.cat === (evData.category || "music"))
+            );
+          }
+
+          if (addBtn) addBtn.textContent = "Guardar cambios";
+          if (cancelBtn) cancelBtn.hidden = false;
+
+          if (state.map) {
+            prepareEventCreation(evData.lat, evData.lng);
+            state.map.setView([evData.lat, evData.lng], 15);
+          }
+
+          const adminView = document.getElementById("adminView");
+          if (adminView) adminView.hidden = false;
+
+          const titleTarget = document.getElementById("eventTitle");
+          if (titleTarget) {
+            titleTarget.scrollIntoView({ behavior: "smooth", block: "center" });
+            titleTarget.focus();
+          }
+
+          return;
+        }
+
+        if (btn.classList.contains("popupDeleteBtn")) {
+          const eventId = decodeURIComponent((btn.dataset.deleteEid || "").trim());
+          if (!eventId) return;
+
+          const title = decodeURIComponent((btn.dataset.deleteTitle || "").trim());
+          const msg = title
+            ? `¿Seguro que querés borrar "${title}"?`
+            : "¿Seguro que querés borrar este evento?";
+
+          if (!confirm(msg)) return;
+
+          const result = App.events?.removeEvent?.(eventId);
+          if (!result?.ok) {
+            alert("No se pudo borrar el evento.");
+            return;
+          }
+
+          if (state.deepLinkLayer && typeof state.deepLinkLayer.clearLayers === "function") {
+            state.deepLinkLayer.clearLayers();
+          }
+
+          App.events.saveAndRefresh({ rebuildMarkers: true });
+          return;
+        }
+
+        if (btn.classList.contains("popupAddBtn")) {
+          const lat = Number(btn.dataset.lat);
+          const lng = Number(btn.dataset.lng);
+          const place = decodeURIComponent(btn.dataset.place || "");
+
+          if (!Number.isFinite(lat) || !Number.isFinite(lng) || !state.map) return;
 
           setUserLocation(lat, lng);
           recomputeNearbyEvents(lat, lng);
           state.map.setView([lat, lng], 15);
-          marker.openPopup();
 
-          if (state.isLoggedIn) prepareEventCreation(lat, lng);
+          prepareEventCreation(lat, lng);
+
+          const placeEl = document.getElementById("eventPlace");
+          if (placeEl && place && !placeEl.value.trim()) placeEl.value = place;
+
+          const titleEl = document.getElementById("eventTitle");
+          if (titleEl) titleEl.focus();
 
           App.renderAll?.({ rebuildMarkers: false });
-        });
-      }
-
-      state.locationMarkers[key].events.push(ev);
-    }
-
-    Object.values(state.locationMarkers).forEach((loc) => {
-      const html = App.map?.buildPlacePopupHTML?.(loc) || "";
-
-      loc.marker.bindPopup(html, {
-        closeButton: true,
-        autoPan: true,
-        keepInView: true,
-        autoPanPadding: [30, 30],
-        offset: [0, -10]
-      });
-
-      loc.marker.on("popupopen", (evt) => {
-        const root = evt.popup.getElement();
-        if (!root) return;
-
-        L.DomEvent.disableClickPropagation(root);
-        L.DomEvent.disableScrollPropagation(root);
-
-        const onClick = async (ev) => {
-          const btn = ev.target.closest("button");
-          if (!btn) return;
-
-          ev.preventDefault();
-          ev.stopPropagation();
-
-                    if (btn.classList.contains("popupCenterBtn")) {
-            const lat = parseFloat(btn.dataset.lat);
-            const lng = parseFloat(btn.dataset.lng);
-
-            if (!Number.isFinite(lat) || !Number.isFinite(lng) || !state.map) return;
-
-            const marker = loc?.marker;
-            const targetZoom = Math.max(state.map.getZoom(), 17);
-
-            if (marker && state.markerCluster && typeof state.markerCluster.zoomToShowLayer === "function") {
-              state.markerCluster.zoomToShowLayer(marker, () => {
-                state._uiPanZoomInProgress = true;
-                try {
-                  state.map.setView([lat, lng], targetZoom, { animate: true });
-                  marker.openPopup();
-                  glowMarker(marker);
-                } finally {
-                  setTimeout(() => (state._uiPanZoomInProgress = false), 250);
-                }
-              });
-            } else {
-              state._uiPanZoomInProgress = true;
-              try {
-                state.map.setView([lat, lng], targetZoom, { animate: true });
-                if (marker) {
-                  marker.openPopup();
-                  glowMarker(marker);
-                }
-              } finally {
-                setTimeout(() => (state._uiPanZoomInProgress = false), 250);
-              }
-            }
-
-            return;
-          }
-
-          if (btn.classList.contains("popupRouteBtn")) {
-            const toLat = Number(btn.dataset.lat);
-            const toLng = Number(btn.dataset.lng);
-            const place = decodeURIComponent((btn.dataset.place || "").trim());
-
-            const fromLat = state.nearbyCenter?.lat;
-            const fromLng = state.nearbyCenter?.lng;
-
-            if (!Number.isFinite(fromLat) || !Number.isFinite(fromLng)) {
-              alert("Primero marcá tu ubicación o usá “Eventos cerca mío”.");
-              return;
-            }
-
-            if (!Number.isFinite(toLat) || !Number.isFinite(toLng)) {
-              alert("No se pudo resolver el destino.");
-              return;
-            }
-
-            const url =
-              `https://www.google.com/maps/dir/?api=1` +
-              `&origin=${encodeURIComponent(`${fromLat},${fromLng}`)}` +
-              `&destination=${encodeURIComponent(`${toLat},${toLng}`)}` +
-              `&travelmode=walking`;
-
-            window.open(url, "_blank", "noopener");
-            return;
-          }
-
-          if (btn.classList.contains("popupShareBtn")) {
-            const eventId = decodeURIComponent((btn.dataset.eid || "").trim());
-            if (!eventId) return;
-
-            const title = decodeURIComponent((btn.dataset.title || "").trim());
-            const url = `${location.origin}${location.pathname}#e=${encodeURIComponent(eventId)}`;
-            const shareText = title ? `Evento: ${title}\n${url}` : url;
-
-            if (navigator.share) {
-              try {
-                await navigator.share({
-                  title: title || "Evento",
-                  text: shareText,
-                  url
-                });
-                return;
-              } catch {}
-            }
-
-            try {
-              await navigator.clipboard.writeText(shareText);
-              const prev = btn.textContent;
-              btn.textContent = "Link copiado ✅";
-              setTimeout(() => (btn.textContent = prev || "Compartir"), 1200);
-            } catch {
-              window.prompt("Copiá este link:", shareText);
-            }
-
-            return;
-          }
-
-          if (btn.classList.contains("popupEditBtn")) {
-            const eventId = decodeURIComponent((btn.dataset.editEid || "").trim());
-            if (!eventId) return;
-
-            const evData = App.events?.findEventById?.(eventId);
-            if (!evData) {
-              alert("No se encontró el evento.");
-              return;
-            }
-
-            App.events?.setEditingEventId?.(eventId);
-
-            const titleEl = document.getElementById("eventTitle");
-            const dateEl = document.getElementById("eventDate");
-            const latEl = document.getElementById("eventLat");
-            const lngEl = document.getElementById("eventLng");
-            const placeEl = document.getElementById("eventPlace");
-            const startEl = document.getElementById("eventStart");
-            const catEl = document.getElementById("eventCategory");
-            const addBtn = document.getElementById("addEventBtn");
-            const cancelBtn = document.getElementById("cancelEditBtn");
-
-            if (titleEl) titleEl.value = evData.title || "";
-            if (dateEl) dateEl.value = evData.date || "";
-            if (latEl) latEl.value = Number(evData.lat).toFixed(6);
-            if (lngEl) lngEl.value = Number(evData.lng).toFixed(6);
-            if (placeEl) placeEl.value = evData.placeName || "";
-            if (startEl) startEl.value = evData.startTime || "";
-            if (catEl) catEl.value = evData.category || "music";
-
-            const adminRow = document.getElementById("adminCategoryChips");
-            if (adminRow) {
-              const chips = [...adminRow.querySelectorAll(".chip[data-cat]")];
-              chips.forEach((b) =>
-                b.classList.toggle("isActive", b.dataset.cat === (evData.category || "music"))
-              );
-            }
-
-            if (addBtn) addBtn.textContent = "Guardar cambios";
-            if (cancelBtn) cancelBtn.hidden = false;
-
-            if (state.map) {
-              prepareEventCreation(evData.lat, evData.lng);
-              state.map.setView([evData.lat, evData.lng], 15);
-            }
-
-            const adminView = document.getElementById("adminView");
-            if (adminView) adminView.hidden = false;
-
-            const titleTarget = document.getElementById("eventTitle");
-            if (titleTarget) {
-              titleTarget.scrollIntoView({ behavior: "smooth", block: "center" });
-              titleTarget.focus();
-            }
-
-            return;
-          }
-
-          if (btn.classList.contains("popupDeleteBtn")) {
-            const eventId = decodeURIComponent((btn.dataset.deleteEid || "").trim());
-            if (!eventId) return;
-
-            const title = decodeURIComponent((btn.dataset.deleteTitle || "").trim());
-            const msg = title
-              ? `¿Seguro que querés borrar "${title}"?`
-              : "¿Seguro que querés borrar este evento?";
-
-            if (!confirm(msg)) return;
-
-            const result = App.events?.removeEvent?.(eventId);
-            if (!result?.ok) {
-              alert("No se pudo borrar el evento.");
-              return;
-            }
-
-            if (state.deepLinkLayer && typeof state.deepLinkLayer.clearLayers === "function") {
-              state.deepLinkLayer.clearLayers();
-            }
-
-            App.events.saveAndRefresh({ rebuildMarkers: true });
-            return;
-          }
-
-          if (btn.classList.contains("popupAddBtn")) {
-            const lat = Number(btn.dataset.lat);
-            const lng = Number(btn.dataset.lng);
-            const place = decodeURIComponent(btn.dataset.place || "");
-
-            if (!Number.isFinite(lat) || !Number.isFinite(lng) || !state.map) return;
-
-            setUserLocation(lat, lng);
-            recomputeNearbyEvents(lat, lng);
-            state.map.setView([lat, lng], 15);
-
-            prepareEventCreation(lat, lng);
-
-            const placeEl = document.getElementById("eventPlace");
-            if (placeEl && place && !placeEl.value.trim()) placeEl.value = place;
-
-            const titleEl = document.getElementById("eventTitle");
-            if (titleEl) titleEl.focus();
-
-            App.renderAll?.({ rebuildMarkers: false });
-            return;
-          }
-        };
-
-        root.addEventListener("click", onClick, true);
-
-        const pending = state._pendingOpenEventId;
-        if (pending) {
-          const sel = `[data-eid="${encodeURIComponent(String(pending))}"]`;
-          const row = root.querySelector(sel);
-
-          if (row) {
-            row.classList.add("popupItemHighlight");
-            row.scrollIntoView({ block: "center", behavior: "smooth" });
-            setTimeout(() => row.classList.remove("popupItemHighlight"), 1600);
-          }
-
-          state._pendingOpenEventId = null;
+          return;
         }
+      };
+
+      root.addEventListener("click", onClick, true);
+
+      evt.popup.once("remove", () => {
+        root.removeEventListener("click", onClick, true);
       });
 
-      loc.marker.setOpacity(1);
+      const pending = state._pendingOpenEventId;
+      if (pending) {
+        const sel = `[data-eid="${encodeURIComponent(String(pending))}"]`;
+        const row = root.querySelector(sel);
+
+        if (row) {
+          row.classList.add("popupItemHighlight");
+          row.scrollIntoView({ block: "center", behavior: "smooth" });
+          setTimeout(() => row.classList.remove("popupItemHighlight"), 1600);
+        }
+
+        state._pendingOpenEventId = null;
+      }
     });
-  }
+
+    loc.marker.setOpacity(1);
+  });
+}
 
   /* =========================
      NEARBY STATE
@@ -904,110 +931,94 @@
   /* =========================
      DEEP LINK TARGET
   ========================= */
-  function focusEventById(eventId) {
-    const id = String(eventId || "").trim();
-    if (!id) return false;
+ function focusEventById(eventId) {
+  const id = String(eventId || "").trim();
+  if (!id) return false;
 
-    const ev = App.events?.findEventById?.(id) || null;
-    if (!ev || !state.map) return false;
+  const ev = App.events?.findEventById?.(id) || null;
+  if (!ev || !state.map) return false;
 
-    if (state.deepLinkLayer && typeof state.deepLinkLayer.clearLayers === "function") {
-      state.deepLinkLayer.clearLayers();
-    }
+  if (state.deepLinkLayer && typeof state.deepLinkLayer.clearLayers === "function") {
+    state.deepLinkLayer.clearLayers();
+  }
 
-    let key = util.smartLocationKey(ev, state.events || []);
-    let loc = state.locationMarkers?.[key];
+  let key = util.smartLocationKey(ev, state.events || []);
+  let loc = state.locationMarkers?.[key];
 
-    if (!loc) {
-      rebuildLocationMarkers(state.events);
-      key = util.smartLocationKey(ev, state.events || []);
-      loc = state.locationMarkers?.[key];
-    }
+  if (!loc) {
+    rebuildLocationMarkers(state.events);
+    key = util.smartLocationKey(ev, state.events || []);
+    loc = state.locationMarkers?.[key];
+  }
 
-    if (loc?.marker) {
-      state._pendingOpenEventId = id;
-
-      const targetZoom = Math.max(state.map.getZoom(), 17);
-
-      if (
-        state.markerCluster &&
-        typeof state.markerCluster.zoomToShowLayer === "function"
-      ) {
-        state.markerCluster.zoomToShowLayer(loc.marker, () => {
-          state.map.setView([ev.lat, ev.lng], targetZoom, { animate: true });
-          loc.marker.openPopup();
-        });
-      } else {
-        state.map.setView([ev.lat, ev.lng], targetZoom, { animate: true });
-        loc.marker.openPopup();
-      }
-
-      return true;
-    }
-
-    const placeTitle = util.shortPlaceName(ev.placeName) || "Lugar sin nombre";
-    const st = util.formatTimeStart(ev);
-    const status = util.getEventStatus(ev);
-
-    const html = `
-      <div class="popupCard">
-        <div class="popupHeader">
-          <div>
-            <div class="popupPlace">${placeTitle}</div>
-            <div class="popupSub">Evento (link compartido)</div>
-          </div>
-        </div>
-
-        <div class="popupList">
-          <div class="popupItem popupItemHighlight">
-            <div class="popupItemTitle">
-              ${st ? `<span style="opacity:.75;margin-right:6px">${st}</span>` : ""}
-              ${ev.title}
-              ${status ? `<span style="opacity:.6;font-size:.85em;margin-left:6px">${status}</span>` : ""}
-            </div>
-            <div class="popupItemMeta">${util.formatDateDisplay(ev.date)}</div>
-          </div>
-        </div>
-      </div>
-    `;
-
-    const markerOpts = {};
-    try {
-      markerOpts.icon = getCategoryIcon(ev.category || "music");
-      markerOpts.bubblingMouseEvents = false;
-    } catch {}
-
-    const m = L.marker([ev.lat, ev.lng], markerOpts);
-
-    m.bindPopup(html, {
-      closeButton: true,
-      autoPan: true,
-      keepInView: true,
-      autoPanPadding: [30, 30],
-      offset: [0, -10]
-    });
-
-    if (state.deepLinkLayer) {
-      m.addTo(state.deepLinkLayer);
-    } else {
-      m.addTo(state.map);
-    }
-
-    const targetZoom = Math.max(state.map.getZoom(), 17);
-    state.map.setView([ev.lat, ev.lng], targetZoom, { animate: true });
-
-    m.openPopup();
-
-    setTimeout(() => {
-      const el = m.getElement?.();
-      if (el) {
-        el.classList.add("marker-highlight");
-        setTimeout(() => el.classList.remove("marker-highlight"), 900);
-      }
-    }, 50);
-
+  if (loc?.marker) {
+    state._pendingOpenEventId = id;
+    openMarkerPopupStable(loc.marker, ev.lat, ev.lng, 17);
     return true;
   }
+
+  const placeTitle = util.shortPlaceName(ev.placeName) || "Lugar sin nombre";
+  const st = util.formatTimeStart(ev);
+  const status = util.getEventStatus(ev);
+
+  const html = `
+    <div class="popupCard">
+      <div class="popupHeader">
+        <div>
+          <div class="popupPlace">${placeTitle}</div>
+          <div class="popupSub">Evento (link compartido)</div>
+        </div>
+      </div>
+
+      <div class="popupList">
+        <div class="popupItem popupItemHighlight">
+          <div class="popupItemTitle">
+            ${st ? `<span style="opacity:.75;margin-right:6px">${st}</span>` : ""}
+            ${ev.title}
+            ${status ? `<span style="opacity:.6;font-size:.85em;margin-left:6px">${status}</span>` : ""}
+          </div>
+          <div class="popupItemMeta">${util.formatDateDisplay(ev.date)}</div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  const markerOpts = {};
+  try {
+    markerOpts.icon = getCategoryIcon(ev.category || "music");
+    markerOpts.bubblingMouseEvents = false;
+  } catch {}
+
+  const m = L.marker([ev.lat, ev.lng], markerOpts);
+
+  m.bindPopup(html, {
+    closeButton: true,
+    autoPan: true,
+    keepInView: true,
+    autoPanPadding: [30, 30],
+    offset: [0, -10],
+    maxWidth: 260,
+    minWidth: 180
+  });
+
+  if (state.deepLinkLayer) {
+    m.addTo(state.deepLinkLayer);
+  } else {
+    m.addTo(state.map);
+  }
+
+  openMarkerPopupStable(m, ev.lat, ev.lng, 17);
+
+  setTimeout(() => {
+    const el = m.getElement?.();
+    if (el) {
+      el.classList.add("marker-highlight");
+      setTimeout(() => el.classList.remove("marker-highlight"), 900);
+    }
+  }, 50);
+
+  return true;
+}
 
   /* =========================
      EXPORT MAP MODULE
