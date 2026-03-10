@@ -1582,3 +1582,71 @@ button:active {
     overflow: hidden;
   }
 }
+
+.leaflet-popup-content {
+  margin: 8px 10px;
+}
+
+.leaflet-popup-content-wrapper {
+  border-radius: 12px;
+}
+
+.popupCard {
+  width: 220px;
+  max-width: 220px;
+}
+
+.popupHeader {
+  margin: 0 0 8px 0;
+  padding: 0;
+  position: static;
+}
+
+.popupPlace,
+.popupSub {
+  margin: 0;
+  padding: 0;
+}
+
+.popupList {
+  max-height: 170px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  margin: 0;
+  padding: 0;
+}
+
+.popupItem {
+  margin: 0 0 8px 0;
+}
+
+.popupActions,
+.popupButtons,
+.popupFooter {
+  margin-top: 8px;
+}
+
+.popupActions button,
+.popupButtons button,
+.popupFooter button,
+.popupBtn {
+  margin-top: 6px;
+}
+
+@media (max-width: 768px) {
+  .popupCard {
+    width: 210px;
+    max-width: 210px;
+  }
+
+  .popupList {
+    max-height: 150px;
+  }
+
+  .leaflet-popup-content {
+    margin: 8px 10px;
+    max-height: none;
+    overflow: visible;
+  }
+}
