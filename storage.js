@@ -6,8 +6,8 @@
   const { util, state } = App;
 
   const STORAGE_KEYS = {
-    EVENTS: "events",
-    LOGIN: "isLoggedIn"
+    EVENTS: "recomentos.events",
+    LOGIN: "recomentos.isLoggedIn"
   };
 
   /* =========================
@@ -33,7 +33,10 @@
      EVENTS
   ========================= */
   function saveEvents(list = state.logic.events) {
-    const safeList = Array.isArray(list) ? list : [];
+    const safeList = Array.isArray(list)
+      ? list.map((ev) => util.normalizeEvent(ev)).filter((ev) => util.isValidEvent(ev))
+      : [];
+
     localStorage.setItem(STORAGE_KEYS.EVENTS, JSON.stringify(safeList));
   }
 

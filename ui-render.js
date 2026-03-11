@@ -22,7 +22,6 @@
     App.ui?.renderAppShell?.();
     App.ui?.renderList?.();
     App.ui?.renderCalendar?.();
-
     App.map?.renderMap?.({ rebuildMarkers });
   }
 
@@ -35,10 +34,7 @@
     } = opts;
 
     if (purgePast) {
-      const purged = App.events?.purgePastEventsInState?.();
-      if (persist && purged?.changed) {
-        App.events?.persistEvents?.();
-      }
+      App.events?.purgePastEventsInState?.();
     }
 
     if (persist) {

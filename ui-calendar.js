@@ -776,36 +776,47 @@
   }
 
   function bindCalendarUI() {
-    const prevMonthBtn = document.getElementById("prevMonthBtn");
-    const nextMonthBtn = document.getElementById("nextMonthBtn");
+  const prevMonthBtn = document.getElementById("prevMonthBtn");
+  const nextMonthBtn = document.getElementById("nextMonthBtn");
 
-    if (prevMonthBtn) {
-      prevMonthBtn.addEventListener("click", () => {
-        App.actions?.setCalendarMonth?.(
-  new Date(
-    state.logic.calendarCursor.getFullYear(),
-    state.logic.calendarCursor.getMonth() - 1,
-    1
-  )
-);
-        renderAll({ rebuildMarkers: false, recomputeNearby: false });
+  if (prevMonthBtn) {
+    prevMonthBtn.addEventListener("click", () => {
+      App.actions?.setCalendarMonth?.(
+        new Date(
+          state.logic.calendarCursor.getFullYear(),
+          state.logic.calendarCursor.getMonth() - 1,
+          1
+        )
+      );
+
+      commit({
+        persist: false,
+        purgePast: false,
+        rebuildMarkers: false,
+        recomputeNearby: false
       });
-    }
-
-    if (nextMonthBtn) {
-      nextMonthBtn.addEventListener("click", () => {
-       App.actions?.setCalendarMonth?.(
-  new Date(
-    state.logic.calendarCursor.getFullYear(),
-    state.logic.calendarCursor.getMonth() + 1,
-    1
-  )
-);
-
-        renderAll({ rebuildMarkers: false, recomputeNearby: false });
-      });
-    }
+    });
   }
+
+  if (nextMonthBtn) {
+    nextMonthBtn.addEventListener("click", () => {
+      App.actions?.setCalendarMonth?.(
+        new Date(
+          state.logic.calendarCursor.getFullYear(),
+          state.logic.calendarCursor.getMonth() + 1,
+          1
+        )
+      );
+
+      commit({
+        persist: false,
+        purgePast: false,
+        rebuildMarkers: false,
+        recomputeNearby: false
+      });
+    });
+  }
+}
 
   /* =========================
      CORE WRAPPERS (compat SSOT)
@@ -937,28 +948,34 @@ App.commit?.({
   }
 
   function bindCategoryUI() {
-    const row = document.getElementById("categoryChips");
-    if (!row) return;
+  const row = document.getElementById("categoryChips");
+  if (!row) return;
 
-    const chips = [...row.querySelectorAll(".chip")];
+  const chips = [...row.querySelectorAll(".chip")];
 
-    function paintActive() {
-      chips.forEach((btn) => {
-        const on = btn.dataset.cat === (state.logic.activeCategory || "all");
-        btn.classList.toggle("isActive", on);
-      });
-    }
-
-    paintActive();
-
+  function paintActive() {
     chips.forEach((btn) => {
-      btn.addEventListener("click", () => {
-        App.actions?.selectCategory?.(btn.dataset.cat || "all");
-        paintActive();
-        renderAll({ rebuildMarkers: false, recomputeNearby: true });
-      });
+      const on = btn.dataset.cat === (state.logic.activeCategory || "all");
+      btn.classList.toggle("isActive", on);
     });
   }
+
+  paintActive();
+
+  chips.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      App.actions?.selectCategory?.(btn.dataset.cat || "all");
+      paintActive();
+
+      commit({
+        persist: false,
+        purgePast: false,
+        rebuildMarkers: false,
+        recomputeNearby: true
+      });
+    });
+  });
+}
 
   /* =========================
      DEEP LINK (#e=EVENT_ID)
@@ -1004,8 +1021,13 @@ App.commit?.({
     }
 
     if (categoryReset) {
-      renderAll({ rebuildMarkers: true, recomputeNearby: true });
-    }
+  commit({
+    persist: false,
+    purgePast: false,
+    rebuildMarkers: true,
+    recomputeNearby: true
+  });
+}
 
     const dateStr = (ev.date || "").slice(0, 10);
     const today = util.todayStrYYYYMMDD();

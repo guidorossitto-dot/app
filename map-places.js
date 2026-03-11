@@ -56,7 +56,9 @@
   try {
     state.runtime.map.setView([lat, lng], zoom, { animate: true });
   } finally {
-    setTimeout(() => (state.runtime.uiPanZoomInProgress = false), 250);
+    setTimeout(() => {
+      App.events?.setUiPanZoomInProgress?.(false);
+    }, 250);
   }
 }
 
@@ -325,62 +327,63 @@ function rebuildLocationMarkers(list = state.logic.events) {
         }
 
         if (btn.classList.contains("popupEditBtn")) {
-          const eventId = decodeURIComponent((btn.dataset.editEid || "").trim());
-          if (!eventId) return;
+  const eventId = decodeURIComponent((btn.dataset.editEid || "").trim());
+  if (!eventId) return;
 
-          const evData = App.events?.findEventById?.(eventId);
-          if (!evData) {
-            alert("No se encontró el evento.");
-            return;
-          }
+  const evData = App.events?.findEventById?.(eventId);
+  if (!evData) {
+    alert("No se encontró el evento.");
+    return;
+  }
 
-          App.actions?.selectCategory?.("all");
+  App.actions?.startEditingEvent?.(eventId);
+  App.actions?.selectCategory?.("all");
 
-          const titleEl = document.getElementById("eventTitle");
-          const dateEl = document.getElementById("eventDate");
-          const latEl = document.getElementById("eventLat");
-          const lngEl = document.getElementById("eventLng");
-          const placeEl = document.getElementById("eventPlace");
-          const startEl = document.getElementById("eventStart");
-          const catEl = document.getElementById("eventCategory");
-          const addBtn = document.getElementById("addEventBtn");
-          const cancelBtn = document.getElementById("cancelEditBtn");
+  const titleEl = document.getElementById("eventTitle");
+  const dateEl = document.getElementById("eventDate");
+  const latEl = document.getElementById("eventLat");
+  const lngEl = document.getElementById("eventLng");
+  const placeEl = document.getElementById("eventPlace");
+  const startEl = document.getElementById("eventStart");
+  const catEl = document.getElementById("eventCategory");
+  const addBtn = document.getElementById("addEventBtn");
+  const cancelBtn = document.getElementById("cancelEditBtn");
 
-          if (titleEl) titleEl.value = evData.title || "";
-          if (dateEl) dateEl.value = evData.date || "";
-          if (latEl) latEl.value = Number(evData.lat).toFixed(6);
-          if (lngEl) lngEl.value = Number(evData.lng).toFixed(6);
-          if (placeEl) placeEl.value = evData.placeName || "";
-          if (startEl) startEl.value = evData.startTime || "";
-          if (catEl) catEl.value = evData.category || "music";
+  if (titleEl) titleEl.value = evData.title || "";
+  if (dateEl) dateEl.value = evData.date || "";
+  if (latEl) latEl.value = Number(evData.lat).toFixed(6);
+  if (lngEl) lngEl.value = Number(evData.lng).toFixed(6);
+  if (placeEl) placeEl.value = evData.placeName || "";
+  if (startEl) startEl.value = evData.startTime || "";
+  if (catEl) catEl.value = evData.category || "music";
 
-          const adminRow = document.getElementById("adminCategoryChips");
-          if (adminRow) {
-            const chips = [...adminRow.querySelectorAll(".chip[data-cat]")];
-            chips.forEach((b) =>
-              b.classList.toggle("isActive", b.dataset.cat === (evData.category || "music"))
-            );
-          }
+  const adminRow = document.getElementById("adminCategoryChips");
+  if (adminRow) {
+    const chips = [...adminRow.querySelectorAll(".chip[data-cat]")];
+    chips.forEach((b) =>
+      b.classList.toggle("isActive", b.dataset.cat === (evData.category || "music"))
+    );
+  }
 
-          if (addBtn) addBtn.textContent = "Guardar cambios";
-          if (cancelBtn) cancelBtn.hidden = false;
+  if (addBtn) addBtn.textContent = "Guardar cambios";
+  if (cancelBtn) cancelBtn.hidden = false;
 
-          if (state.runtime.map) {
-            prepareEventCreation(evData.lat, evData.lng);
-            state.runtime.map.setView([evData.lat, evData.lng], 15);
-          }
+  if (state.runtime.map) {
+    prepareEventCreation(evData.lat, evData.lng);
+    uiSetView(evData.lat, evData.lng, 15);
+  }
 
-          const adminView = document.getElementById("adminView");
-          if (adminView) adminView.hidden = false;
+  const adminView = document.getElementById("adminView");
+  if (adminView) adminView.hidden = false;
 
-          const titleTarget = document.getElementById("eventTitle");
-          if (titleTarget) {
-            titleTarget.scrollIntoView({ behavior: "smooth", block: "center" });
-            titleTarget.focus();
-          }
+  const titleTarget = document.getElementById("eventTitle");
+  if (titleTarget) {
+    titleTarget.scrollIntoView({ behavior: "smooth", block: "center" });
+    titleTarget.focus();
+  }
 
-          return;
-        }
+  return;
+}
 
         if (btn.classList.contains("popupDeleteBtn")) {
           const eventId = decodeURIComponent((btn.dataset.deleteEid || "").trim());
@@ -429,7 +432,7 @@ return;
 
           setUserLocation(lat, lng);
           recomputeNearbyEvents(lat, lng);
-          state.runtime.map.setView([lat, lng], 15);
+          uiSetView(lat, lng, 15);
 
           prepareEventCreation(lat, lng);
 
@@ -491,19 +494,19 @@ return;
   /* =========================
      NEARBY STATE
   ========================= */
-  function recomputeNearbyEvents(lat, lng) {
+ function recomputeNearbyEvents(lat, lng) {
   if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
     App.actions?.setNearbyCenter?.(null);
     App.actions?.setNearbyEvents?.([]);
     return [];
   }
 
+  const nearby = util.getNearbyTodayEvents(lat, lng, state.logic.events || []);
+
   App.actions?.setNearbyCenter?.({ lat, lng });
+  App.actions?.setNearbyEvents?.(nearby);
 
-const nearby = util.getNearbyTodayEvents(lat, lng, state.logic.events || []);
-App.actions?.setNearbyEvents?.(nearby);
-
-  return state.logic.nearbyEvents;
+  return nearby;
 }
 
   function filterEventsByDistance(lat, lng) {
@@ -620,99 +623,113 @@ App.actions?.setNearbyEvents?.(nearby);
      ADMIN EVENTS
   ========================= */
   function createEventFromAdminForm() {
-    const titleEl = document.getElementById("eventTitle");
-    const dateEl = document.getElementById("eventDate");
-    const latEl = document.getElementById("eventLat");
-    const lngEl = document.getElementById("eventLng");
-    const placeEl = document.getElementById("eventPlace");
-    const startEl = document.getElementById("eventStart");
-    const catEl = document.getElementById("eventCategory");
-    const addBtn = document.getElementById("addEventBtn");
-    const cancelBtn = document.getElementById("cancelEditBtn");
+  const titleEl = document.getElementById("eventTitle");
+  const dateEl = document.getElementById("eventDate");
+  const latEl = document.getElementById("eventLat");
+  const lngEl = document.getElementById("eventLng");
+  const placeEl = document.getElementById("eventPlace");
+  const startEl = document.getElementById("eventStart");
+  const catEl = document.getElementById("eventCategory");
+  const addBtn = document.getElementById("addEventBtn");
+  const cancelBtn = document.getElementById("cancelEditBtn");
 
-    if (!titleEl || !dateEl || !latEl || !lngEl) return;
+  if (!titleEl || !dateEl || !latEl || !lngEl) return;
 
-    const title = titleEl.value.trim();
-    const date = dateEl.value.trim();
-    let lat = Number(latEl.value);
-    let lng = Number(lngEl.value);
-    let placeName = placeEl ? placeEl.value.trim() : "";
-    const startTime = startEl ? startEl.value.trim() : "";
-    const category = catEl ? catEl.value : "music";
+  const title = titleEl.value.trim();
+  const date = dateEl.value.trim();
+  let lat = Number(latEl.value);
+  let lng = Number(lngEl.value);
+  let placeName = placeEl ? placeEl.value.trim() : "";
+  const startTime = startEl ? startEl.value.trim() : "";
+  const category = catEl ? catEl.value : "music";
 
-    const canonical = findCanonicalPlace(placeName, lat, lng);
-    if (canonical) {
-      lat = canonical.lat;
-      lng = canonical.lng;
-      placeName = canonical.placeName;
+  const canonical = findCanonicalPlace(placeName, lat, lng);
+  if (canonical) {
+    lat = canonical.lat;
+    lng = canonical.lng;
+    placeName = canonical.placeName;
 
-      if (latEl) latEl.value = Number(lat).toFixed(6);
-      if (lngEl) lngEl.value = Number(lng).toFixed(6);
-      if (placeEl) placeEl.value = util.shortPlaceName(placeName);
+    if (latEl) latEl.value = Number(lat).toFixed(6);
+    if (lngEl) lngEl.value = Number(lng).toFixed(6);
+    if (placeEl) placeEl.value = util.shortPlaceName(placeName);
+  }
+
+  const patch = {
+    title,
+    date,
+    lat,
+    lng,
+    placeName,
+    startTime,
+    category
+  };
+
+  const editingId = String(state.logic.editingEventId || "").trim() || null;
+
+  if (editingId) {
+    const result = App.events?.replaceEvent?.(editingId, patch);
+
+    if (!result?.ok) {
+      alert("No se pudo guardar la edición.");
+      return;
     }
 
-    const patch = {
-      title,
-      date,
-      lat,
-      lng,
-      placeName,
-      startTime,
-      category
+    App.actions?.stopEditingEvent?.();
+  } else {
+    const rawEvent = {
+      id: util.newId(),
+      ...patch
     };
 
-    if (state.logic.editingEventId) {
-  const result = events.replaceEvent(state.logic.editingEventId, patch);
+    const result = App.events?.addEvent?.(rawEvent);
 
-      if (!result.ok) {
-        alert("No se pudo guardar la edición.");
-        return;
-      }
-
-      App.actions?.stopEditingEvent?.();
-    } else {
-      const rawEvent = {
-        id: util.newId(),
-        ...patch
-      };
-
-      const result = events.addEvent(rawEvent);
-
-      if (!result.ok) {
-        alert("Completá título, fecha y coordenadas válidas.");
-        return;
-      }
+    if (!result?.ok) {
+      alert("Completá título, fecha y coordenadas válidas.");
+      return;
     }
-
-    titleEl.value = "";
-    dateEl.value = "";
-    latEl.value = "";
-    lngEl.value = "";
-    if (placeEl) placeEl.value = "";
-    if (startEl) startEl.value = "";
-    if (catEl) catEl.value = "music";
-
-    const adminRow = document.getElementById("adminCategoryChips");
-    if (adminRow) {
-      const chips = [...adminRow.querySelectorAll(".chip[data-cat]")];
-      chips.forEach((b) => b.classList.toggle("isActive", b.dataset.cat === "music"));
-    }
-
-    if (addBtn) addBtn.textContent = "Agregar evento";
-    if (cancelBtn) cancelBtn.hidden = true;
-
-    clearEventCreationMarker();
-    App.actions?.saveAndRefresh?.({ rebuildMarkers: true });
   }
+
+  titleEl.value = "";
+  dateEl.value = "";
+  latEl.value = "";
+  lngEl.value = "";
+  if (placeEl) placeEl.value = "";
+  if (startEl) startEl.value = "";
+  if (catEl) catEl.value = "music";
+
+  const adminRow = document.getElementById("adminCategoryChips");
+  if (adminRow) {
+    const chips = [...adminRow.querySelectorAll(".chip[data-cat]")];
+    chips.forEach((b) => b.classList.toggle("isActive", b.dataset.cat === "music"));
+  }
+
+  if (addBtn) addBtn.textContent = "Agregar evento";
+  if (cancelBtn) cancelBtn.hidden = true;
+
+  clearEventCreationMarker();
+
+  App.commit?.({
+    persist: true,
+    purgePast: false,
+    rebuildMarkers: true,
+    recomputeNearby: true
+  });
+}
 
   function clearAllEvents() {
-    if (!confirm("¿Seguro que querés borrar todos los eventos?")) return;
+  if (!confirm("¿Seguro que querés borrar todos los eventos?")) return;
 
-    events.clearAllEvents();
-    App.actions?.setNearbyEvents?.([]);
-    App.actions?.setNearbyCenter?.(null);
-    App.actions?.saveAndRefresh?.({ rebuildMarkers: true });
+  const result = App.events?.clearAllEvents?.();
+  if (!result?.ok) {
+    alert("No se pudieron borrar los eventos.");
+    return;
   }
+
+  App.actions?.stopEditingEvent?.();
+  App.actions?.setNearbyEvents?.([]);
+  App.actions?.setNearbyCenter?.(null);
+  App.actions?.saveAndRefresh?.({ rebuildMarkers: true });
+}
 
   /* =========================
      GEOLOCATION + INPUT SEARCH
@@ -730,7 +747,7 @@ App.actions?.setNearbyEvents?.(nearby);
 
       setUserLocation(lat, lng);
       recomputeNearbyEvents(lat, lng);
-      state.runtime.map.setView([lat, lng], 15);
+      uiSetView(lat, lng, 15);
 
       if (state.logic.isLoggedIn) prepareEventCreation(lat, lng);
 
@@ -758,7 +775,7 @@ App.actions?.setNearbyEvents?.(nearby);
 
   setUserLocation(lat, lng);
   recomputeNearbyEvents(lat, lng);
-  state.runtime.map.setView([lat, lng], 15);
+  uiSetView(lat, lng, 15);
 
   App.renderAll?.({ rebuildMarkers: false });
 }
@@ -792,7 +809,7 @@ App.actions?.setNearbyEvents?.(nearby);
 
     setUserLocation(clat, clng);
     recomputeNearbyEvents(clat, clng);
-    state.runtime.map.setView([clat, clng], 15);
+    uiSetView(clat, clng, 15);
 
     App.renderAll?.({ rebuildMarkers: false });
   });
@@ -838,23 +855,18 @@ App.actions?.setNearbyEvents?.(nearby);
 
   const targetZoom = Math.max(state.runtime.map.getZoom(), 16);
 
-  uiSetView(lat, lng, targetZoom);
+  function uiSetView(lat, lng, zoom) {
+  if (!state.runtime.map) return;
 
-  if (loc?.marker) {
-    if (
-      state.runtime.markerCluster &&
-      typeof state.runtime.markerCluster.zoomToShowLayer === "function"
-    ) {
-      state.runtime.markerCluster.zoomToShowLayer(loc.marker, () => {
-        uiSetView(lat, lng, Math.max(targetZoom, 17));
-        loc.marker.openPopup();
-        glowMarker(loc.marker);
-      });
-    } else {
-      loc.marker.openPopup();
-      glowMarker(loc.marker);
-    }
+  App.events?.setUiPanZoomInProgress?.(true);
+  try {
+    state.runtime.map.setView([lat, lng], zoom, { animate: true });
+  } finally {
+    setTimeout(() => {
+      App.events?.setUiPanZoomInProgress?.(false);
+    }, 250);
   }
+}
 });
 
   /* =========================
