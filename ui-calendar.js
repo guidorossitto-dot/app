@@ -160,19 +160,19 @@
   /* =========================
      LISTAS
   ========================= */
-  function renderEvents(list = state.logic.events) {
-  const ul = document.getElementById("eventList");
-  if (!ul) return;
+    function renderEvents(list = state.logic.events, emptyMsg = "No hay próximos eventos") {
+    const ul = document.getElementById("eventList");
+    if (!ul) return;
 
-  const onlyFuture = selectors.getVisibleFutureEvents(list);
+    const safeList = Array.isArray(list) ? list : selectors.getVisibleFutureEvents(state.logic.events || []);
 
-  if (!onlyFuture || onlyFuture.length === 0) {
-    ul.innerHTML = "<li>No hay próximos eventos</li>";
-    return;
+    if (!safeList || safeList.length === 0) {
+      ul.innerHTML = `<li>${emptyMsg}</li>`;
+      return;
+    }
+
+    renderGroupedList(ul, safeList);
   }
-
-  renderGroupedList(ul, onlyFuture);
-}
 
   function renderNearbyEvents(list = state.logic.nearbyEvents) {
     const ul = document.getElementById("nearbyList");
@@ -186,19 +186,19 @@
     renderGroupedList(ul, list);
   }
 
-  function renderTodayEvents(list = state.logic.events) {
-  const ul = document.getElementById("todayEvents");
-  if (!ul) return;
+    function renderTodayEvents(list = state.logic.events, emptyMsg = "No hay eventos hoy") {
+    const ul = document.getElementById("todayEvents");
+    if (!ul) return;
 
-  const todayEvents = selectors.getVisibleTodayEvents(list);
+    const safeList = Array.isArray(list) ? list : selectors.getVisibleTodayEvents(state.logic.events || []);
 
-  if (!todayEvents || todayEvents.length === 0) {
-    ul.innerHTML = "<li>No hay eventos hoy</li>";
-    return;
+    if (!safeList || safeList.length === 0) {
+      ul.innerHTML = `<li>${emptyMsg}</li>`;
+      return;
+    }
+
+    renderGroupedList(ul, safeList);
   }
-
-  renderGroupedList(ul, todayEvents);
-}
 
   function renderEventsIntoUl(ulId, list, emptyMsg) {
     const ul = document.getElementById(ulId);
@@ -421,13 +421,120 @@
     if (inlineBtn) inlineBtn.addEventListener("click", () => App.map?.useMyLocation?.());
   }
 
-  function renderList() {
-    renderTodayEvents();
-    renderEvents();
+  function setListFocus(focus) {
+    state.runtime = state.runtime || {};
+    state.runtime.listFocus = focus || null;
+  }
+
+  function clearListFocus() {
+    if (!state.runtime) return;
+    state.runtime.listFocus = null;
+  }
+
+  function getFocusedEvent() {
+    const focus = state.runtime?.listFocus;
+    if (!focus || focus.type !== "event" || !focus.eventId) return null;
+    return App.events?.findEventById?.(focus.eventId) || null;
+  }
+
+  function getListRenderState() {
+    const focus = state.runtime?.listFocus || null;
+    const today = util.todayStrYYYYMMDD();
+
+    if (!focus) {
+      return {
+        todayList: selectors.getVisibleTodayEvents(state.logic.events || []),
+        todayEmpty: "No hay eventos hoy",
+        futureList: selectors.getVisibleFutureEvents(state.logic.events || []),
+        futureEmpty: "No hay próximos eventos"
+      };
+    }
+
+    if (focus.type === "day" && focus.dateStr) {
+      const dayEvents = util.getEventsOnDate(focus.dateStr, state.logic.events || []);
+
+      if (focus.dateStr === today) {
+        return {
+          todayList: util.filterByActiveCategory(dayEvents),
+          todayEmpty: "No hay eventos hoy",
+          futureList: [],
+          futureEmpty: "No hay próximos eventos"
+        };
+      }
+
+      if (focus.dateStr > today) {
+        return {
+          todayList: selectors.getVisibleTodayEvents(state.logic.events || []),
+          todayEmpty: "No hay eventos hoy",
+          futureList: util.filterByActiveCategory(dayEvents),
+          futureEmpty: "No hay eventos ese día"
+        };
+      }
+
+      return {
+        todayList: selectors.getVisibleTodayEvents(state.logic.events || []),
+        todayEmpty: "No hay eventos hoy",
+        futureList: [],
+        futureEmpty: "Ese día ya pasó"
+      };
+    }
+
+    if (focus.type === "event") {
+      const ev = getFocusedEvent();
+
+      if (!ev) {
+        return {
+          todayList: selectors.getVisibleTodayEvents(state.logic.events || []),
+          todayEmpty: "No hay eventos hoy",
+          futureList: selectors.getVisibleFutureEvents(state.logic.events || []),
+          futureEmpty: "No hay próximos eventos"
+        };
+      }
+
+      const dateStr = (ev.date || "").slice(0, 10);
+
+      if (dateStr === today) {
+        return {
+          todayList: util.filterByActiveCategory([ev]),
+          todayEmpty: "No hay eventos hoy",
+          futureList: [],
+          futureEmpty: "No hay próximos eventos"
+        };
+      }
+
+      if (dateStr > today) {
+        return {
+          todayList: selectors.getVisibleTodayEvents(state.logic.events || []),
+          todayEmpty: "No hay eventos hoy",
+          futureList: util.filterByActiveCategory([ev]),
+          futureEmpty: "No hay próximos eventos"
+        };
+      }
+
+      return {
+        todayList: selectors.getVisibleTodayEvents(state.logic.events || []),
+        todayEmpty: "No hay eventos hoy",
+        futureList: [],
+        futureEmpty: "Ese evento ya pasó"
+      };
+    }
+
+    return {
+      todayList: selectors.getVisibleTodayEvents(state.logic.events || []),
+      todayEmpty: "No hay eventos hoy",
+      futureList: selectors.getVisibleFutureEvents(state.logic.events || []),
+      futureEmpty: "No hay próximos eventos"
+    };
+  }
+
+    function renderList() {
+    const view = getListRenderState();
+
+    renderTodayEvents(view.todayList, view.todayEmpty);
+    renderEvents(view.futureList, view.futureEmpty);
     renderNearbyEvents(state.logic.nearbyEvents);
     updateNearbyCount(state.logic.nearbyEvents);
   }
-
   /* =========================
      CALENDARIO
   ========================= */
@@ -630,24 +737,19 @@
     });
   }
 
-  function openCalendarDay(dateStr, anchorEl = null) {
-    const dayEvents = util.getEventsOnDate(dateStr, state.logic.events);
-    const today = util.todayStrYYYYMMDD();
-
+    function openCalendarDay(dateStr, anchorEl = null) {
     if (anchorEl) {
+      const dayEvents = util.getEventsOnDate(dateStr, state.logic.events);
       showCalendarDayPopover(anchorEl, dateStr, dayEvents);
       return;
     }
 
     removeCalendarPopover();
-
-    if (dateStr === today) {
-      renderEventsIntoUl("todayEvents", dayEvents, "No hay eventos hoy");
-    } else if (dateStr > today) {
-      renderEventsIntoUl("eventList", dayEvents, "No hay eventos ese día");
-    } else {
-      renderEventsIntoUl("eventList", [], "Ese día ya pasó");
-    }
+    setListFocus({ type: "day", dateStr });
+    renderAll({
+      rebuildMarkers: false,
+      recomputeNearby: false
+    });
   }
 
   function renderCalendar() {
@@ -779,7 +881,7 @@
   const prevMonthBtn = document.getElementById("prevMonthBtn");
   const nextMonthBtn = document.getElementById("nextMonthBtn");
 
-  if (prevMonthBtn) {
+    if (prevMonthBtn) {
     prevMonthBtn.addEventListener("click", () => {
       App.actions?.setCalendarMonth?.(
         new Date(
@@ -788,6 +890,8 @@
           1
         )
       );
+
+      clearListFocus();
 
       commit({
         persist: false,
@@ -807,6 +911,8 @@
           1
         )
       );
+
+      clearListFocus();
 
       commit({
         persist: false,
@@ -962,9 +1068,10 @@ App.commit?.({
 
   paintActive();
 
-  chips.forEach((btn) => {
+    chips.forEach((btn) => {
     btn.addEventListener("click", () => {
       App.actions?.selectCategory?.(btn.dataset.cat || "all");
+      clearListFocus();
       paintActive();
 
       commit({
@@ -991,13 +1098,18 @@ App.commit?.({
     App.actions?.queueDeepLink?.(decodeURIComponent(eventId));
   }
 
-  function processQueuedDeepLink() {
+    function processQueuedDeepLink() {
     const eventId = state.runtime.pendingDeepLinkEventId;
     if (!eventId) return;
 
     const ev = App.events?.findEventById?.(eventId) || null;
     if (!ev) {
       App.actions?.clearQueuedDeepLink?.();
+      clearListFocus();
+      renderAll({
+        rebuildMarkers: false,
+        recomputeNearby: false
+      });
       return;
     }
 
@@ -1020,24 +1132,20 @@ App.commit?.({
       }
     }
 
+    setListFocus({ type: "event", eventId });
+
     if (categoryReset) {
-  commit({
-    persist: false,
-    purgePast: false,
-    rebuildMarkers: true,
-    recomputeNearby: true
-  });
-}
-
-    const dateStr = (ev.date || "").slice(0, 10);
-    const today = util.todayStrYYYYMMDD();
-
-    if (dateStr === today) {
-      renderEventsIntoUl("todayEvents", [ev], "No hay eventos hoy");
-    } else if (dateStr > today) {
-      renderEventsIntoUl("eventList", [ev], "No hay próximos eventos");
+      commit({
+        persist: false,
+        purgePast: false,
+        rebuildMarkers: true,
+        recomputeNearby: true
+      });
     } else {
-      renderEventsIntoUl("eventList", [], "Ese evento ya pasó");
+      renderAll({
+        rebuildMarkers: false,
+        recomputeNearby: false
+      });
     }
 
     if (state.runtime.bootReady && App.map?.focusEventById) {
