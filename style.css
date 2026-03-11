@@ -1522,3 +1522,8 @@ button:active {
   border-radius: 10px;
   background: rgba(255, 235, 59, 0.25);
 }
+
+#loginBtn,
+#logoutBtn {
+  display: none;
+}

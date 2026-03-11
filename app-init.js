@@ -1,3 +1,8 @@
+function isAdminMode() {
+  const params = new URLSearchParams(window.location.search);
+  return params.get("admin") === "1";
+}
+
 // app-init.js
 (() => {
   "use strict";
@@ -34,6 +39,16 @@
     App.ui?.bindSidebarUI?.();
   }
 
+  function hideAdminUIIfNeeded() {
+  if (isAdminMode()) return;
+
+  const loginBtn = document.getElementById("loginBtn");
+  const logoutBtn = document.getElementById("logoutBtn");
+
+  if (loginBtn) loginBtn.style.display = "none";
+  if (logoutBtn) logoutBtn.style.display = "none";
+}
+
   function initMapState() {
     App.map?.bindAdminCategoryChips?.();
     App.map?.initMap?.(App.CFG.DEFAULT_LAT, App.CFG.DEFAULT_LNG);
@@ -59,6 +74,7 @@
 
     await hydrateInitialState();
     bindUI();
+    hideAdminUIIfNeeded();
     initMapState();
 
     App.renderAll?.({ rebuildMarkers: true });

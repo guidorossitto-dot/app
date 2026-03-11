@@ -148,14 +148,31 @@
      APP SHELL
   ========================= */
   function renderAppShell() {
-    const adminView = document.getElementById("adminView");
-    const loginBtn = document.getElementById("loginBtn");
-    const logoutBtn = document.getElementById("logoutBtn");
+  const adminView = document.getElementById("adminView");
+  const loginBtn = document.getElementById("loginBtn");
+  const logoutBtn = document.getElementById("logoutBtn");
 
-    if (adminView) adminView.hidden = !state.logic.isLoggedIn;
-    if (loginBtn) loginBtn.hidden = state.logic.isLoggedIn;
-    if (logoutBtn) logoutBtn.hidden = !state.logic.isLoggedIn;
+  const params = new URLSearchParams(window.location.search);
+  const adminMode = params.get("admin") === "1";
+
+  if (adminView) adminView.hidden = !state.logic.isLoggedIn;
+
+  if (!adminMode) {
+    if (loginBtn) loginBtn.style.display = "none";
+    if (logoutBtn) logoutBtn.style.display = "none";
+    return;
   }
+
+  if (loginBtn) {
+    loginBtn.style.display = "";
+    loginBtn.hidden = state.logic.isLoggedIn;
+  }
+
+  if (logoutBtn) {
+    logoutBtn.style.display = "";
+    logoutBtn.hidden = !state.logic.isLoggedIn;
+  }
+}
 
   /* =========================
      LISTAS
