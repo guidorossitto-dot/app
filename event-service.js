@@ -211,15 +211,10 @@
 
   const existing = findEventById(id);
   if (!existing) {
-    console.warn("removeEvent: no existe en estado", id);
     return { ok: false, error: "NOT_FOUND", removedEvent: null };
   }
 
-  console.log("removeEvent -> deleting remote id:", id);
-
   const deleted = await storage?.deleteEvent?.(id);
-  console.log("removeEvent -> delete response:", deleted);
-
   if (!deleted?.ok) {
     return {
       ok: false,
@@ -231,8 +226,6 @@
   state.logic.events = (state.logic.events || []).filter(
     (ev) => String(ev?.id) !== id
   );
-
-  console.log("removeEvent -> local state filtered id:", id);
 
   return {
     ok: true,

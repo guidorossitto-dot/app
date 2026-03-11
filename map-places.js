@@ -836,20 +836,12 @@ async function createEventFromAdminForm() {
     loc = state.runtime.locationMarkers?.[key];
   }
 
-  const targetZoom = Math.max(state.runtime.map.getZoom(), 16);
-
-  function uiSetView(lat, lng, zoom) {
-  if (!state.runtime.map) return;
-
-  App.events?.setUiPanZoomInProgress?.(true);
-  try {
-    state.runtime.map.setView([lat, lng], zoom, { animate: true });
-  } finally {
-    setTimeout(() => {
-      App.events?.setUiPanZoomInProgress?.(false);
-    }, 250);
+  if (loc?.marker) {
+    openMarkerPopupStable(loc.marker, lat, lng, 17);
+    return;
   }
-}
+
+  uiSetView(lat, lng, 16);
 });
 
   /* =========================

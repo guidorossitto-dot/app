@@ -1002,14 +1002,7 @@
 
     if (!confirm(msg)) return;
 
-    console.log("DELETE click id:", eventId);
-
-console.log("DELETE click id:", eventId);
-
 const result = await App.events?.removeEvent?.(eventId);
-
-console.log("DELETE result:", result);
-console.log("DELETE result:", result);
 
 if (!result?.ok) {
   alert("No se pudo borrar el evento.");
