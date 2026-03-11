@@ -385,43 +385,42 @@ function rebuildLocationMarkers(list = state.logic.events) {
   return;
 }
 
-        if (btn.classList.contains("popupDeleteBtn")) {
-          const eventId = decodeURIComponent((btn.dataset.deleteEid || "").trim());
-          if (!eventId) return;
+       if (btn.classList.contains("popupDeleteBtn")) {
+  const eventId = decodeURIComponent((btn.dataset.deleteEid || "").trim());
+  if (!eventId) return;
 
-          const title = decodeURIComponent((btn.dataset.deleteTitle || "").trim());
-          const msg = title
-            ? `¿Seguro que querés borrar "${title}"?`
-            : "¿Seguro que querés borrar este evento?";
+  const title = decodeURIComponent((btn.dataset.deleteTitle || "").trim());
+  const msg = title
+    ? `¿Seguro que querés borrar "${title}"?`
+    : "¿Seguro que querés borrar este evento?";
 
-          if (!confirm(msg)) return;
+  if (!confirm(msg)) return;
 
-         const result = App.events?.removeEvent?.(eventId);
-if (!result?.ok) {
-  alert("No se pudo borrar el evento.");
+  const result = await App.events?.removeEvent?.(eventId);
+  if (!result?.ok) {
+    alert("No se pudo borrar el evento.");
+    return;
+  }
+
+  if (state.logic.editingEventId === eventId) {
+    App.actions?.stopEditingEvent?.();
+  }
+
+  if (
+    state.runtime.deepLinkLayer &&
+    typeof state.runtime.deepLinkLayer.clearLayers === "function"
+  ) {
+    state.runtime.deepLinkLayer.clearLayers();
+  }
+
+  App.commit?.({
+    persist: true,
+    purgePast: false,
+    rebuildMarkers: true,
+    recomputeNearby: true
+  });
   return;
 }
-
-if (state.logic.editingEventId === eventId) {
-  App.actions?.stopEditingEvent?.();
-}
-
-if (
-  state.runtime.deepLinkLayer &&
-  typeof state.runtime.deepLinkLayer.clearLayers === "function"
-) {
-  state.runtime.deepLinkLayer.clearLayers();
-}
-
-App.commit?.({
-  persist: true,
-  purgePast: false,
-  rebuildMarkers: true,
-  recomputeNearby: true
-});
-return;
-
-        }
 
         if (btn.classList.contains("popupAddBtn")) {
           const lat = Number(btn.dataset.lat);
@@ -622,7 +621,7 @@ return;
   /* =========================
      ADMIN EVENTS
   ========================= */
-  function createEventFromAdminForm() {
+async function createEventFromAdminForm() {
   const titleEl = document.getElementById("eventTitle");
   const dateEl = document.getElementById("eventDate");
   const latEl = document.getElementById("eventLat");
@@ -667,24 +666,24 @@ return;
   const editingId = String(state.logic.editingEventId || "").trim() || null;
 
   if (editingId) {
-    const result = App.events?.replaceEvent?.(editingId, patch);
+  const result = await App.events?.replaceEvent?.(editingId, patch);
 
-    if (!result?.ok) {
-      alert("No se pudo guardar la edición.");
-      return;
-    }
+  if (!result?.ok) {
+    alert("No se pudo guardar la edición.");
+    return;
+  }
 
-    App.actions?.stopEditingEvent?.();
-  } else {
+  App.actions?.stopEditingEvent?.();
+} else {
     const rawEvent = {
       id: util.newId(),
       ...patch
     };
 
-    const result = App.events?.addEvent?.(rawEvent);
+    const result = await App.events?.addEventRemote?.(rawEvent);
 
     if (!result?.ok) {
-      alert("Completá título, fecha y coordenadas válidas.");
+      alert("No se pudo guardar el evento.");
       return;
     }
   }
@@ -715,22 +714,6 @@ return;
     recomputeNearby: true
   });
 }
-
-  function clearAllEvents() {
-  if (!confirm("¿Seguro que querés borrar todos los eventos?")) return;
-
-  const result = App.events?.clearAllEvents?.();
-  if (!result?.ok) {
-    alert("No se pudieron borrar los eventos.");
-    return;
-  }
-
-  App.actions?.stopEditingEvent?.();
-  App.actions?.setNearbyEvents?.([]);
-  App.actions?.setNearbyCenter?.(null);
-  App.actions?.saveAndRefresh?.({ rebuildMarkers: true });
-}
-
   /* =========================
      GEOLOCATION + INPUT SEARCH
   ========================= */
@@ -1067,6 +1050,27 @@ return;
   }, 50);
 
   return true;
+}
+
+async function clearAllEvents() {
+  if (!confirm("¿Seguro que querés borrar todos los eventos?")) return;
+
+  const result = await App.events?.clearAllEvents?.();
+  if (!result?.ok) {
+    alert("No se pudieron borrar los eventos.");
+    return;
+  }
+
+  App.actions?.stopEditingEvent?.();
+  App.actions?.setNearbyEvents?.([]);
+  App.actions?.setNearbyCenter?.(null);
+
+  App.commit?.({
+    persist: true,
+    purgePast: false,
+    rebuildMarkers: true,
+    recomputeNearby: true
+  });
 }
 
   /* =========================

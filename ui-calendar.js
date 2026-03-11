@@ -984,74 +984,93 @@
 }
 
   function bindDeleteEventUI() {
-    document.addEventListener("click", (e) => {
-      const btn = e.target.closest(".deleteEventBtn");
-      if (!btn) return;
+  state.runtime = state.runtime || {};
+  if (state.runtime.deleteUIBound) return;
+  state.runtime.deleteUIBound = true;
 
-      const eventId = decodeURIComponent((btn.dataset.deleteEid || "").trim());
-      if (!eventId) return;
+  document.addEventListener("click", async (e) => {
+    const btn = e.target.closest(".deleteEventBtn");
+    if (!btn) return;
 
-      const title = decodeURIComponent((btn.dataset.deleteTitle || "").trim());
-      const msg = title
-        ? `¿Seguro que querés borrar "${title}"?`
-        : "¿Seguro que querés borrar este evento?";
+    const eventId = decodeURIComponent((btn.dataset.deleteEid || "").trim());
+    if (!eventId) return;
 
-      if (!confirm(msg)) return;
+    const title = decodeURIComponent((btn.dataset.deleteTitle || "").trim());
+    const msg = title
+      ? `¿Seguro que querés borrar "${title}"?`
+      : "¿Seguro que querés borrar este evento?";
 
-      const result = App.events?.removeEvent?.(eventId);
+    if (!confirm(msg)) return;
+
+    console.log("DELETE click id:", eventId);
+
+console.log("DELETE click id:", eventId);
+
+const result = await App.events?.removeEvent?.(eventId);
+
+console.log("DELETE result:", result);
+console.log("DELETE result:", result);
+
 if (!result?.ok) {
   alert("No se pudo borrar el evento.");
   return;
 }
 
-if (state.logic.editingEventId === eventId) {
-  App.actions?.stopEditingEvent?.();
+    if (state.logic.editingEventId === eventId) {
+      App.actions?.stopEditingEvent?.();
+    }
+
+    App.commit?.({
+      persist: true,
+      purgePast: false,
+      rebuildMarkers: true,
+      recomputeNearby: true
+    });
+  });
 }
 
-App.commit?.({
-  persist: true,
-  purgePast: false,
-  rebuildMarkers: true,
-  recomputeNearby: true
-});
+function bindAdminUI() {
+  const addBtn = document.getElementById("addEventBtn");
+  const clearBtn = document.getElementById("clearEventsBtn");
+  const cancelBtn = document.getElementById("cancelEditBtn");
+
+  if (addBtn) {
+    addBtn.addEventListener("click", async () => {
+      await App.map?.createEventFromAdminForm?.();
     });
   }
 
-  function bindAdminUI() {
-    const addBtn = document.getElementById("addEventBtn");
-    const clearBtn = document.getElementById("clearEventsBtn");
-    const cancelBtn = document.getElementById("cancelEditBtn");
-
-    if (addBtn) addBtn.addEventListener("click", () => App.map?.createEventFromAdminForm?.());
-    if (clearBtn) clearBtn.addEventListener("click", () => App.map?.clearAllEvents?.());
-
-    if (cancelBtn) {
-      cancelBtn.addEventListener("click", () => {
-        App.actions?.stopEditingEvent?.();
-
-        const titleEl = document.getElementById("eventTitle");
-        const dateEl = document.getElementById("eventDate");
-        const latEl = document.getElementById("eventLat");
-        const lngEl = document.getElementById("eventLng");
-        const placeEl = document.getElementById("eventPlace");
-        const startEl = document.getElementById("eventStart");
-        const catEl = document.getElementById("eventCategory");
-        const addBtn2 = document.getElementById("addEventBtn");
-
-        if (titleEl) titleEl.value = "";
-        if (dateEl) dateEl.value = "";
-        if (latEl) latEl.value = "";
-        if (lngEl) lngEl.value = "";
-        if (placeEl) placeEl.value = "";
-        if (startEl) startEl.value = "";
-        if (catEl) catEl.value = "music";
-        if (addBtn2) addBtn2.textContent = "Agregar evento";
-
-        cancelBtn.hidden = true;
-        App.map?.clearEventCreationMarker?.();
-      });
-    }
+  if (clearBtn) {
+    clearBtn.addEventListener("click", () => App.map?.clearAllEvents?.());
   }
+
+  if (cancelBtn) {
+    cancelBtn.addEventListener("click", () => {
+      App.actions?.stopEditingEvent?.();
+
+      const titleEl = document.getElementById("eventTitle");
+      const dateEl = document.getElementById("eventDate");
+      const latEl = document.getElementById("eventLat");
+      const lngEl = document.getElementById("eventLng");
+      const placeEl = document.getElementById("eventPlace");
+      const startEl = document.getElementById("eventStart");
+      const catEl = document.getElementById("eventCategory");
+      const addBtn2 = document.getElementById("addEventBtn");
+
+      if (titleEl) titleEl.value = "";
+      if (dateEl) dateEl.value = "";
+      if (latEl) latEl.value = "";
+      if (lngEl) lngEl.value = "";
+      if (placeEl) placeEl.value = "";
+      if (startEl) startEl.value = "";
+      if (catEl) catEl.value = "music";
+      if (addBtn2) addBtn2.textContent = "Agregar evento";
+
+      cancelBtn.hidden = true;
+      App.map?.clearEventCreationMarker?.();
+    });
+  }
+}
 
   function bindCategoryUI() {
   const row = document.getElementById("categoryChips");

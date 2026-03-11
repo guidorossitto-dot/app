@@ -5,13 +5,20 @@
   const App = window.App;
   const { state } = App;
 
-  function hydrateInitialState() {
-    App.events?.hydrateEventsFromStorage?.();
-    App.events?.hydrateLoginFromStorage?.();
+  async function hydrateInitialState() {
+    await App.storage?.loadEvents?.();
 
-    const purged = App.events?.purgePastEventsInState?.();
-    if (purged?.changed) {
-      App.events?.persistEvents?.();
+    if (App.events?.hydrateLoginFromStorage) {
+      App.events.hydrateLoginFromStorage();
+    } else if (App.storage?.readLoginState) {
+      state.logic.isLoggedIn = App.storage.readLoginState();
+    }
+
+    if (App.events?.purgePastEventsInState) {
+      const purged = App.events.purgePastEventsInState();
+      if (purged?.changed) {
+        console.warn("Hay eventos pasados en estado. Más adelante los limpiaremos también en Supabase.");
+      }
     }
 
     App.events?.setCalendarCursor?.(new Date());
@@ -47,16 +54,21 @@
     }, App.CFG.REFRESH_MS);
   }
 
-  function bootAfterMapReady() {
+  async function bootAfterMapReady() {
     if (state.runtime.bootReady) return;
 
-    hydrateInitialState();
+    await hydrateInitialState();
     bindUI();
     initMapState();
 
     App.renderAll?.({ rebuildMarkers: true });
 
-    App.events?.setBootReady?.(true);
+    if (App.events?.setBootReady) {
+      App.events.setBootReady(true);
+    } else {
+      state.runtime.bootReady = true;
+    }
+
     App.ui?.processQueuedDeepLink?.();
 
     startAutoRefresh();
@@ -65,7 +77,7 @@
   App.init = App.init || {};
   App.init.bootAfterMapReady = bootAfterMapReady;
 
-  document.addEventListener("DOMContentLoaded", () => {
-    App.init?.bootAfterMapReady?.();
+  document.addEventListener("DOMContentLoaded", async () => {
+    await App.init?.bootAfterMapReady?.();
   });
 })();

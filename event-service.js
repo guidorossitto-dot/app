@@ -133,77 +133,134 @@
     return { ok: true, error: null, event: ev };
   }
 
-  function replaceEvent(eventId, patch = {}) {
-    const id = String(eventId || "").trim();
-    if (!id) {
-      return { ok: false, error: "INVALID_ID", event: null };
-    }
+  async function addEventRemote(rawEvent) {
+  const ev = util.normalizeEvent(rawEvent);
 
-    const list = ensureEventsArray();
-    const idx = list.findIndex((ev) => String(ev.id) === id);
-
-    if (idx === -1) {
-      return { ok: false, error: "NOT_FOUND", event: null };
-    }
-
-    const current = list[idx];
-    const merged = util.normalizeEvent({
-      ...current,
-      ...patch,
-      id: current.id
-    });
-
-    if (!util.isValidEvent(merged)) {
-      return { ok: false, error: "INVALID_EVENT", event: null };
-    }
-
-    const out = App.store?.dispatch?.({
-      type: "REPLACE_EVENT",
-      eventId: id,
-      event: merged
-    });
-
-    if (!out?.ok) {
-      return { ok: false, error: out?.error || "STORE_ERROR", event: null };
-    }
-
-    return { ok: true, error: null, event: merged };
+  if (!util.isValidEvent(ev)) {
+    return { ok: false, error: "INVALID_EVENT", event: null };
   }
 
-  function removeEvent(eventId) {
-    const id = String(eventId || "").trim();
-    if (!id) {
-      return { ok: false, error: "INVALID_ID", removedEvent: null };
-    }
+  if (!ev.id) {
+    return { ok: false, error: "MISSING_ID", event: null };
+  }
 
-    const existing = findEventById(id);
-    if (!existing) {
-      return { ok: false, error: "NOT_FOUND", removedEvent: null };
-    }
+  if (hasEventId(ev.id)) {
+    return { ok: false, error: "DUPLICATE_ID", event: null };
+  }
 
-    const out = App.store?.dispatch?.({
-      type: "REMOVE_EVENT",
-      eventId: id
-    });
+  const inserted = await storage?.insertEvent?.(ev);
 
-    if (!out?.ok) {
-      return { ok: false, error: out?.error || "STORE_ERROR", removedEvent: null };
-    }
+  if (!inserted?.ok || !inserted.event) {
+    return { ok: false, error: inserted?.error || "REMOTE_INSERT_ERROR", event: null };
+  }
 
+  // agregar al estado SSOT
+  state.logic.events = [...(state.logic.events || []), inserted.event];
+
+  return { ok: true, error: null, event: inserted.event };
+}
+
+  async function replaceEvent(eventId, patch = {}) {
+  const id = String(eventId || "").trim();
+  if (!id) {
+    return { ok: false, error: "INVALID_ID", event: null };
+  }
+
+  const list = ensureEventsArray();
+  const idx = list.findIndex((ev) => String(ev.id) === id);
+
+  if (idx === -1) {
+    return { ok: false, error: "NOT_FOUND", event: null };
+  }
+
+  const current = list[idx];
+  const merged = util.normalizeEvent({
+    ...current,
+    ...patch,
+    id: current.id
+  });
+
+  if (!util.isValidEvent(merged)) {
+    return { ok: false, error: "INVALID_EVENT", event: null };
+  }
+
+  const updated = await storage?.updateEvent?.(id, merged);
+
+  if (!updated?.ok) {
+    return { ok: false, error: updated?.error || "REMOTE_UPDATE_ERROR", event: null };
+  }
+
+  const out = App.store?.dispatch?.({
+    type: "REPLACE_EVENT",
+    eventId: id,
+    event: merged
+  });
+
+  if (!out?.ok) {
+    return { ok: false, error: out?.error || "STORE_ERROR", event: null };
+  }
+
+  return { ok: true, error: null, event: merged };
+}
+
+  async function removeEvent(eventId) {
+  const id = String(eventId || "").trim();
+  if (!id) {
+    return { ok: false, error: "INVALID_ID", removedEvent: null };
+  }
+
+  const existing = findEventById(id);
+  if (!existing) {
+    console.warn("removeEvent: no existe en estado", id);
+    return { ok: false, error: "NOT_FOUND", removedEvent: null };
+  }
+
+  console.log("removeEvent -> deleting remote id:", id);
+
+  const deleted = await storage?.deleteEvent?.(id);
+  console.log("removeEvent -> delete response:", deleted);
+
+  if (!deleted?.ok) {
     return {
-      ok: true,
-      error: null,
-      removedEvent: existing
+      ok: false,
+      error: deleted?.error || "REMOTE_DELETE_ERROR",
+      removedEvent: null
     };
   }
 
-  function clearAllEvents() {
-    const out = App.store?.dispatch?.({
-      type: "CLEAR_ALL_EVENTS"
-    });
+  state.logic.events = (state.logic.events || []).filter(
+    (ev) => String(ev?.id) !== id
+  );
 
-    return { ok: !!out?.ok, error: out?.ok ? null : out?.error || "STORE_ERROR" };
+  console.log("removeEvent -> local state filtered id:", id);
+
+  return {
+    ok: true,
+    error: null,
+    removedEvent: existing
+  };
+}
+
+ async function clearAllEvents() {
+  const deleted = await storage?.deleteAllEvents?.();
+
+  if (!deleted?.ok) {
+    return {
+      ok: false,
+      error: deleted?.error || "REMOTE_CLEAR_ALL_ERROR"
+    };
   }
+
+  const out = App.store?.dispatch?.({
+    type: "CLEAR_ALL_EVENTS"
+  });
+
+  return {
+    ok: !!out?.ok,
+    error: out?.ok ? null : out?.error || "STORE_ERROR",
+    deletedCount: deleted?.deletedCount || 0
+  };
+}
 
   /* =========================
      UI / APP STATE WRITES
@@ -360,6 +417,7 @@
     addEvent,
     replaceEvent,
     removeEvent,
+    addEventRemote,
     clearAllEvents,
 
     login,
