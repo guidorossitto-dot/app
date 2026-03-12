@@ -16,7 +16,7 @@
 
     CATEGORY_ALL: "all",
     DEFAULT_CATEGORY: "music",
-    ALLOWED_CATEGORIES: ["music", "dance", "theatre", "visual_arts"]
+ALLOWED_CATEGORIES: ["music", "dance", "theatre", "visual_arts", "cinema"]
   };
 
   /* =========================
@@ -229,19 +229,21 @@
   }
 
   function categoryLabel(cat) {
-    switch (cat) {
-      case "music":
-        return "🎵 Música";
-      case "dance":
-        return "💃 Danza";
-      case "theatre":
-        return "🎭 Teatro";
-      case "visual_arts":
-        return "🖼️ Visuales";
-      default:
-        return "";
-    }
+  switch (cat) {
+    case "music":
+      return "🎵 Música";
+    case "dance":
+      return "💃 Danza";
+    case "theatre":
+      return "🎭 Teatro";
+    case "visual_arts":
+      return "🖼️ Visuales";
+    case "cinema":
+      return "🎬 Cine";
+    default:
+      return "";
   }
+}
 
   /* =========================
      EVENT MODEL
