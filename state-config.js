@@ -149,40 +149,47 @@ ALLOWED_CATEGORIES: ["music", "dance", "theatre", "visual_arts", "cinema"]
      EVENT STATUS / SORT
   ========================= */
   function getEventStatus(ev) {
-    if (!ev || !ev.date) return "";
+  if (!ev || !ev.date) return "";
 
-    const today = todayStrYYYYMMDD();
-    const tomorrow = addDaysYYYYMMDD(today, 1);
+  const today = todayStrYYYYMMDD();
+  const tomorrow = addDaysYYYYMMDD(today, 1);
 
-    if (ev.date === tomorrow) {
-      const st = (ev.startTime || "").trim();
-      return st ? `Mañana ${st}` : "Mañana";
-    }
-
-    if (ev.date > today) {
-      const diffDays = Math.round(
-        (makeLocalDateTime(ev.date, "00:00") - makeLocalDateTime(today, "00:00")) / 86400000
-      );
-      return `En ${diffDays} días`;
-    }
-
+  if (ev.date === tomorrow) {
     const st = (ev.startTime || "").trim();
-    if (!st) return "Hoy";
-
-    const now = new Date();
-    const eventDT = makeLocalDateTime(ev.date, st);
-    const diffMs = eventDT - now;
-
-    if (diffMs <= 0) return "En curso";
-
-    const minutes = Math.floor(diffMs / 60000);
-    if (minutes < 60) return `Comienza en ${minutes} min`;
-
-    const hours = Math.floor(minutes / 60);
-    if (hours < 6) return `Comienza en ${hours} h`;
-
-    return "Hoy";
+    return st ? `Mañana ${st}` : "Mañana";
   }
+
+  if (ev.date > today) {
+    const diffDays = Math.round(
+      (makeLocalDateTime(ev.date, "00:00") - makeLocalDateTime(today, "00:00")) / 86400000
+    );
+    return `En ${diffDays} días`;
+  }
+
+  const st = (ev.startTime || "").trim();
+  if (!st) return "Hoy";
+
+  const now = new Date();
+  const eventDT = makeLocalDateTime(ev.date, st);
+  const diffMs = eventDT - now;
+
+  if (diffMs <= 0) return "En curso";
+
+  const minutes = Math.floor(diffMs / 60000);
+
+  if (minutes < 60) return `Comienza en ${minutes} min`;
+
+  const hours = Math.floor(minutes / 60);
+  const rem = minutes % 60;
+
+  if (hours < 6) {
+    return rem > 0
+      ? `Comienza en ${hours} h ${rem} min`
+      : `Comienza en ${hours} h`;
+  }
+
+  return "Hoy";
+}
 
   function sortEventsByStatusThenTime(a, b) {
     const sa = getEventStatus(a);
