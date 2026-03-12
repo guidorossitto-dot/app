@@ -642,6 +642,17 @@ async function createEventFromAdminForm() {
   const startTime = startEl ? startEl.value.trim() : "";
   const category = catEl ? catEl.value : "music";
 
+  if (
+    !title ||
+    !date ||
+    !placeName ||
+    !Number.isFinite(lat) ||
+    !Number.isFinite(lng)
+  ) {
+    alert("Completá título, fecha, lugar y coordenadas válidas.");
+    return;
+  }
+
   const canonical = findCanonicalPlace(placeName, lat, lng);
   if (canonical) {
     lat = canonical.lat;
@@ -666,15 +677,15 @@ async function createEventFromAdminForm() {
   const editingId = String(state.logic.editingEventId || "").trim() || null;
 
   if (editingId) {
-  const result = await App.events?.replaceEvent?.(editingId, patch);
+    const result = await App.events?.replaceEvent?.(editingId, patch);
 
-  if (!result?.ok) {
-    alert("No se pudo guardar la edición.");
-    return;
-  }
+    if (!result?.ok) {
+      alert("No se pudo guardar la edición.");
+      return;
+    }
 
-  App.actions?.stopEditingEvent?.();
-} else {
+    App.actions?.stopEditingEvent?.();
+  } else {
     const rawEvent = {
       id: util.newId(),
       ...patch
@@ -686,6 +697,28 @@ async function createEventFromAdminForm() {
       alert("No se pudo guardar el evento.");
       return;
     }
+
+    // Crear venue automático si no existe uno igual
+    if (App.venues?.addVenue && App.venues?.listVenues) {
+      const existingVenue = App.venues
+        .listVenues()
+        .find((v) => {
+          const sameName =
+            String(v?.name || "").trim().toLowerCase() === placeName.toLowerCase();
+          const sameLat = Number(v?.lat) === lat;
+          const sameLng = Number(v?.lng) === lng;
+          return sameName && sameLat && sameLng;
+        });
+
+      if (!existingVenue) {
+        App.venues.addVenue({
+          name: placeName,
+          address: placeName,
+          lat,
+          lng
+        });
+      }
+    }
   }
 
   titleEl.value = "";
@@ -695,6 +728,15 @@ async function createEventFromAdminForm() {
   if (placeEl) placeEl.value = "";
   if (startEl) startEl.value = "";
   if (catEl) catEl.value = "music";
+
+  const venueSearchInput = document.getElementById("venueSearchInput");
+  const venueSuggestions = document.getElementById("venueSuggestions");
+  if (venueSearchInput) venueSearchInput.value = "";
+  if (venueSuggestions) venueSuggestions.innerHTML = "";
+
+  if (App.venues?.clearSelectedVenueForAdmin) {
+    App.venues.clearSelectedVenueForAdmin();
+  }
 
   const adminRow = document.getElementById("adminCategoryChips");
   if (adminRow) {

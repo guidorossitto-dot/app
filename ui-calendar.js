@@ -995,6 +995,37 @@ if (evs.length > maxVisible) {
   }
 }
 
+function bindCategoryUI() {
+  const row = document.getElementById("categoryChips");
+  if (!row) return;
+
+  const chips = [...row.querySelectorAll(".chip")];
+
+  function paintActive() {
+    chips.forEach((btn) => {
+      const on = btn.dataset.cat === (state.logic.activeCategory || "all");
+      btn.classList.toggle("isActive", on);
+    });
+  }
+
+  paintActive();
+
+  chips.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      App.actions?.selectCategory?.(btn.dataset.cat || "all");
+      clearListFocus?.();
+      paintActive();
+
+      commit?.({
+        persist: false,
+        purgePast: false,
+        rebuildMarkers: true,
+        recomputeNearby: true
+      });
+    });
+  });
+}
+
   /* =========================
      CORE WRAPPERS (compat SSOT)
   ========================= */
@@ -1097,6 +1128,7 @@ function bindAdminUI() {
   const addBtn = document.getElementById("addEventBtn");
   const clearBtn = document.getElementById("clearEventsBtn");
   const cancelBtn = document.getElementById("cancelEditBtn");
+  const venueSearchInput = document.getElementById("venueSearchInput");
 
   if (addBtn) {
     addBtn.addEventListener("click", async () => {
@@ -1120,6 +1152,7 @@ function bindAdminUI() {
       const startEl = document.getElementById("eventStart");
       const catEl = document.getElementById("eventCategory");
       const addBtn2 = document.getElementById("addEventBtn");
+      const venueSuggestions = document.getElementById("venueSuggestions");
 
       if (titleEl) titleEl.value = "";
       if (dateEl) dateEl.value = "";
@@ -1129,43 +1162,78 @@ function bindAdminUI() {
       if (startEl) startEl.value = "";
       if (catEl) catEl.value = "music";
       if (addBtn2) addBtn2.textContent = "Agregar evento";
+      if (venueSearchInput) venueSearchInput.value = "";
+      if (venueSuggestions) venueSuggestions.innerHTML = "";
+
+      App.venues?.clearSelectedVenueForAdmin?.();
 
       cancelBtn.hidden = true;
       App.map?.clearEventCreationMarker?.();
     });
   }
-}
 
-  function bindCategoryUI() {
-  const row = document.getElementById("categoryChips");
-  if (!row) return;
+  if (venueSearchInput) {
+    venueSearchInput.addEventListener("input", (e) => {
+      const query = e.target.value || "";
 
-  const chips = [...row.querySelectorAll(".chip")];
+      App.state.logic.adminVenueQuery = query;
+      App.state.logic.adminVenueSuggestions =
+        App.venues?.searchVenuesByName?.(query) || [];
 
-  function paintActive() {
-    chips.forEach((btn) => {
-      const on = btn.dataset.cat === (state.logic.activeCategory || "all");
-      btn.classList.toggle("isActive", on);
+      renderVenueSuggestions();
     });
   }
-
-  paintActive();
-
-    chips.forEach((btn) => {
-    btn.addEventListener("click", () => {
-      App.actions?.selectCategory?.(btn.dataset.cat || "all");
-      clearListFocus();
-      paintActive();
-
-      commit({
-          persist: false,
-          purgePast: false,
-          rebuildMarkers: true,
-          recomputeNearby: true
-        });
-    });
-  });
 }
+
+function renderVenueSuggestions() {
+  const box = document.getElementById("venueSuggestions");
+  if (!box) return;
+
+  const items = App.state.logic.adminVenueSuggestions || [];
+
+  if (!items.length) {
+    box.innerHTML = "";
+    return;
+  }
+
+  box.innerHTML = items.map((venue) => `
+    <button
+      type="button"
+      class="venueSuggestionItem"
+      data-venue-id="${venue.id}"
+    >
+      <strong>${venue.name}</strong><br>
+      <small>${venue.address || ""}</small>
+    </button>
+  `).join("");
+}
+
+function applyVenueToAdminForm(venue) {
+  if (!venue) return;
+
+  const venueSearchInput = document.getElementById("venueSearchInput");
+  const placeInput = document.getElementById("eventPlace");
+  const latInput = document.getElementById("eventLat");
+  const lngInput = document.getElementById("eventLng");
+  const box = document.getElementById("venueSuggestions");
+
+  if (venueSearchInput) venueSearchInput.value = venue.name;
+  if (placeInput) placeInput.value = venue.name;
+  if (latInput) latInput.value = venue.lat ?? "";
+  if (lngInput) lngInput.value = venue.lng ?? "";
+  if (box) box.innerHTML = "";
+}
+
+document.addEventListener("click", (e) => {
+  const btn = e.target.closest(".venueSuggestionItem");
+  if (!btn) return;
+
+  const venueId = btn.dataset.venueId;
+  const result = App.venues?.selectVenueForAdmin?.(venueId);
+  if (!result?.ok) return;
+
+  applyVenueToAdminForm(result.venue);
+});
 
   /* =========================
      DEEP LINK (#e=EVENT_ID)

@@ -115,6 +115,14 @@
             <div class="adminGrid">
               <input id="eventPlace" placeholder="Lugar (ej: Teatro Solís)">
 
+              <input
+  id="venueSearchInput"
+  type="text"
+  placeholder="Buscar lugar existente"
+/>
+
+<div id="venueSuggestions"></div>
+
               <div class="chipRow chipRow--admin" id="adminCategoryChips">
   <span class="chipLabel">Categoría:</span>
   <button type="button" class="chip chip--sm isActive" data-cat="music">🎵</button>
@@ -170,6 +178,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script src="state-config.js"></script>
+<script src="venue-service.js"></script>
 <script src="supabase-client.js"></script>
 <script src="storage.js"></script>
 <script src="event-selectors.js"></script>

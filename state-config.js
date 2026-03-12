@@ -28,9 +28,14 @@ ALLOWED_CATEGORIES: ["music", "dance", "theatre", "visual_arts", "cinema"]
     logic: {
       isLoggedIn: false,
       events: [],
+      venues: [],
       calendarCursor: new Date(),
       activeCategory: App.CFG.CATEGORY_ALL,
       editingEventId: null,
+
+      adminVenueQuery: "",
+      adminVenueSuggestions: [],
+      selectedVenueId: null,
       nearbyCenter: null, // { lat, lng } | null
       nearbyEvents: []
     },
