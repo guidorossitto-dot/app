@@ -1570,3 +1570,32 @@ button:active {
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
+@media (max-width: 768px) {
+
+  /* celdas del calendario más compactas */
+  .day {
+    height: 95px;
+    padding: 4px;
+  }
+
+  /* número del día */
+  .day-number {
+    font-size: 0.8rem;
+    margin-bottom: 2px;
+  }
+
+  /* eventos dentro del calendario */
+  .day .event {
+    font-size: 0.7rem;
+    line-height: 1.1;
+    padding: 1px 3px;
+    margin-bottom: 2px;
+  }
+
+  /* +N más */
+  .day .event-more {
+    font-size: 0.7rem;
+  }
+
+}
