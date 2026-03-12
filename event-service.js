@@ -266,6 +266,14 @@
     return setLoginState(false);
   }
 
+  function isAdminMode() {
+  const params = new URLSearchParams(window.location.search);
+  return params.get("admin") === "1";
+}
+
+App.events = App.events || {};
+App.events.isAdminMode = isAdminMode;
+
   function setActiveCategory(category) {
     const value =
       category === App.CFG.CATEGORY_ALL

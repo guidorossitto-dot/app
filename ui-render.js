@@ -2,49 +2,50 @@
 (() => {
   "use strict";
 
-  const App = (window.App = window.App || {});
+  const App = window.App = window.App || {};
+  App.ui = App.ui || {};
 
-  function renderAll(opts = {}) {
-    const rebuildMarkers = opts.rebuildMarkers ?? true;
-    const recomputeNearby = opts.recomputeNearby ?? true;
+  function renderLoginUI() {
+    const loginBtn = document.getElementById("loginBtn");
+    const logoutBtn = document.getElementById("logoutBtn");
+    const adminView = document.getElementById("adminView");
 
-    if (
-      recomputeNearby &&
-      App.state?.logic?.nearbyCenter &&
-      App.map?.recomputeNearbyEvents
-    ) {
-      App.map.recomputeNearbyEvents(
-        App.state.logic.nearbyCenter.lat,
-        App.state.logic.nearbyCenter.lng
-      );
+    if (!loginBtn || !logoutBtn || !adminView) return;
+
+    const isAdmin = !!App.events?.isAdminMode?.();
+    const isLoggedIn = !!App.state?.logic?.isLoggedIn;
+
+    if (!isAdmin) {
+      loginBtn.hidden = true;
+      logoutBtn.hidden = true;
+      adminView.hidden = true;
+      return;
     }
 
-    App.ui?.renderAppShell?.();
-    App.ui?.renderList?.();
-    App.ui?.renderCalendar?.();
-    App.map?.renderMap?.({ rebuildMarkers });
+    loginBtn.hidden = isLoggedIn;
+    logoutBtn.hidden = !isLoggedIn;
+    adminView.hidden = !isLoggedIn;
   }
 
-  function commit(opts = {}) {
-    const {
-      persist = true,
-      purgePast = true,
-      rebuildMarkers = true,
-      recomputeNearby = true
-    } = opts;
+  function bindLoginUI() {
+    const loginBtn = document.getElementById("loginBtn");
+    const logoutBtn = document.getElementById("logoutBtn");
 
-    if (purgePast) {
-      App.events?.purgePastEventsInState?.();
-    }
+    if (!loginBtn || !logoutBtn) return;
 
-    if (persist) {
-      App.events?.persistEvents?.();
-      App.events?.persistLoginState?.();
-    }
+    loginBtn.addEventListener("click", () => {
+      App.actions?.login?.();
+      App.ui?.renderLoginUI?.();
+    });
 
-    renderAll({ rebuildMarkers, recomputeNearby });
+    logoutBtn.addEventListener("click", () => {
+      App.actions?.logout?.();
+      App.ui?.renderLoginUI?.();
+    });
+
+    renderLoginUI();
   }
 
-  App.renderAll = renderAll;
-  App.commit = commit;
+  App.ui.renderLoginUI = renderLoginUI;
+  App.ui.bindLoginUI = bindLoginUI;
 })();
