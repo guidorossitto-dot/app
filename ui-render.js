@@ -50,24 +50,21 @@
   App.ui.bindLoginUI = bindLoginUI;
 
   function renderAll(opts = {}) {
-    App.ui?.renderLoginUI?.();
-    App.ui?.renderAppShell?.();
-    App.ui?.renderTodayEvents?.();
-    App.ui?.renderEvents?.();
-    App.ui?.renderNearbyEvents?.();
-    App.ui?.renderCalendar?.();
+  App.ui?.renderLoginUI?.();
+  App.ui?.renderAppShell?.();
+  App.ui?.renderList?.();
+  App.ui?.renderCalendar?.();
 
-    if (opts.rebuildMarkers) {
-      App.map?.rebuildMarkers?.();
-    }
-
-    if (opts.recomputeNearby) {
-      const center = App.state?.logic?.nearbyCenter;
-      if (center && App.map?.recomputeNearbyEvents) {
-        App.map.recomputeNearbyEvents(center.lat, center.lng);
-      }
-    }
+  if (opts.rebuildMarkers) {
+    App.map?.rebuildMarkers?.();
   }
 
+  if (opts.recomputeNearby) {
+    const center = App.state?.logic?.nearbyCenter;
+    if (center && App.map?.recomputeNearbyEvents) {
+      App.map.recomputeNearbyEvents(center.lat, center.lng);
+    }
+  }
+}
   App.renderAll = renderAll;
 })();

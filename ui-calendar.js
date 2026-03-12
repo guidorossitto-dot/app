@@ -177,45 +177,53 @@
   /* =========================
      LISTAS
   ========================= */
-    function renderEvents(list = state.logic.events, emptyMsg = "No hay próximos eventos") {
-    const ul = document.getElementById("eventList");
-    if (!ul) return;
+    function renderEvents(list, emptyMsg = "No hay próximos eventos") {
+  const ul = document.getElementById("eventList");
+  if (!ul) return;
 
-    const safeList = Array.isArray(list) ? list : selectors.getVisibleFutureEvents(state.logic.events || []);
+  const safeList = Array.isArray(list)
+    ? list
+    : selectors.getVisibleFutureEvents(state.logic.events || []);
 
-    if (!safeList || safeList.length === 0) {
-      ul.innerHTML = `<li>${emptyMsg}</li>`;
-      return;
-    }
-
-    renderGroupedList(ul, safeList);
+  if (!safeList || safeList.length === 0) {
+    ul.innerHTML = `<li>${emptyMsg}</li>`;
+    return;
   }
 
-  function renderNearbyEvents(list = state.logic.nearbyEvents) {
-    const ul = document.getElementById("nearbyList");
-    if (!ul) return;
+  renderGroupedList(ul, safeList);
+}
 
-    if (!list || list.length === 0) {
-      ul.innerHTML = "<li>No hay eventos a 2 km</li>";
-      return;
-    }
+function renderTodayEvents(list, emptyMsg = "No hay eventos hoy") {
+  const ul = document.getElementById("todayEvents");
+  if (!ul) return;
 
-    renderGroupedList(ul, list);
+  const safeList = Array.isArray(list)
+    ? list
+    : selectors.getVisibleTodayEvents(state.logic.events || []);
+
+  if (!safeList || safeList.length === 0) {
+    ul.innerHTML = `<li>${emptyMsg}</li>`;
+    return;
   }
 
-    function renderTodayEvents(list = state.logic.events, emptyMsg = "No hay eventos hoy") {
-    const ul = document.getElementById("todayEvents");
-    if (!ul) return;
+  renderGroupedList(ul, safeList);
+}
 
-    const safeList = Array.isArray(list) ? list : selectors.getVisibleTodayEvents(state.logic.events || []);
+function renderNearbyEvents(list) {
+  const ul = document.getElementById("nearbyList");
+  if (!ul) return;
 
-    if (!safeList || safeList.length === 0) {
-      ul.innerHTML = `<li>${emptyMsg}</li>`;
-      return;
-    }
+  const safeList = Array.isArray(list)
+    ? list
+    : selectors.getTodayNearbyEvents(state.logic.nearbyEvents || []);
 
-    renderGroupedList(ul, safeList);
+  if (!safeList || safeList.length === 0) {
+    ul.innerHTML = "<li>No hay eventos a 2 km</li>";
+    return;
   }
+
+  renderGroupedList(ul, safeList);
+}
 
   function renderEventsIntoUl(ulId, list, emptyMsg) {
     const ul = document.getElementById(ulId);
