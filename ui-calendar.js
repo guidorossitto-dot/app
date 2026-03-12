@@ -600,9 +600,18 @@ function renderNearbyEvents(list) {
     const time = util.formatTimeStart(ev);
     const place = util.shortPlaceName(ev.placeName) || "Lugar sin nombre";
     const dateText = util.formatDateDisplay(ev.date);
+    const icon =
+  ev.category === "music" ? "🎵" :
+  ev.category === "dance" ? "💃" :
+  ev.category === "theatre" ? "🎭" :
+  ev.category === "visual_arts" ? "🖼️" :
+  "📍";
 
     pop.innerHTML = `
-      <div class="calendarEventPopover__title">${ev.title || "Evento"}</div>
+      <div class="calendarEventPopover__title">
+  <span class="calendarEventIcon">${icon}</span>
+  <span class="calendarEventTitleText">${ev.title || "Evento"}</span>
+</div>
       <div class="calendarEventPopover__meta">
         ${time ? `<div><strong>Hora:</strong> ${time}</div>` : ""}
         <div><strong>Lugar:</strong> ${place}</div>
