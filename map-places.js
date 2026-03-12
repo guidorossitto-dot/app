@@ -711,12 +711,12 @@ async function createEventFromAdminForm() {
         });
 
       if (!existingVenue) {
-        App.venues.addVenue({
-          name: placeName,
-          address: placeName,
-          lat,
-          lng
-        });
+      await App.venues.addVenueRemote({
+  name: placeName,
+  address: placeName,
+  lat,
+  lng
+});
       }
     }
   }

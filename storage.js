@@ -5,8 +5,9 @@
   const { util, state } = App;
 
   const STORAGE_KEYS = {
-    LOGIN: "recomentos.isLoggedIn"
-  };
+  LOGIN: "recomentos.isLoggedIn",
+  VENUES: "recomentos.venues"
+};
 
   function safeParseJSON(raw, fallback = null) {
     try {
@@ -28,6 +29,65 @@
       lng: Number(row.lng)
     });
   }
+
+  function mapRowToVenue(row) {
+  return {
+    id: String(row.id || "").trim(),
+    name: String(row.name || "").trim(),
+    address: String(row.address || "").trim(),
+    neighborhood: String(row.neighborhood || "").trim(),
+    lat: Number(row.lat),
+    lng: Number(row.lng),
+    instagramUrl: String(row.instagram_url || "").trim(),
+    websiteUrl: String(row.website_url || "").trim(),
+    mapsUrl: String(row.maps_url || "").trim(),
+    notes: String(row.notes || "").trim(),
+    createdAt: String(row.created_at || "").trim(),
+    updatedAt: String(row.updated_at || "").trim()
+  };
+}
+
+function mapVenueToRow(venue) {
+  return {
+    id: venue.id,
+    name: venue.name || "",
+    address: venue.address || "",
+    neighborhood: venue.neighborhood || "",
+    lat: Number(venue.lat),
+    lng: Number(venue.lng),
+    instagram_url: venue.instagramUrl || "",
+    website_url: venue.websiteUrl || "",
+    maps_url: venue.mapsUrl || "",
+    notes: venue.notes || "",
+    created_at: venue.createdAt || new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  };
+}
+
+function saveVenues() {
+  try {
+    const venues = Array.isArray(state.logic?.venues) ? state.logic.venues : [];
+    localStorage.setItem(STORAGE_KEYS.VENUES, JSON.stringify(venues));
+    return { ok: true, count: venues.length };
+  } catch (err) {
+    console.error("No se pudieron guardar los venues.", err);
+    return { ok: false, error: err };
+  }
+}
+
+function loadVenues() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEYS.VENUES);
+    const parsed = safeParseJSON(raw, []);
+
+    const result = App.venues?.replaceAllVenues?.(Array.isArray(parsed) ? parsed : []);
+    return { ok: true, count: result?.count || 0 };
+  } catch (err) {
+    console.error("No se pudieron cargar los venues.", err);
+    if (state.logic) state.logic.venues = [];
+    return { ok: false, error: err };
+  }
+}
 
   function mapEventToRow(ev) {
     const safe = util.normalizeEvent(ev);
@@ -113,6 +173,84 @@
     const purged = purgePastEvents(safeList);
     return purged.length !== safeList.length;
   }
+
+async function loadVenuesRemote() {
+  const supabase = App.supabase;
+  if (!supabase) return { ok: false, error: "SUPABASE_NOT_READY" };
+
+  const { data, error } = await supabase
+    .from("venues")
+    .select("*")
+    .order("name", { ascending: true });
+
+  if (error) {
+    console.error("No se pudieron cargar los venues desde Supabase.", error);
+    return { ok: false, error };
+  }
+
+  const venues = Array.isArray(data) ? data.map(mapRowToVenue) : [];
+  App.venues?.replaceAllVenues?.(venues);
+
+  return { ok: true, count: venues.length, venues };
+}
+
+async function insertVenue(venue) {
+  const supabase = App.supabase;
+  if (!supabase) return { ok: false, error: "SUPABASE_NOT_READY" };
+
+  const row = mapVenueToRow(venue);
+
+  const { data, error } = await supabase
+    .from("venues")
+    .insert(row)
+    .select()
+    .single();
+
+  if (error) {
+    console.error("No se pudo insertar el venue en Supabase.", error);
+    return { ok: false, error };
+  }
+
+  return { ok: true, venue: mapRowToVenue(data) };
+}
+
+async function updateVenueRemote(venue) {
+  const supabase = App.supabase;
+  if (!supabase) return { ok: false, error: "SUPABASE_NOT_READY" };
+
+  const row = mapVenueToRow(venue);
+
+  const { data, error } = await supabase
+    .from("venues")
+    .update(row)
+    .eq("id", venue.id)
+    .select()
+    .single();
+
+  if (error) {
+    console.error("No se pudo actualizar el venue en Supabase.", error);
+    return { ok: false, error };
+  }
+
+  return { ok: true, venue: mapRowToVenue(data) };
+}
+
+async function deleteVenueRemote(venueId) {
+  const supabase = App.supabase;
+  if (!supabase) return { ok: false, error: "SUPABASE_NOT_READY" };
+
+  const { error } = await supabase
+    .from("venues")
+    .delete()
+    .eq("id", venueId);
+
+  if (error) {
+    console.error("No se pudo borrar el venue en Supabase.", error);
+    return { ok: false, error };
+  }
+
+  return { ok: true };
+}
 
   async function saveEvents(list = state.logic.events) {
     console.warn("saveEvents quedó obsoleto con Supabase. Usar insert/update/delete.");
@@ -227,19 +365,28 @@
   }
 
   App.storage = {
-    loadEvents,
-    readEvents,
-    saveEvents,
-    purgePastEvents,
-    hasPastEvents,
-    insertEvent,
-    deleteEvent,
-    deleteAllEvents,
-    updateEvent,
-    saveLoginState,
-    readLoginState,
+  loadEvents,
+  readEvents,
+  saveEvents,
+  purgePastEvents,
+  hasPastEvents,
+  insertEvent,
+  deleteEvent,
+  deleteAllEvents,
+  updateEvent,
+  saveLoginState,
+  readLoginState,
 
-    mapRowToEvent,
-    mapEventToRow
-  };
+  saveVenues,
+  loadVenues,
+
+  loadVenuesRemote,
+  insertVenue,
+  updateVenueRemote,
+  deleteVenueRemote,
+
+
+  mapRowToEvent,
+  mapEventToRow
+};
 })();

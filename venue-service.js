@@ -263,6 +263,50 @@
     };
   }
 
+  async function addVenueRemote(rawVenue = {}) {
+  ensureVenueState();
+
+  const validation = validateVenue(rawVenue);
+  if (!validation.ok) {
+    return { ok: false, error: validation.error };
+  }
+
+  const venue = normalizeVenue(rawVenue);
+
+  const duplicate = state.logic.venues.find((v) => {
+    const sameName = safeLower(v.name) === safeLower(venue.name);
+    const sameLat = v.lat === venue.lat;
+    const sameLng = v.lng === venue.lng;
+    return sameName && sameLat && sameLng;
+  });
+
+  if (duplicate) {
+    return { ok: true, venue: cloneVenue(duplicate), duplicate: true };
+  }
+
+  const remote = await App.storage?.insertVenue?.(venue);
+  if (!remote?.ok) return remote;
+
+  state.logic.venues.push(remote.venue);
+
+  if (App.storage?.saveVenues) {
+    App.storage.saveVenues();
+  }
+
+  return { ok: true, venue: cloneVenue(remote.venue) };
+}
+
+async function loadVenuesRemote() {
+  const result = await App.storage?.loadVenuesRemote?.();
+  if (!result?.ok) return result;
+
+  if (App.storage?.saveVenues) {
+    App.storage.saveVenues();
+  }
+
+  return result;
+}
+
   /* =========================
      ADMIN UI SUPPORT
   ========================= */
@@ -300,14 +344,16 @@
   ========================= */
 
   App.venues = {
-    listVenues,
-    getVenueById,
-    searchVenuesByName,
-    addVenue,
-    updateVenue,
-    removeVenue,
-    replaceAllVenues,
-    selectVenueForAdmin,
-    clearSelectedVenueForAdmin
-  };
+  listVenues,
+  getVenueById,
+  searchVenuesByName,
+  addVenue,
+  addVenueRemote,
+  updateVenue,
+  removeVenue,
+  replaceAllVenues,
+  loadVenuesRemote,
+  selectVenueForAdmin,
+  clearSelectedVenueForAdmin
+};
 })();

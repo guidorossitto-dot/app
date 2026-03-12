@@ -6,23 +6,39 @@
   const { state } = App;
 
   async function hydrateInitialState() {
-    await App.storage?.loadEvents?.();
 
-    if (App.events?.hydrateLoginFromStorage) {
-      App.events.hydrateLoginFromStorage();
-    } else if (App.storage?.readLoginState) {
-      state.logic.isLoggedIn = App.storage.readLoginState();
-    }
+  const venuesRemote = await App.venues?.loadVenuesRemote?.();
 
-    if (App.events?.purgePastEventsInState) {
-      const purged = App.events.purgePastEventsInState();
-      if (purged?.changed) {
-        console.warn("Hay eventos pasados en estado. Más adelante los limpiaremos también en Supabase.");
-      }
-    }
+if (!venuesRemote?.ok) {
+  await App.storage?.loadVenues?.();
+}
 
-    App.events?.setCalendarCursor?.(new Date());
+  await App.storage?.loadEvents?.();
+
+  (state.logic.events || []).forEach((ev) => {
+  if (!ev?.placeName || !Number.isFinite(ev?.lat) || !Number.isFinite(ev?.lng)) return;
+
+  App.venues?.addVenue?.(
+    { name: ev.placeName, address: ev.placeName, lat: ev.lat, lng: ev.lng },
+    { persist: false }
+  );
+});
+
+  if (App.events?.hydrateLoginFromStorage) {
+    App.events.hydrateLoginFromStorage();
+  } else if (App.storage?.readLoginState) {
+    state.logic.isLoggedIn = App.storage.readLoginState();
   }
+
+  if (App.events?.purgePastEventsInState) {
+    const purged = App.events.purgePastEventsInState();
+    if (purged?.changed) {
+      console.warn("Hay eventos pasados en estado.");
+    }
+  }
+
+  App.events?.setCalendarCursor?.(new Date());
+}
 
   function bindUI() {
     App.ui?.bindLoginUI?.();
