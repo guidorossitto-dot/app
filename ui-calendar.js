@@ -850,37 +850,45 @@ function renderNearbyEvents(list) {
 
       const evs = byDate[dateStr] || [];
 
-      const isMobile = window.innerWidth <= 768;
+const isMobile = window.innerWidth <= 768;
 const maxVisible = isMobile ? 2 : 3;
 
 evs.slice(0, maxVisible).forEach((ev) => {
-        const b = document.createElement("div");
-        b.className = "event";
-        b.textContent = ev.title;
-        b.dataset.eid = ev.id || "";
+  const b = document.createElement("div");
+  b.className = "event";
 
-        b.addEventListener("click", (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          showCalendarEventPopover(b, ev);
-        });
+  const icon =
+    ev.category === "music" ? "🎵 " :
+    ev.category === "dance" ? "💃 " :
+    ev.category === "theatre" ? "🎭 " :
+    ev.category === "visual_arts" ? "🖼️ " :
+    "";
 
-        cell.appendChild(b);
-      });
+  b.textContent = `${icon}${ev.title}`;
+  b.dataset.eid = ev.id || "";
 
-      if (evs.length > maxVisible) {
-        const more = document.createElement("div");
-        more.className = "event event-more";
-        more.textContent = `+${evs.length - maxVisible} más`;
+  b.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    showCalendarEventPopover(b, ev);
+  });
 
-        more.addEventListener("click", (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          showCalendarDayPopover(more, dateStr, evs);
-        });
+  cell.appendChild(b);
+});
 
-        cell.appendChild(more);
-      }
+if (evs.length > maxVisible) {
+  const more = document.createElement("div");
+  more.className = "event event-more";
+  more.textContent = `+${evs.length - maxVisible} más`;
+
+  more.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    showCalendarDayPopover(more, dateStr, evs);
+  });
+
+  cell.appendChild(more);
+}
 
       cell.addEventListener("click", () => {
         openCalendarDay(dateStr);
