@@ -102,22 +102,27 @@
 
                   ${
                     state.logic.isLoggedIn
-                      ? `<button class="popupBtn popupEditBtn"
-                          data-edit-eid="${encodeURIComponent(eid)}"
-                          title="Editar este evento">
-                          Editar
-                        </button>`
+                      ? `${state.logic.isLoggedIn ? `
+<button class="popupEditBtn"
+  data-edit-eid="${encodeURIComponent(ev.id)}"
+>
+✏️ Editar
+</button>
+` : ""}`
                       : ""
                   }
 
                   ${
                     state.logic.isLoggedIn
-                      ? `<button class="popupBtn popupDeleteBtn"
-                          data-delete-eid="${encodeURIComponent(eid)}"
-                          data-delete-title="${encodeURIComponent(e.title || "")}"
-                          title="Borrar este evento">
-                          Borrar
-                        </button>`
+                      ? `${state.logic.isLoggedIn ? `
+<button
+  class="popupDeleteBtn"
+  data-delete-eid="${encodeURIComponent(ev.id)}"
+  data-delete-title="${encodeURIComponent(ev.title || "")}"
+>
+  🗑 Borrar
+</button>
+` : ""}`
                       : ""
                   }
                 </div>

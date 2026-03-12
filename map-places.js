@@ -384,7 +384,7 @@ function rebuildLocationMarkers(list = state.logic.events) {
 
   return;
 }
-
+      if (!state.logic.isLoggedIn) return;
        if (btn.classList.contains("popupDeleteBtn")) {
   const eventId = decodeURIComponent((btn.dataset.deleteEid || "").trim());
   if (!eventId) return;
