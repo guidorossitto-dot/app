@@ -1666,3 +1666,16 @@ button:active {
   overflow-wrap: anywhere;
   word-break: break-word;
 }
+.leaflet-popup-content,
+.popupCard,
+.popupItem,
+.popupItemTitle,
+.popupItemMeta,
+.popupPlace,
+.popupSub {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+.leaflet-popup-content {
+  max-width: 220px;
+}
