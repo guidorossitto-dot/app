@@ -35,36 +35,68 @@
 
     loginBtn.addEventListener("click", () => {
       App.actions?.login?.();
-      App.ui?.renderLoginUI?.();
+      App.commit?.({
+        persist: true,
+        purgePast: false,
+        rebuildMarkers: true,
+        recomputeNearby: true
+      });
     });
 
     logoutBtn.addEventListener("click", () => {
       App.actions?.logout?.();
-      App.ui?.renderLoginUI?.();
+      App.commit?.({
+        persist: true,
+        purgePast: false,
+        rebuildMarkers: true,
+        recomputeNearby: true
+      });
     });
 
     renderLoginUI();
   }
 
+  function renderAll(opts = {}) {
+    const finalOpts = {
+      persist: false,
+      purgePast: false,
+      rebuildMarkers: false,
+      recomputeNearby: false,
+      ...opts
+    };
+
+    if (finalOpts.recomputeNearby) {
+      const center = App.state?.logic?.nearbyCenter;
+      if (center && App.map?.recomputeNearbyEvents) {
+        App.map.recomputeNearbyEvents(center.lat, center.lng);
+      }
+    }
+
+    App.ui?.renderLoginUI?.();
+    App.ui?.renderAppShell?.();
+    App.ui?.renderList?.();
+    App.ui?.renderCalendar?.();
+
+    App.map?.renderMap?.({
+      rebuildMarkers: finalOpts.rebuildMarkers
+    });
+  }
+
+  function commit(opts = {}) {
+    const finalOpts = {
+      persist: true,
+      purgePast: false,
+      rebuildMarkers: true,
+      recomputeNearby: true,
+      ...opts
+    };
+
+    return renderAll(finalOpts);
+  }
+
   App.ui.renderLoginUI = renderLoginUI;
   App.ui.bindLoginUI = bindLoginUI;
 
-  function renderAll(opts = {}) {
-  App.ui?.renderLoginUI?.();
-  App.ui?.renderAppShell?.();
-  App.ui?.renderList?.();
-  App.ui?.renderCalendar?.();
-
-  if (opts.rebuildMarkers) {
-    App.map?.rebuildMarkers?.();
-  }
-
-  if (opts.recomputeNearby) {
-    const center = App.state?.logic?.nearbyCenter;
-    if (center && App.map?.recomputeNearbyEvents) {
-      App.map.recomputeNearbyEvents(center.lat, center.lng);
-    }
-  }
-}
   App.renderAll = renderAll;
+  App.commit = commit;
 })();

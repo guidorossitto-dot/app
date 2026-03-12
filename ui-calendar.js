@@ -1114,7 +1114,7 @@ function bindAdminUI() {
       commit({
         persist: false,
         purgePast: false,
-        rebuildMarkers: false,
+        rebuildMarkers: true,
         recomputeNearby: true
       });
     });
