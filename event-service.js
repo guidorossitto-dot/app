@@ -154,8 +154,14 @@
     return { ok: false, error: inserted?.error || "REMOTE_INSERT_ERROR", event: null };
   }
 
-  // agregar al estado SSOT
-  state.logic.events = [...(state.logic.events || []), inserted.event];
+  const out = App.store?.dispatch?.({
+    type: "ADD_EVENT",
+    event: inserted.event
+  });
+
+  if (!out?.ok) {
+    return { ok: false, error: out?.error || "STORE_ERROR", event: null };
+  }
 
   return { ok: true, error: null, event: inserted.event };
 }
@@ -203,7 +209,7 @@
   return { ok: true, error: null, event: merged };
 }
 
-  async function removeEvent(eventId) {
+ async function removeEvent(eventId) {
   const id = String(eventId || "").trim();
   if (!id) {
     return { ok: false, error: "INVALID_ID", removedEvent: null };
@@ -223,9 +229,18 @@
     };
   }
 
-  state.logic.events = (state.logic.events || []).filter(
-    (ev) => String(ev?.id) !== id
-  );
+  const out = App.store?.dispatch?.({
+    type: "REMOVE_EVENT",
+    eventId: id
+  });
+
+  if (!out?.ok) {
+    return {
+      ok: false,
+      error: out?.error || "STORE_ERROR",
+      removedEvent: null
+    };
+  }
 
   return {
     ok: true,
@@ -259,22 +274,23 @@
      UI / APP STATE WRITES
   ========================= */
   function login() {
-    return setLoginState(true);
-  }
+  setLoginState(true);
+  persistLoginState();
+  return state.logic.isLoggedIn;
+}
 
-  function logout() {
-    return setLoginState(false);
-  }
+function logout() {
+  setLoginState(false);
+  persistLoginState();
+  return state.logic.isLoggedIn;
+}
 
   function isAdminMode() {
   const params = new URLSearchParams(window.location.search);
   return params.get("admin") === "1";
 }
 
-App.events = App.events || {};
-App.events.isAdminMode = isAdminMode;
-
-  function setActiveCategory(category) {
+function setActiveCategory(category) {
     const value =
       category === App.CFG.CATEGORY_ALL
         ? App.CFG.CATEGORY_ALL
@@ -423,6 +439,7 @@ App.events.isAdminMode = isAdminMode;
 
     login,
     logout,
+    isAdminMode,
     setActiveCategory,
     setCalendarCursor,
     setEditingEventId,
