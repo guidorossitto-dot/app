@@ -1626,3 +1626,32 @@ button:active {
     font-size: 0.62rem;
   }
 }
+
+.calendarDayPopover__itemTitle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.calendarEventIcon {
+  flex: 0 0 auto;
+}
+
+.calendarEventTitleText {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 768px) {
+  .calendarDayPopover__itemTitle {
+    gap: 4px;
+    font-size: 0.9rem;
+  }
+
+  .calendarEventIcon {
+    font-size: 0.95rem;
+  }
+}

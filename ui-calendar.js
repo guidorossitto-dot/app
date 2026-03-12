@@ -708,8 +708,9 @@ function renderNearbyEvents(list) {
                 return `
                   <div class="calendarDayPopover__item" data-eid="${encodeURIComponent(ev.id || "")}" style="cursor:pointer;">
                     <div class="calendarDayPopover__itemTitle">
-                     ${icon}${ev.title || "Evento"}
-                    </div>
+                      <span class="calendarEventIcon">${icon}</span>
+                      <span class="calendarEventTitleText">${ev.title || "Evento"}</span>
+                  </div>
                     <div class="calendarDayPopover__itemMeta">
                       ${time ? `<div><strong>Hora:</strong> ${time}</div>` : ""}
                       <div><strong>Lugar:</strong> ${place}</div>
