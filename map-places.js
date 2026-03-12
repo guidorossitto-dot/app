@@ -229,15 +229,14 @@ function rebuildLocationMarkers(list = state.logic.events) {
     const html = App.map?.buildPlacePopupHTML?.(loc) || "";
 
     loc.marker.bindPopup(html, {
-  closeButton: true,
-  autoPan: true,
-  keepInView: true,
-  autoPanPaddingTopLeft: [20, 80],
-  autoPanPaddingBottomRight: [20, 80],
-  offset: [0, -8],
-  maxWidth: 220,
-  minWidth: 120
-});
+      closeButton: true,
+      autoPan: true,
+      keepInView: true,
+      autoPanPadding: [16, 16],
+      offset: [0, -10],
+      maxWidth: 260,
+      minWidth: 180
+    });
 
     loc.marker.off("popupopen");
     loc.marker.on("popupopen", (evt) => {
