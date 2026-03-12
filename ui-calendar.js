@@ -700,7 +700,7 @@ function renderNearbyEvents(list) {
                 const status = util.getEventStatus(ev);
 
                 return `
-                  <div class="calendarDayPopover__item">
+                  <div class="calendarDayPopover__item" data-eid="${encodeURIComponent(ev.id || "")}" style="cursor:pointer;">
                     <div class="calendarDayPopover__itemTitle">
                       ${ev.title || "Evento"}
                     </div>
@@ -749,7 +749,26 @@ function renderNearbyEvents(list) {
         removeCalendarPopover();
       });
     }
+    pop.querySelectorAll(".calendarDayPopover__item[data-eid]").forEach((item) => {
+  item.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
 
+    const eventId = decodeURIComponent(item.dataset.eid || "");
+    if (!eventId) return;
+
+    removeCalendarPopover();
+
+    const mapEl = document.getElementById("map");
+    if (mapEl) mapEl.scrollIntoView({ behavior: "smooth", block: "start" });
+
+    if (App.map?.focusEventById) {
+      App.map.focusEventById(eventId);
+    }
+  });
+});
+
+    
     requestAnimationFrame(() => {
       const onDocClick = (e) => {
         if (!pop.contains(e.target) && e.target !== anchorEl) {
@@ -1112,11 +1131,11 @@ function bindAdminUI() {
       paintActive();
 
       commit({
-        persist: false,
-        purgePast: false,
-        rebuildMarkers: true,
-        recomputeNearby: true
-      });
+          persist: false,
+          purgePast: false,
+          rebuildMarkers: true,
+          recomputeNearby: true
+        });
     });
   });
 }

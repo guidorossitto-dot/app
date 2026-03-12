@@ -1523,3 +1523,50 @@ button:active {
   background: rgba(255, 235, 59, 0.25);
 }
 
+/* Calendario: grilla estable */
+#calendar {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 8px;
+}
+
+/* Cada celda del día */
+.day {
+  min-width: 0;
+  height: 130px;          /* tamaño fijo */
+  overflow: hidden;       /* evita que se deforme */
+  display: flex;
+  flex-direction: column;
+  padding: 6px;
+  box-sizing: border-box;
+}
+
+/* Número del día */
+.day-number {
+  flex: 0 0 auto;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+/* Evento dentro del calendario */
+.day .event {
+  min-width: 0;
+  flex: 0 0 auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;    /* una sola línea */
+  font-size: 0.82rem;
+  line-height: 1.2;
+  margin-bottom: 4px;
+  padding: 2px 4px;
+  border-radius: 6px;
+}
+
+/* +N más */
+.day .event-more {
+  margin-top: auto;
+  font-size: 0.8rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
