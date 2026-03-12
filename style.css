@@ -1601,17 +1601,28 @@ button:active {
 }
 
 @media (max-width: 768px) {
-
   #calendar {
-    gap: 4px;
+    gap: 3px;
   }
 
   .day {
-    height: 90px;
+    height: 80px;
+    padding: 3px;
+  }
+
+  .day-number {
+    font-size: 0.75rem;
+    margin-bottom: 2px;
   }
 
   .day .event {
-    font-size: 0.68rem;
+    font-size: 0.62rem;
+    line-height: 1.05;
+    padding: 1px 2px;
+    margin-bottom: 2px;
   }
 
+  .day .event-more {
+    font-size: 0.62rem;
+  }
 }
