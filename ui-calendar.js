@@ -698,11 +698,17 @@ function renderNearbyEvents(list) {
                 const time = util.formatTimeStart(ev);
                 const place = util.shortPlaceName(ev.placeName) || "Lugar sin nombre";
                 const status = util.getEventStatus(ev);
+                const icon =
+  ev.category === "music" ? "🎵 " :
+  ev.category === "dance" ? "💃 " :
+  ev.category === "theatre" ? "🎭 " :
+  ev.category === "visual_arts" ? "🖼️ " :
+  "";
 
                 return `
                   <div class="calendarDayPopover__item" data-eid="${encodeURIComponent(ev.id || "")}" style="cursor:pointer;">
                     <div class="calendarDayPopover__itemTitle">
-                      ${ev.title || "Evento"}
+                     ${icon}${ev.title || "Evento"}
                     </div>
                     <div class="calendarDayPopover__itemMeta">
                       ${time ? `<div><strong>Hora:</strong> ${time}</div>` : ""}
