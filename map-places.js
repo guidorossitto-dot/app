@@ -1069,23 +1069,24 @@ async function clearAllEvents() {
      EXPORT MAP MODULE
   ========================= */
   App.map = {
-    ...(App.map || {}),
-    initMap,
-    rebuildLocationMarkers,
-    renderMap,
-    recomputeNearbyEvents,
-    filterEventsByDistance,
-    setUserLocation,
-    prepareEventCreation,
-    clearEventCreationMarker,
-    useMyLocation,
-    searchNearbyFromInputs,
-    bindAdminCategoryChips,
-    bindPlaceSearchUI,
-    createEventFromAdminForm,
-    focusEventById,
-    clearAllEvents
-  };
+  ...(App.map || {}),
+  initMap,
+  rebuildMarkers: rebuildLocationMarkers,
+  rebuildLocationMarkers,
+  renderMap,
+  recomputeNearbyEvents,
+  filterEventsByDistance,
+  setUserLocation,
+  prepareEventCreation,
+  clearEventCreationMarker,
+  useMyLocation,
+  searchNearbyFromInputs,
+  bindAdminCategoryChips,
+  bindPlaceSearchUI,
+  createEventFromAdminForm,
+  focusEventById,
+  clearAllEvents
+};
 
   App.map.bindPlaceSearchUI();
 })();
