@@ -1599,3 +1599,19 @@ button:active {
   }
 
 }
+
+@media (max-width: 768px) {
+
+  #calendar {
+    gap: 4px;
+  }
+
+  .day {
+    height: 90px;
+  }
+
+  .day .event {
+    font-size: 0.68rem;
+  }
+
+}

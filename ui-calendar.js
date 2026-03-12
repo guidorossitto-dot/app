@@ -850,7 +850,10 @@ function renderNearbyEvents(list) {
 
       const evs = byDate[dateStr] || [];
 
-      evs.slice(0, 3).forEach((ev) => {
+      const isMobile = window.innerWidth <= 768;
+const maxVisible = isMobile ? 2 : 3;
+
+evs.slice(0, maxVisible).forEach((ev) => {
         const b = document.createElement("div");
         b.className = "event";
         b.textContent = ev.title;
@@ -865,10 +868,10 @@ function renderNearbyEvents(list) {
         cell.appendChild(b);
       });
 
-      if (evs.length > 3) {
+      if (evs.length > maxVisible) {
         const more = document.createElement("div");
         more.className = "event event-more";
-        more.textContent = `+${evs.length - 3} más`;
+        more.textContent = `+${evs.length - maxVisible} más`;
 
         more.addEventListener("click", (e) => {
           e.preventDefault();
