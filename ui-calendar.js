@@ -1275,23 +1275,24 @@ function bindAdminUI() {
      EXPORT UI MODULE
   ========================= */
   App.ui = {
-    renderAppShell,
-    renderList,
-    renderEvents,
-    renderNearbyEvents,
-    renderTodayEvents,
-    renderEventsIntoUl,
-    renderCalendar,
-    updateNearbyCount,
+  ...(App.ui || {}),
+  renderAppShell,
+  renderList,
+  renderEvents,
+  renderNearbyEvents,
+  renderTodayEvents,
+  renderEventsIntoUl,
+  renderCalendar,
+  updateNearbyCount,
 
-    bindLoginUI,
-    bindPublicUI,
-    bindAdminUI,
-    bindCalendarUI,
-    bindCategoryUI,
-    bindDeleteEventUI,
-    bindSidebarUI,
+  bindLoginUI,
+  bindPublicUI,
+  bindAdminUI,
+  bindCalendarUI,
+  bindCategoryUI,
+  bindDeleteEventUI,
+  bindSidebarUI,
 
-    processQueuedDeepLink
-  };
+  processQueuedDeepLink
+};
 })();

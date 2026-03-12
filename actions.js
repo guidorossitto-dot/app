@@ -12,13 +12,12 @@
   }
 
   function login() {
-    return setLogin(true);
-  }
+  return App.events?.login?.();
+}
 
-  function logout() {
-    return setLogin(false);
-  }
-
+function logout() {
+  return App.events?.logout?.();
+}
   /* =========================
      LOGIC STATE
   ========================= */
