@@ -113,6 +113,18 @@ async function deleteEventFromButton(btn) {
     return selectors.getGroupedEvents(list || []);
   }
 
+  function formatDistance(ev) {
+  if (!ev || typeof ev.distanceKm !== "number") return "";
+
+  const km = ev.distanceKm;
+
+  if (km < 1) {
+    return `🚶 ${Math.round(km * 1000)} m`;
+  }
+
+  return `🚶 ${km.toFixed(1)} km`;
+}
+
  function renderGroupedList(ul, list) {
   if (!ul) return;
   ul.innerHTML = "";
@@ -127,6 +139,16 @@ async function deleteEventFromButton(btn) {
   const renderEv = (ev) => {
     const time = util.formatTimeStart(ev);
     const status = util.getEventStatus(ev);
+
+    let soonBadge = "";
+
+if (
+  status &&
+  typeof ev.distanceKm === "number" &&
+  ev.distanceKm <= 1
+) {
+  soonBadge = `🔥 ${status}`;
+}
 
     const icon =
       ev.category === "music" ? "🎵" :
@@ -153,16 +175,17 @@ async function deleteEventFromButton(btn) {
 
               ${categoryTagHTML(ev)}
 
-              ${
-                status
-                  ? `<span class="eventMiniCard__status">${status}</span>`
-                  : ""
-              }
+             ${
+  soonBadge
+    ? `<span class="eventMiniCard__status">${soonBadge}</span>`
+    : ""
+}
             </div>
 
             <div class="eventMiniCard__meta">
-              ${util.formatDateDisplay(ev.date)}
-            </div>
+  ${util.formatDateDisplay(ev.date)}
+  ${formatDistance(ev)}
+</div>
           </div>
         </div>
 
