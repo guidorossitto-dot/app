@@ -51,44 +51,43 @@
       </div>
 
       <div class="appLayout appLayout--leftSidebar">
-        <aside class="sideColumn sideColumn--left" id="leftSidebar">
-          <div class="sidebarToolbar">
-            <button type="button" id="toggleSidebarBtn" class="sidebarToggleBtn" aria-expanded="true">
-              ☰ Agenda
-            </button>
-          </div>
+  <aside class="sideColumn sideColumn--left" id="leftSidebar">
+  <div class="sidebarToolbar">
+    <button type="button" id="toggleSidebarBtn" class="sidebarToggleBtn" aria-expanded="true">
+      ☰ Agenda
+    </button>
+  </div>
 
-          <div class="panelCard sidebarPanel">
-            <details class="accordion" open>
-              <summary>Eventos de hoy</summary>
-              <ul id="todayEvents"></ul>
-            </details>
-          </div>
+  <div class="panelCard sidebarPanel panelCard--today">
+    <details class="accordion" open>
+      <summary>☀️ Eventos de hoy</summary>
+      <ul id="todayEvents"></ul>
+    </details>
+  </div>
 
-          <div class="panelCard sidebarPanel">
-            <details class="accordion" open>
-              <summary>Próximos eventos</summary>
-              <ul id="eventList"></ul>
-            </details>
-          </div>
-        </aside>
+  <div class="panelCard sidebarPanel panelCard--future">
+    <details class="accordion" open>
+      <summary>🗓️ Próximos eventos</summary>
+      <ul id="eventList"></ul>
+    </details>
+  </div>
+</aside>
 
-        <div class="mainColumn">
-          <div class="panelCard panelCard--map">
-            <div class="panelHeader">
-              <h3>Mapa</h3>
-            </div>
-            <div id="map"></div>
-          </div>
+<div class="mainColumn">
+  <div class="panelCard panelCard--map">
+    <div class="panelHeader">
+      <h3>Mapa</h3>
+    </div>
+    <div id="map"></div>
+  </div>
 
-          <div class="panelCard">
-            <details class="accordion" open>
-              <summary>Eventos cerca tuyo</summary>
-              <div id="nearbySummaryBlock"></div>
-              <ul id="nearbyList"></ul>
-            </details>
-          </div>
-
+  <div class="panelCard panelCard--nearby">
+    <details class="accordion" open>
+      <summary>📍 Eventos cerca tuyo</summary>
+      <div id="nearbySummaryBlock"></div>
+      <ul id="nearbyList"></ul>
+    </details>
+  </div>
           <div class="panelCard">
             <div class="panelHeader">
               <h3>Buscar lugar real</h3>
