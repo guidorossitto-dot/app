@@ -956,11 +956,31 @@ button:active {
 .accordion > ul {
   padding: 0 12px 12px;
   margin: 0;
+  max-height: 320px;
+  overflow-y: auto;
+  overflow-x: hidden;
   animation: accordionFadeIn 220ms ease;
+  -webkit-overflow-scrolling: touch;
 }
 
 .sideColumn .accordion > ul {
   padding: 0 0 4px;
+  max-height: 320px;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.accordion > ul::-webkit-scrollbar {
+  width: 8px;
+}
+
+.accordion > ul::-webkit-scrollbar-thumb {
+  background: #d6d6d6;
+  border-radius: 999px;
+}
+
+.accordion > ul::-webkit-scrollbar-track {
+  background: transparent;
 }
 
 /* ==============
