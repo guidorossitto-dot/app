@@ -8,6 +8,12 @@
   /* =========================
      CATEGORY HTML HELPERS
   ========================= */
+function canManageUI() {
+  const params = new URLSearchParams(window.location.search);
+  const isAdminMode = params.get("admin") === "1";
+  return !!state.logic.isLoggedIn && isAdminMode;
+}
+
   function categoryTagHTML(ev) {
     const t = util.categoryLabel(ev?.category);
     return t ? `<span class="catTag">${t}</span>` : "";
@@ -69,14 +75,14 @@
             </button>
 
             ${
-              state.logic.isLoggedIn
-                ? `<button class="linkBtn deleteEventBtn"
-                    data-delete-eid="${encodeURIComponent(ev.id)}"
-                    data-delete-title="${encodeURIComponent(ev.title || "")}">
-                    Borrar
-                  </button>`
-                : ""
-            }
+  canManageUI()
+    ? `<button class="linkBtn deleteEventBtn"
+        data-delete-eid="${encodeURIComponent(ev.id)}"
+        data-delete-title="${encodeURIComponent(ev.title || "")}">
+        Borrar
+      </button>`
+    : ""
+}
           </div>
         </div>
       `;
@@ -277,14 +283,14 @@ function renderNearbyEvents(list) {
                 </button>
 
                 ${
-                  state.logic.isLoggedIn
-                    ? `<button class="linkBtn deleteEventBtn"
-                        data-delete-eid="${encodeURIComponent(ev.id)}"
-                        data-delete-title="${encodeURIComponent(ev.title || "")}">
-                        Borrar
-                      </button>`
-                    : ""
-                }
+  canManageUI()
+    ? `<button class="linkBtn deleteEventBtn"
+        data-delete-eid="${encodeURIComponent(ev.id)}"
+        data-delete-title="${encodeURIComponent(ev.title || "")}">
+        Borrar
+      </button>`
+    : ""
+}
               </div>
             </div>
           </div>

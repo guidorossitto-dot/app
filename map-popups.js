@@ -10,6 +10,12 @@
     return t ? ` <span class="catTag">${t}</span>` : "";
   }
 
+function canManageUI() {
+  const params = new URLSearchParams(window.location.search);
+  const isAdminMode = params.get("admin") === "1";
+  return !!state.logic.isLoggedIn && isAdminMode;
+}
+
   function buildPlacePopupHTML(loc) {
     if (!loc) return "";
 
@@ -21,14 +27,14 @@
     const sorted = [...(loc.events || [])].sort(util.sortEventsByStatusThenTime);
     const total = sorted.length;
 
-    const actionBtn = state.logic.isLoggedIn
-      ? `<button class="popupBtn popupBtnPrimary popupAddBtn"
-            data-lat="${loc.lat}"
-            data-lng="${loc.lng}"
-            data-place="${encodeURIComponent(placeName || "")}">
-          Cargar evento acá
-        </button>`
-      : "";
+    const actionBtn = canManageUI()
+  ? `<button class="popupBtn popupBtnPrimary popupAddBtn"
+        data-lat="${loc.lat}"
+        data-lng="${loc.lng}"
+        data-place="${encodeURIComponent(placeName || "")}">
+      Cargar evento acá
+    </button>`
+  : "";
 
     const centerBtn = `
       <button class="popupBtn popupCenterBtn"
@@ -101,21 +107,21 @@
               </button>
 
               ${
-                state.logic.isLoggedIn
-                  ? `
-                    <button class="popupBtn popupEditBtn"
-                      data-edit-eid="${encodeURIComponent(eid)}">
-                      ✏️ Editar
-                    </button>
+  canManageUI()
+    ? `
+      <button class="popupBtn popupEditBtn"
+        data-edit-eid="${encodeURIComponent(eid)}">
+        ✏️ Editar
+      </button>
 
-                    <button class="popupBtn deleteEventBtn"
-                      data-delete-eid="${encodeURIComponent(eid)}"
-                      data-delete-title="${encodeURIComponent(e.title || "")}">
-                      🗑 Borrar
-                    </button>
-                  `
-                  : ""
-              }
+      <button class="popupBtn deleteEventBtn"
+        data-delete-eid="${encodeURIComponent(eid)}"
+        data-delete-title="${encodeURIComponent(e.title || "")}">
+        🗑 Borrar
+      </button>
+    `
+    : ""
+}
             </div>
           `
           : ""
