@@ -167,37 +167,29 @@ async function deleteEventFromButton(btn) {
       </div>
 
       <div class="eventMiniCard__actions">
-        <button class="linkBtn mapFocusBtn"
-          data-eid="${encodeURIComponent(ev.id || "")}"
-          data-lat="${ev.lat}"
-          data-lng="${ev.lng}"
-          data-key="${util.smartLocationKey(ev, state.logic.events || [])}">
-          Ver en mapa
-        </button>
+  <button class="linkBtn routeBtn"
+    data-lat="${ev.lat}"
+    data-lng="${ev.lng}"
+    data-place="${encodeURIComponent(ev.title || ev.placeName || "")}">
+    Cómo llegar
+  </button>
 
-        <button class="linkBtn routeBtn"
-          data-lat="${ev.lat}"
-          data-lng="${ev.lng}"
-          data-place="${encodeURIComponent(ev.title || ev.placeName || "")}">
-          Cómo llegar
-        </button>
+  <button class="linkBtn shareBtn"
+    data-eid="${encodeURIComponent(ev.id)}"
+    data-title="${encodeURIComponent(ev.title || "")}">
+    Compartir
+  </button>
 
-        <button class="linkBtn shareBtn"
-          data-eid="${encodeURIComponent(ev.id)}"
-          data-title="${encodeURIComponent(ev.title || "")}">
-          Compartir
-        </button>
-
-        ${
-          canManageUI()
-            ? `<button class="linkBtn deleteEventBtn"
-                data-delete-eid="${encodeURIComponent(ev.id)}"
-                data-delete-title="${encodeURIComponent(ev.title || "")}">
-                Borrar
-              </button>`
-            : ""
-        }
-      </div>
+  ${
+    canManageUI()
+      ? `<button class="linkBtn deleteEventBtn"
+          data-delete-eid="${encodeURIComponent(ev.id)}"
+          data-delete-title="${encodeURIComponent(ev.title || "")}">
+          Borrar
+        </button>`
+      : ""
+  }
+</div>
     </article>
   `;
 };
