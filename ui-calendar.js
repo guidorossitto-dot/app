@@ -707,6 +707,7 @@ function renderNearbyEvents(list) {
   ev.category === "dance" ? "💃" :
   ev.category === "theatre" ? "🎭" :
   ev.category === "visual_arts" ? "🖼️" :
+  ev.category === "cinema" ? "🎬" :
   "📍";
 
     pop.innerHTML = `
@@ -814,6 +815,7 @@ function renderNearbyEvents(list) {
   ev.category === "dance" ? "💃 " :
   ev.category === "theatre" ? "🎭 " :
   ev.category === "visual_arts" ? "🖼️ " :
+  ev.category === "cinema" ? "🎬 " :
   "";
 
                 return `
@@ -976,11 +978,12 @@ evs.slice(0, maxVisible).forEach((ev) => {
   b.className = "event";
 
   const icon =
-    ev.category === "music" ? "🎵 " :
-    ev.category === "dance" ? "💃 " :
-    ev.category === "theatre" ? "🎭 " :
-    ev.category === "visual_arts" ? "🖼️ " :
-    "";
+  ev.category === "music" ? "🎵 " :
+  ev.category === "dance" ? "💃 " :
+  ev.category === "theatre" ? "🎭 " :
+  ev.category === "visual_arts" ? "🖼️ " :
+  ev.category === "cinema" ? "🎬 " :
+  "";
 
   b.textContent = `${icon}${ev.title}`;
   b.dataset.eid = ev.id || "";
