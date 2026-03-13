@@ -568,6 +568,43 @@ function rebuildLocationMarkers(list = state.logic.events) {
   /* =========================
      ADMIN EVENTS
   ========================= */
+
+  function formatYMD(dateObj) {
+  const y = dateObj.getFullYear();
+  const m = String(dateObj.getMonth() + 1).padStart(2, "0");
+  const d = String(dateObj.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
+function generateDailyOccurrences(baseEvent, startDate, endDate) {
+  const out = [];
+
+  if (!baseEvent || !startDate || !endDate) return out;
+
+  const start = new Date(`${startDate}T00:00:00`);
+  const end = new Date(`${endDate}T00:00:00`);
+
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return out;
+  if (start > end) return out;
+
+  const cur = new Date(start);
+
+  while (cur <= end) {
+    out.push({
+      ...baseEvent,
+      id: util.newId(),
+      date: formatYMD(cur)
+    });
+
+    cur.setDate(cur.getDate() + 1);
+
+    if (out.length > 60) break;
+  }
+
+  return out;
+}
+
+
 async function createEventFromAdminForm() {
   const titleEl = document.getElementById("eventTitle");
   const dateEl = document.getElementById("eventDate");
@@ -578,6 +615,9 @@ async function createEventFromAdminForm() {
   const catEl = document.getElementById("eventCategory");
   const addBtn = document.getElementById("addEventBtn");
   const cancelBtn = document.getElementById("cancelEditBtn");
+  const createModeEl = document.getElementById("eventCreateMode");
+const endDateEl = document.getElementById("eventEndDate");
+
 
   if (!titleEl || !dateEl || !latEl || !lngEl) return;
 
@@ -632,41 +672,78 @@ async function createEventFromAdminForm() {
     }
 
     App.actions?.stopEditingEvent?.();
-  } else {
-    const rawEvent = {
-      id: util.newId(),
-      ...patch
-    };
+   } else {
+  const mode = createModeEl?.value || "single";
+  const endDate = endDateEl?.value?.trim() || "";
 
-    const result = await App.events?.addEventRemote?.(rawEvent);
+  const baseEvent = {
+    ...patch
+  };
 
-    if (!result?.ok) {
-      alert("No se pudo guardar el evento.");
+  let eventsToCreate = [];
+
+  if (mode === "dailyRange") {
+    if (!date || !endDate) {
+      alert("Completá fecha inicio y fecha fin.");
       return;
     }
 
-    // Crear venue automático si no existe uno igual
-    if (App.venues?.addVenue && App.venues?.listVenues) {
-      const existingVenue = App.venues
-        .listVenues()
-        .find((v) => {
-          const sameName =
-            String(v?.name || "").trim().toLowerCase() === placeName.toLowerCase();
-          const sameLat = Number(v?.lat) === lat;
-          const sameLng = Number(v?.lng) === lng;
-          return sameName && sameLat && sameLng;
-        });
+    eventsToCreate = generateDailyOccurrences(baseEvent, date, endDate);
 
-      if (!existingVenue) {
-      await App.venues.addVenueRemote({
-  name: placeName,
-  address: placeName,
-  lat,
-  lng
-});
+    if (!eventsToCreate.length) {
+      alert("No se pudieron generar ocurrencias. Revisá el rango de fechas.");
+      return;
+    }
+
+    if (eventsToCreate.length > 60) {
+      alert("Demasiadas ocurrencias. Reducí el rango.");
+      return;
+    }
+  } else {
+    eventsToCreate = [
+      {
+        id: util.newId(),
+        ...baseEvent
       }
+    ];
+  }
+
+  for (const ev of eventsToCreate) {
+    const result = await App.events?.addEventRemote?.(ev);
+
+    if (!result?.ok) {
+      alert("No se pudo guardar uno de los eventos.");
+      return;
     }
   }
+
+  // Crear venue automático si no existe uno igual
+  if (App.venues?.addVenue && App.venues?.listVenues) {
+    const existingVenue = App.venues
+      .listVenues()
+      .find((v) => {
+        const sameName =
+          String(v?.name || "").trim().toLowerCase() === placeName.toLowerCase();
+        const sameLat = Number(v?.lat) === lat;
+        const sameLng = Number(v?.lng) === lng;
+        return sameName && sameLat && sameLng;
+      });
+
+    if (!existingVenue) {
+      await App.venues.addVenueRemote({
+        name: placeName,
+        address: placeName,
+        lat,
+        lng
+      });
+    }
+  }
+
+  if (eventsToCreate.length > 1) {
+    alert(`Se crearon ${eventsToCreate.length} eventos.`);
+  }
+}
+
 
   titleEl.value = "";
   dateEl.value = "";
@@ -675,6 +752,14 @@ async function createEventFromAdminForm() {
   if (placeEl) placeEl.value = "";
   if (startEl) startEl.value = "";
   if (catEl) catEl.value = "music";
+  if (createModeEl) createModeEl.value = "single";
+if (endDateEl) {
+  endDateEl.value = "";
+  endDateEl.hidden = true;
+}
+const endDateLabelEl = document.getElementById("eventEndDateLabel");
+if (endDateLabelEl) endDateLabelEl.hidden = true;
+
 
   const venueSearchInput = document.getElementById("venueSearchInput");
   const venueSuggestions = document.getElementById("venueSuggestions");
