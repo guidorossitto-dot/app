@@ -137,7 +137,7 @@ async function deleteEventFromButton(btn) {
     "📍";
 
   return `
-    <article class="eventMiniCard">
+    <article class="eventMiniCard eventMiniCard--${ev.category || "default"}">
       <div class="eventMiniCard__top">
         <div class="eventMiniCard__icon" aria-hidden="true">${icon}</div>
 
