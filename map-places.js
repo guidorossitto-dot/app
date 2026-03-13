@@ -853,38 +853,42 @@ async function createEventFromAdminForm() {
   /* =========================
      LISTENER: Ver en mapa
   ========================= */
-  document.addEventListener("click", (e) => {
-  const linkBtn = e.target.closest(".linkBtn[data-lat][data-lng]");
-  if (!linkBtn) return;
+  document.addEventListener("click", async (e) => {
+  const btn = e.target.closest(".shareBtn");
+  if (!btn) return;
 
   e.preventDefault();
   e.stopPropagation();
 
-  const lat = parseFloat(linkBtn.dataset.lat);
-  const lng = parseFloat(linkBtn.dataset.lng);
-  const key = linkBtn.dataset.key || util.locationKey(lat, lng);
+  const eventId = decodeURIComponent((btn.dataset.eid || "").trim());
+  if (!eventId) return;
 
-  if (!Number.isFinite(lat) || !Number.isFinite(lng) || !state.runtime.map) return;
+  const title = decodeURIComponent((btn.dataset.title || "").trim());
+  const url = `${location.origin}${location.pathname}#e=${encodeURIComponent(eventId)}`;
+  const shareText = title ? `Evento: ${title}\n${url}` : url;
 
-  const mapEl = document.getElementById("map");
-  if (mapEl) mapEl.scrollIntoView({ behavior: "smooth", block: "start" });
-
-  state.runtime.map.closePopup();
-
-  let loc = state.runtime.locationMarkers?.[key];
-
-  if (!loc) {
-    rebuildLocationMarkers(state.logic.events);
-    loc = state.runtime.locationMarkers?.[key];
+  if (navigator.share) {
+    try {
+      await navigator.share({
+        title: title || "Evento",
+        text: shareText,
+        url
+      });
+      return;
+    } catch {}
   }
 
-  if (loc?.marker) {
-    openMarkerPopupStable(loc.marker, lat, lng, 17);
-    return;
+  try {
+    await navigator.clipboard.writeText(shareText);
+    const prev = btn.textContent;
+    btn.textContent = "Link copiado ✅";
+    setTimeout(() => {
+      btn.textContent = prev || "Compartir";
+    }, 1200);
+  } catch {
+    window.prompt("Copiá este link:", shareText);
   }
-
-  uiSetView(lat, lng, 16);
-});
+}, true);
 
   /* =========================
      NOMINATIM
