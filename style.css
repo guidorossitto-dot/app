@@ -1002,10 +1002,12 @@ button:active {
   animation: mapFadeIn 380ms ease;
 }
 
-.leaflet-pane,
-.leaflet-top,
-.leaflet-bottom {
-  z-index: 1000;
+.leaflet-popup-pane {
+  z-index: 700;
+}
+
+.leaflet-tooltip-pane {
+  z-index: 650;
 }
 
 .leaflet-popup-pane {
@@ -1372,10 +1374,9 @@ button:active {
 }
 
 .popupCard {
-  width: 205px;
-  max-width: 205px;
+  width: min(240px, 70vw);
+  max-width: 70vw;
   min-width: 0;
-  overflow: visible !important;
 }
 
 .popupHeader {
@@ -1466,10 +1467,16 @@ button:active {
 }
 
 @media (max-width: 768px) {
-  .popupCard {
-    width: 190px;
-    max-width: 190px;
+  .leaflet-popup-content {
+    max-width: 75vw;
   }
+
+  .popupCard {
+    width: 100%;
+    max-width: 100%;
+  }
+}
+  
 
   .popupList {
     max-height: 135px;
@@ -1480,7 +1487,6 @@ button:active {
     max-height: none;
     overflow: visible;
   }
-}
 .leaflet-popup-content-wrapper,
 .leaflet-popup-content {
   overflow: visible !important;
