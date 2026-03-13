@@ -66,72 +66,63 @@
     `;
 
     for (const e of sorted) {
-      const st = util.formatTimeStart(e);
-      const status = util.getEventStatus(e);
-      const eid = e.id != null ? String(e.id) : "";
+  const st = util.formatTimeStart(e);
+  const status = util.getEventStatus(e);
+  const eid = e.id != null ? String(e.id) : "";
 
-      html += `
-        <div class="popupItem" ${eid ? `data-eid="${encodeURIComponent(eid)}"` : ""}>
-          <div class="popupItemTitle">
-            <div style="min-width:0;">
-              ${st ? `<span style="opacity:.75;margin-right:6px">${st}</span>` : ""}
-              <span style="word-break:break-word;">${e.title}${categoryTagHTML(e)}</span>
-              ${status ? `<span style="opacity:.6;font-size:.85em;margin-left:6px">${status}</span>` : ""}
-            </div>
-          </div>
-
-          <div class="popupItemMeta">${util.formatDateDisplay(e.date)}</div>
-
-          ${
-            eid
-              ? `
-                <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:6px;">
-                  <button class="popupBtn popupShareBtn"
-                    data-eid="${encodeURIComponent(eid)}"
-                    data-title="${encodeURIComponent(e.title || "")}"
-                    title="Copiar link de este evento">
-                    Compartir
-                  </button>
-
-                  <button class="popupBtn popupRouteBtn"
-                    data-lat="${e.lat}"
-                    data-lng="${e.lng}"
-                    data-place="${encodeURIComponent(e.title || placeTitle || "")}">
-                    Cómo llegar
-                  </button>
-
-                  ${
-                    state.logic.isLoggedIn
-                      ? `${state.logic.isLoggedIn ? `
-<button class="popupEditBtn"
-  data-edit-eid="${encodeURIComponent(ev.id)}"
->
-✏️ Editar
-</button>
-` : ""}`
-                      : ""
-                  }
-
-                  ${
-                    state.logic.isLoggedIn
-                      ? `${state.logic.isLoggedIn ? `
-<button
-  class="popupDeleteBtn"
-  data-delete-eid="${encodeURIComponent(ev.id)}"
-  data-delete-title="${encodeURIComponent(ev.title || "")}"
->
-  🗑 Borrar
-</button>
-` : ""}`
-                      : ""
-                  }
-                </div>
-              `
-              : ""
-          }
+  html += `
+    <div class="popupItem" ${eid ? `data-eid="${encodeURIComponent(eid)}"` : ""}>
+      <div class="popupItemTitle">
+        <div style="min-width:0;">
+          ${st ? `<span style="opacity:.75;margin-right:6px">${st}</span>` : ""}
+          <span style="word-break:break-word;">${e.title}${categoryTagHTML(e)}</span>
+          ${status ? `<span style="opacity:.6;font-size:.85em;margin-left:6px">${status}</span>` : ""}
         </div>
-      `;
-    }
+      </div>
+
+      <div class="popupItemMeta">${util.formatDateDisplay(e.date)}</div>
+
+      ${
+        eid
+          ? `
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:6px;">
+              <button class="popupBtn shareBtn"
+                data-eid="${encodeURIComponent(eid)}"
+                data-title="${encodeURIComponent(e.title || "")}"
+                title="Copiar link de este evento">
+                Compartir
+              </button>
+
+              <button class="popupBtn routeBtn"
+                data-lat="${e.lat}"
+                data-lng="${e.lng}"
+                data-place="${encodeURIComponent(e.title || placeTitle || "")}">
+                Cómo llegar
+              </button>
+
+              ${
+                state.logic.isLoggedIn
+                  ? `
+                    <button class="popupBtn popupEditBtn"
+                      data-edit-eid="${encodeURIComponent(eid)}">
+                      ✏️ Editar
+                    </button>
+
+                    <button class="popupBtn deleteEventBtn"
+                      data-delete-eid="${encodeURIComponent(eid)}"
+                      data-delete-title="${encodeURIComponent(e.title || "")}">
+                      🗑 Borrar
+                    </button>
+                  `
+                  : ""
+              }
+            </div>
+          `
+          : ""
+      }
+    </div>
+  `;
+}
 
     html += `
         </div>
