@@ -161,7 +161,7 @@ function canManageUI() {
   const params = new URLSearchParams(window.location.search);
   const adminMode = params.get("admin") === "1";
 
-  if (adminView) adminView.hidden = !state.logic.isLoggedIn;
+  if (adminView) adminView.hidden = !canManageUI();
 
   if (!adminMode) {
     if (loginBtn) loginBtn.style.display = "none";
@@ -1096,9 +1096,47 @@ function bindCategoryUI() {
   if (state.runtime.deleteUIBound) return;
   state.runtime.deleteUIBound = true;
 
+  document.addEventListener("click", (e) => {
+  const btn = e.target.closest(".popupEditBtn");
+  if (!btn) return;
+
+  if (!canManageUI()) {
+    alert("No tenés permisos para editar eventos.");
+    return;
+  }
+
+  const eventId = decodeURIComponent((btn.dataset.editEid || "").trim());
+  if (!eventId) return;
+
+  App.actions?.startEditingEvent?.(eventId);
+
+  if (state.runtime.map) {
+    state.runtime.map.closePopup();
+  }
+
+  App.commit?.({
+    persist: false,
+    purgePast: false,
+    rebuildMarkers: false,
+    recomputeNearby: false
+  });
+
+  const adminView = document.getElementById("adminView");
+  if (adminView && adminView.hidden) {
+    adminView.hidden = false;
+  }
+
+  adminView?.scrollIntoView({ behavior: "smooth", block: "start" });
+});
+
   document.addEventListener("click", async (e) => {
     const btn = e.target.closest(".deleteEventBtn");
     if (!btn) return;
+
+    if (!canManageUI()) {
+      alert("No tenés permisos para borrar eventos.");
+      return;
+    }
 
     const eventId = decodeURIComponent((btn.dataset.deleteEid || "").trim());
     if (!eventId) return;
@@ -1110,12 +1148,12 @@ function bindCategoryUI() {
 
     if (!confirm(msg)) return;
 
-const result = await App.events?.removeEvent?.(eventId);
+    const result = await App.events?.removeEvent?.(eventId);
 
-if (!result?.ok) {
-  alert("No se pudo borrar el evento.");
-  return;
-}
+    if (!result?.ok) {
+      alert("No se pudo borrar el evento.");
+      return;
+    }
 
     if (state.logic.editingEventId === eventId) {
       App.actions?.stopEditingEvent?.();
@@ -1138,16 +1176,33 @@ function bindAdminUI() {
 
   if (addBtn) {
     addBtn.addEventListener("click", async () => {
+      if (!canManageUI()) {
+        alert("No tenés permisos para cargar eventos.");
+        return;
+      }
+
       await App.map?.createEventFromAdminForm?.();
     });
   }
 
   if (clearBtn) {
-    clearBtn.addEventListener("click", () => App.map?.clearAllEvents?.());
+    clearBtn.addEventListener("click", () => {
+      if (!canManageUI()) {
+        alert("No tenés permisos para borrar eventos.");
+        return;
+      }
+
+      App.map?.clearAllEvents?.();
+    });
   }
 
   if (cancelBtn) {
     cancelBtn.addEventListener("click", () => {
+      if (!canManageUI()) {
+        alert("No tenés permisos para editar eventos.");
+        return;
+      }
+
       App.actions?.stopEditingEvent?.();
 
       const titleEl = document.getElementById("eventTitle");
@@ -1180,6 +1235,12 @@ function bindAdminUI() {
 
   if (venueSearchInput) {
     venueSearchInput.addEventListener("input", (e) => {
+      if (!canManageUI()) {
+        const box = document.getElementById("venueSuggestions");
+        if (box) box.innerHTML = "";
+        return;
+      }
+
       const query = e.target.value || "";
 
       App.state.logic.adminVenueQuery = query;
@@ -1233,6 +1294,11 @@ function applyVenueToAdminForm(venue) {
 document.addEventListener("click", (e) => {
   const btn = e.target.closest(".venueSuggestionItem");
   if (!btn) return;
+
+  if (!canManageUI()) {
+    alert("No tenés permisos para editar eventos.");
+    return;
+  }
 
   const venueId = btn.dataset.venueId;
   const result = App.venues?.selectVenueForAdmin?.(venueId);
