@@ -385,7 +385,7 @@ function rebuildLocationMarkers(list = state.logic.events) {
   return;
 }
       if (!state.logic.isLoggedIn) return;
-       if (btn.classList.contains("popupDeleteBtn")) {
+       if (btn.classList.contains("deleteEventBtn")) {
   const eventId = decodeURIComponent((btn.dataset.deleteEid || "").trim());
   if (!eventId) return;
 
@@ -411,6 +411,10 @@ function rebuildLocationMarkers(list = state.logic.events) {
     typeof state.runtime.deepLinkLayer.clearLayers === "function"
   ) {
     state.runtime.deepLinkLayer.clearLayers();
+  }
+
+  if (state.runtime.map) {
+    state.runtime.map.closePopup();
   }
 
   App.commit?.({

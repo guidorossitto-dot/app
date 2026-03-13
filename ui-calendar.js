@@ -1169,42 +1169,54 @@ function bindCategoryUI() {
 });
 
   document.addEventListener("click", async (e) => {
-    const btn = e.target.closest(".deleteEventBtn");
-    if (!btn) return;
+  const btn = e.target.closest(".deleteEventBtn, .popupDeleteBtn");
+  if (!btn) return;
 
-    if (!canManageUI()) {
-      alert("No tenés permisos para borrar eventos.");
-      return;
-    }
+  e.preventDefault();
+  e.stopPropagation();
 
-    const eventId = decodeURIComponent((btn.dataset.deleteEid || "").trim());
-    if (!eventId) return;
+  if (!canManageUI()) {
+    alert("No tenés permisos para borrar eventos.");
+    return;
+  }
 
-    const title = decodeURIComponent((btn.dataset.deleteTitle || "").trim());
-    const msg = title
-      ? `¿Seguro que querés borrar "${title}"?`
-      : "¿Seguro que querés borrar este evento?";
+  const eventId = decodeURIComponent(
+    (btn.dataset.deleteEid || btn.dataset.eid || btn.dataset.id || "").trim()
+  );
+  if (!eventId) return;
 
-    if (!confirm(msg)) return;
+  const title = decodeURIComponent(
+    (btn.dataset.deleteTitle || btn.dataset.title || "").trim()
+  );
 
-    const result = await App.events?.removeEvent?.(eventId);
+  const msg = title
+    ? `¿Seguro que querés borrar "${title}"?`
+    : "¿Seguro que querés borrar este evento?";
 
-    if (!result?.ok) {
-      alert("No se pudo borrar el evento.");
-      return;
-    }
+  if (!confirm(msg)) return;
 
-    if (state.logic.editingEventId === eventId) {
-      App.actions?.stopEditingEvent?.();
-    }
+  const result = await App.events?.removeEvent?.(eventId);
 
-    App.commit?.({
-      persist: true,
-      purgePast: false,
-      rebuildMarkers: true,
-      recomputeNearby: true
-    });
+  if (!result?.ok) {
+    alert("No se pudo borrar el evento.");
+    return;
+  }
+
+  if (state.logic.editingEventId === eventId) {
+    App.actions?.stopEditingEvent?.();
+  }
+
+  if (state.runtime.map) {
+    state.runtime.map.closePopup();
+  }
+
+  App.commit?.({
+    persist: true,
+    purgePast: false,
+    rebuildMarkers: true,
+    recomputeNearby: true
   });
+});
 }
 
 function bindAdminUI() {
