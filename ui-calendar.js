@@ -49,6 +49,58 @@ async function shareEventFromButton(btn) {
   }
 }
 
+async function deleteEventFromButton(btn) {
+  if (!btn) return { ok: false };
+
+  if (!canManageUI()) {
+    alert("No tenés permisos para borrar eventos.");
+    return { ok: false, error: "FORBIDDEN" };
+  }
+
+  const eventId = decodeURIComponent(
+    (btn.dataset.deleteEid || btn.dataset.eid || btn.dataset.id || "").trim()
+  );
+  if (!eventId) {
+    return { ok: false, error: "MISSING_ID" };
+  }
+
+  const title = decodeURIComponent(
+    (btn.dataset.deleteTitle || btn.dataset.title || "").trim()
+  );
+
+  const msg = title
+    ? `¿Seguro que querés borrar "${title}"?`
+    : "¿Seguro que querés borrar este evento?";
+
+  if (!confirm(msg)) {
+    return { ok: false, error: "CANCELLED" };
+  }
+
+  const result = await App.events?.removeEvent?.(eventId);
+
+  if (!result?.ok) {
+    alert("No se pudo borrar el evento.");
+    return { ok: false, error: result?.error || "DELETE_FAILED" };
+  }
+
+  if (state.logic.editingEventId === eventId) {
+    App.actions?.stopEditingEvent?.();
+  }
+
+  if (state.runtime.map) {
+    state.runtime.map.closePopup();
+  }
+
+  App.commit?.({
+    persist: true,
+    purgePast: false,
+    rebuildMarkers: true,
+    recomputeNearby: true
+  });
+
+  return { ok: true, eventId };
+}
+
   function categoryTagHTML(ev) {
     const t = util.categoryLabel(ev?.category);
     return t ? `<span class="catTag">${t}</span>` : "";
@@ -1210,47 +1262,7 @@ function bindCategoryUI() {
   e.preventDefault();
   e.stopPropagation();
 
-  if (!canManageUI()) {
-    alert("No tenés permisos para borrar eventos.");
-    return;
-  }
-
-  const eventId = decodeURIComponent(
-    (btn.dataset.deleteEid || btn.dataset.eid || btn.dataset.id || "").trim()
-  );
-  if (!eventId) return;
-
-  const title = decodeURIComponent(
-    (btn.dataset.deleteTitle || btn.dataset.title || "").trim()
-  );
-
-  const msg = title
-    ? `¿Seguro que querés borrar "${title}"?`
-    : "¿Seguro que querés borrar este evento?";
-
-  if (!confirm(msg)) return;
-
-  const result = await App.events?.removeEvent?.(eventId);
-
-  if (!result?.ok) {
-    alert("No se pudo borrar el evento.");
-    return;
-  }
-
-  if (state.logic.editingEventId === eventId) {
-    App.actions?.stopEditingEvent?.();
-  }
-
-  if (state.runtime.map) {
-    state.runtime.map.closePopup();
-  }
-
-  App.commit?.({
-    persist: true,
-    purgePast: false,
-    rebuildMarkers: true,
-    recomputeNearby: true
-  });
+  await App.ui?.deleteEventFromButton?.(btn);
 });
 }
 
@@ -1569,6 +1581,7 @@ document.addEventListener("click", (e) => {
   bindDeleteEventUI,
   bindSidebarUI,
   shareEventFromButton,
+  deleteEventFromButton,
 
   processQueuedDeepLink
 };

@@ -356,26 +356,8 @@ function rebuildLocationMarkers(list = state.logic.events) {
   return;
 }
       if (!state.logic.isLoggedIn) return;
-       if (btn.classList.contains("deleteEventBtn")) {
-  const eventId = decodeURIComponent((btn.dataset.deleteEid || "").trim());
-  if (!eventId) return;
-
-  const title = decodeURIComponent((btn.dataset.deleteTitle || "").trim());
-  const msg = title
-    ? `¿Seguro que querés borrar "${title}"?`
-    : "¿Seguro que querés borrar este evento?";
-
-  if (!confirm(msg)) return;
-
-  const result = await App.events?.removeEvent?.(eventId);
-  if (!result?.ok) {
-    alert("No se pudo borrar el evento.");
-    return;
-  }
-
-  if (state.logic.editingEventId === eventId) {
-    App.actions?.stopEditingEvent?.();
-  }
+      if (btn.classList.contains("deleteEventBtn")) {
+  await App.ui?.deleteEventFromButton?.(btn);
 
   if (
     state.runtime.deepLinkLayer &&
@@ -383,17 +365,7 @@ function rebuildLocationMarkers(list = state.logic.events) {
   ) {
     state.runtime.deepLinkLayer.clearLayers();
   }
-
-  if (state.runtime.map) {
-    state.runtime.map.closePopup();
-  }
-
-  App.commit?.({
-    persist: true,
-    purgePast: false,
-    rebuildMarkers: true,
-    recomputeNearby: true
-  });
+  
   return;
 }
 
