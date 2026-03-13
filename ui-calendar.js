@@ -27,128 +27,135 @@ function canManageUI() {
   }
 
   function renderGroupedList(ul, list) {
-    if (!ul) return;
-    ul.innerHTML = "";
+  if (!ul) return;
+  ul.innerHTML = "";
 
-    if (!list || list.length === 0) {
-      ul.innerHTML = "<li>No hay eventos</li>";
-      return;
-    }
+  if (!list || list.length === 0) {
+    ul.innerHTML = "<li>No hay eventos</li>";
+    return;
+  }
 
-    const groups = groupByPlace(list);
+  const groups = groupByPlace(list);
 
-    const renderEv = (ev) => {
-      const time = util.formatTimeStart(ev);
-      const status = util.getEventStatus(ev);
+  const renderEv = (ev) => {
+    const time = util.formatTimeStart(ev);
+    const status = util.getEventStatus(ev);
 
-      return `
-        <div style="padding:6px 0;border-top:1px solid #eee">
-          <div style="font-weight:600">
-            ${time ? `<span style="opacity:.75;margin-right:6px">${time}</span>` : ""}
-            ${ev.title}${categoryTagHTML(ev)}
-            ${status ? `<span style="opacity:.6;font-size:.85em;margin-left:6px">${status}</span>` : ""}
-          </div>
-
-          <div style="opacity:.75;font-size:.9em">
-            ${util.formatDateDisplay(ev.date)}
-          </div>
-
-          <div style="margin-top:4px;display:flex;gap:10px;font-size:.85em;align-items:center;flex-wrap:wrap">
-            <button class="linkBtn"
-              data-lat="${ev.lat}"
-              data-lng="${ev.lng}"
-              data-key="${util.smartLocationKey(ev, state.logic.events || [])}">
-              Ver en mapa
-            </button>
-
-            <button class="linkBtn routeBtn"
-              data-lat="${ev.lat}"
-              data-lng="${ev.lng}"
-              data-place="${encodeURIComponent(ev.title || ev.placeName || "")}">
-              Cómo llegar
-            </button>
-
-            <button class="linkBtn shareBtn"
-              data-eid="${encodeURIComponent(ev.id)}"
-              data-title="${encodeURIComponent(ev.title || "")}">
-              Compartir
-            </button>
-
-            ${
-  canManageUI()
-    ? `<button class="linkBtn deleteEventBtn"
-        data-delete-eid="${encodeURIComponent(ev.id)}"
-        data-delete-title="${encodeURIComponent(ev.title || "")}">
-        Borrar
-      </button>`
-    : ""
-}
-          </div>
+    return `
+      <div style="padding:6px 0;border-top:1px solid #eee">
+        <div style="font-weight:600">
+          ${time ? `<span style="opacity:.75;margin-right:6px">${time}</span>` : ""}
+          ${ev.title}${categoryTagHTML(ev)}
+          ${status ? `<span style="opacity:.6;font-size:.85em;margin-left:6px">${status}</span>` : ""}
         </div>
-      `;
-    };
 
-    for (const g of groups) {
-      const placeTitle = g.placeTitle;
-      const count = g.count;
-      const evs = g.events;
-      const badge = g.badge;
+        <div style="opacity:.75;font-size:.9em">
+          ${util.formatDateDisplay(ev.date)}
+        </div>
 
-      const li = document.createElement("li");
+        <div style="margin-top:4px;display:flex;gap:10px;font-size:.85em;align-items:center;flex-wrap:wrap">
+          <button class="linkBtn mapFocusBtn"
+            data-eid="${encodeURIComponent(ev.id || "")}"
+            data-lat="${ev.lat}"
+            data-lng="${ev.lng}"
+            data-key="${util.smartLocationKey(ev, state.logic.events || [])}">
+            Ver en mapa
+          </button>
 
-      if (count === 1) {
-        li.innerHTML = `
-          <div style="padding:8px 0;border-top:1px solid #eee">
-            <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
-              <div>
-                <div style="font-weight:500">${placeTitle}</div>
-                ${badge ? `<div style="opacity:.7;font-size:.9em;margin-top:2px">${badge}</div>` : ""}
-              </div>
-              <button class="linkBtn"
-                data-lat="${g.lat}"
-                data-lng="${g.lng}"
-                data-key="${g.key}">
-                Ver en mapa
-              </button>
-            </div>
+          <button class="linkBtn routeBtn"
+            data-lat="${ev.lat}"
+            data-lng="${ev.lng}"
+            data-place="${encodeURIComponent(ev.title || ev.placeName || "")}">
+            Cómo llegar
+          </button>
 
-            <div style="margin-top:6px">
-              ${renderEv(evs[0])}
-            </div>
-          </div>
-        `;
+          <button class="linkBtn shareBtn"
+            data-eid="${encodeURIComponent(ev.id)}"
+            data-title="${encodeURIComponent(ev.title || "")}">
+            Compartir
+          </button>
 
-        ul.appendChild(li);
-        continue;
-      }
+          ${
+            canManageUI()
+              ? `<button class="linkBtn deleteEventBtn"
+                  data-delete-eid="${encodeURIComponent(ev.id)}"
+                  data-delete-title="${encodeURIComponent(ev.title || "")}">
+                  Borrar
+                </button>`
+              : ""
+          }
+        </div>
+      </div>
+    `;
+  };
 
+  for (const g of groups) {
+    const placeTitle = g.placeTitle;
+    const count = g.count;
+    const evs = g.events;
+    const badge = g.badge;
+
+    const li = document.createElement("li");
+
+    if (count === 1) {
       li.innerHTML = `
-        <details class="accordion" style="margin:6px 0">
-          <summary style="display:flex;align-items:center;justify-content:space-between;gap:10px">
-            <span>
-              <span style="font-weight:500">${placeTitle}</span>
-              <span style="opacity:.65"> · ${count} ${count === 1 ? "evento" : "eventos"}</span>
-              ${badge ? `<span style="opacity:.7;font-size:.9em;margin-left:8px">${badge}</span>` : ""}
-            </span>
+        <div style="padding:8px 0;border-top:1px solid #eee">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+            <div>
+              <div style="font-weight:500">${placeTitle}</div>
+              ${badge ? `<div style="opacity:.7;font-size:.9em;margin-top:2px">${badge}</div>` : ""}
+            </div>
 
-            <button class="linkBtn"
+            <button class="linkBtn mapPlaceBtn"
               data-lat="${g.lat}"
               data-lng="${g.lng}"
               data-key="${g.key}"
-              style="margin-left:auto">
+              type="button">
               Ver en mapa
             </button>
-          </summary>
-
-          <div style="padding:6px 8px">
-            ${evs.map(renderEv).join("")}
           </div>
-        </details>
+
+          <div style="margin-top:6px">
+            ${renderEv(evs[0])}
+          </div>
+        </div>
       `;
 
       ul.appendChild(li);
+      continue;
     }
+
+    li.innerHTML = `
+      <details class="accordion" style="margin:6px 0">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px">
+          <div style="font-weight:500">
+            ${placeTitle}
+            <span style="opacity:.65"> · ${count} ${count === 1 ? "evento" : "eventos"}</span>
+            ${badge ? `<span style="opacity:.7;font-size:.9em;margin-left:8px">${badge}</span>` : ""}
+          </div>
+
+          <button class="linkBtn mapPlaceBtn"
+            data-lat="${g.lat}"
+            data-lng="${g.lng}"
+            data-key="${g.key}"
+            type="button">
+            Ver en mapa
+          </button>
+        </div>
+
+        <summary style="cursor:pointer">
+          Ver eventos
+        </summary>
+
+        <div style="padding:6px 8px">
+          ${evs.map(renderEv).join("")}
+        </div>
+      </details>
+    `;
+
+    ul.appendChild(li);
   }
+}
 
   /* =========================
      APP SHELL
@@ -262,12 +269,13 @@ function renderNearbyEvents(list) {
             <div class="eventPlace">
               ${ev.placeName ? `<div>${util.shortPlaceName(ev.placeName)}</div>` : ""}
               <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-                <button class="linkBtn"
-                  data-lat="${ev.lat}"
-                  data-lng="${ev.lng}"
-                  data-key="${util.smartLocationKey(ev, state.logic.events || [])}">
-                  Ver en mapa
-                </button>
+                <button class="linkBtn mapFocusBtn"
+  data-eid="${encodeURIComponent(featured.id || "")}"
+  data-lat="${featured.lat}"
+  data-lng="${featured.lng}"
+  data-key="${featuredKey}">
+  Ver en mapa
+</button>
 
                 <button class="linkBtn routeBtn"
                   data-lat="${ev.lat}"
@@ -383,12 +391,13 @@ function renderNearbyEvents(list) {
               <span class="featuredFire">🔥</span>
               <span>DESTACADO ${catChip ? "· " + catChip : ""}</span>
             </div>
-            <button class="linkBtn"
-              data-lat="${featured.lat}"
-              data-lng="${featured.lng}"
-              data-key="${featuredKey}">
-              Ver en mapa
-            </button>
+            <button class="linkBtn mapFocusBtn"
+  data-eid="${encodeURIComponent(featured.id || "")}"
+  data-lat="${featured.lat}"
+  data-lng="${featured.lng}"
+  data-key="${featuredKey}">
+  Ver en mapa
+</button>
           </div>
 
           <div class="featuredTitle">
@@ -1097,6 +1106,36 @@ function bindCategoryUI() {
   state.runtime.deleteUIBound = true;
 
   document.addEventListener("click", (e) => {
+  const btn = e.target.closest(".mapPlaceBtn");
+  if (!btn) return;
+
+  e.preventDefault();
+  e.stopPropagation();
+
+  const lat = Number(btn.dataset.lat);
+  const lng = Number(btn.dataset.lng);
+  const key = btn.dataset.key || "";
+
+  const mapEl = document.getElementById("map");
+  if (mapEl) {
+    mapEl.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  const loc = key ? state.runtime.locationMarkers?.[key] : null;
+
+  if (loc?.marker && state.runtime.map) {
+    const p = loc.marker.getLatLng();
+    state.runtime.map.setView([p.lat, p.lng], 16);
+    loc.marker.openPopup();
+    return;
+  }
+
+  if (state.runtime.map && Number.isFinite(lat) && Number.isFinite(lng)) {
+    state.runtime.map.setView([lat, lng], 16);
+  }
+});
+
+  document.addEventListener("click", (e) => {
   const btn = e.target.closest(".popupEditBtn");
   if (!btn) return;
 
@@ -1390,6 +1429,36 @@ document.addEventListener("click", (e) => {
     queueDeepLinkFromHash();
     processQueuedDeepLink();
   });
+
+  document.addEventListener("click", (e) => {
+  const btn = e.target.closest(".mapFocusBtn");
+  if (!btn) return;
+
+  e.preventDefault();
+  e.stopPropagation();
+
+  const eventId = decodeURIComponent((btn.dataset.eid || "").trim());
+  const lat = Number(btn.dataset.lat);
+  const lng = Number(btn.dataset.lng);
+  const key = btn.dataset.key || "";
+
+  const mapEl = document.getElementById("map");
+  if (mapEl) {
+    mapEl.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  if (eventId && App.map?.focusEventById) {
+    const ok = App.map.focusEventById(eventId);
+    if (ok) return;
+  }
+
+  const loc = key ? state.runtime.locationMarkers?.[key] : null;
+
+  if (state.runtime.map && Number.isFinite(lat) && Number.isFinite(lng)) {
+    state.runtime.map.setView([lat, lng], 16);
+    if (loc?.marker) loc.marker.openPopup();
+  }
+});
 
   document.addEventListener("click", (e) => {
     const btn = e.target.closest(".routeBtn");
