@@ -113,7 +113,7 @@ async function deleteEventFromButton(btn) {
     return selectors.getGroupedEvents(list || []);
   }
 
-  function renderGroupedList(ul, list) {
+ function renderGroupedList(ul, list) {
   if (!ul) return;
   ul.innerHTML = "";
 
@@ -125,74 +125,74 @@ async function deleteEventFromButton(btn) {
   const groups = groupByPlace(list);
 
   const renderEv = (ev) => {
-  const time = util.formatTimeStart(ev);
-  const status = util.getEventStatus(ev);
+    const time = util.formatTimeStart(ev);
+    const status = util.getEventStatus(ev);
 
-  const icon =
-    ev.category === "music" ? "🎵" :
-    ev.category === "dance" ? "💃" :
-    ev.category === "theatre" ? "🎭" :
-    ev.category === "visual_arts" ? "🖼️" :
-    ev.category === "cinema" ? "🎬" :
-    "📍";
+    const icon =
+      ev.category === "music" ? "🎵" :
+      ev.category === "dance" ? "💃" :
+      ev.category === "theatre" ? "🎭" :
+      ev.category === "visual_arts" ? "🖼️" :
+      ev.category === "cinema" ? "🎬" :
+      "📍";
 
-  return `
-    <article class="eventMiniCard eventMiniCard--${ev.category || "default"}">
-      <div class="eventMiniCard__top">
-        <div class="eventMiniCard__icon" aria-hidden="true">${icon}</div>
+    return `
+      <article class="eventMiniCard eventMiniCard--${ev.category || "default"}">
+        <div class="eventMiniCard__top">
+          <div class="eventMiniCard__icon" aria-hidden="true">${icon}</div>
 
-        <div class="eventMiniCard__main">
-          <div class="eventMiniCard__titleRow">
-            ${
-              time
-                ? `<span class="eventMiniCard__time">${time}</span>`
-                : ""
-            }
+          <div class="eventMiniCard__main">
+            <div class="eventMiniCard__titleRow">
+              ${
+                time
+                  ? `<span class="eventMiniCard__time">${time}</span>`
+                  : ""
+              }
 
-            <span class="eventMiniCard__title">${ev.title || "Evento"}</span>
+              <span class="eventMiniCard__title">${ev.title || "Evento"}</span>
 
-            ${categoryTagHTML(ev)}
+              ${categoryTagHTML(ev)}
 
-            ${
-              status
-                ? `<span class="eventMiniCard__status">${status}</span>`
-                : ""
-            }
-          </div>
+              ${
+                status
+                  ? `<span class="eventMiniCard__status">${status}</span>`
+                  : ""
+              }
+            </div>
 
-          <div class="eventMiniCard__meta">
-            ${util.formatDateDisplay(ev.date)}
+            <div class="eventMiniCard__meta">
+              ${util.formatDateDisplay(ev.date)}
+            </div>
           </div>
         </div>
-      </div>
 
-      <div class="eventMiniCard__actions">
-  <button class="linkBtn routeBtn"
-    data-lat="${ev.lat}"
-    data-lng="${ev.lng}"
-    data-place="${encodeURIComponent(ev.title || ev.placeName || "")}">
-    Cómo llegar
-  </button>
+        <div class="eventMiniCard__actions">
+          <button class="linkBtn routeBtn"
+            data-lat="${ev.lat}"
+            data-lng="${ev.lng}"
+            data-place="${encodeURIComponent(ev.title || ev.placeName || "")}">
+            Cómo llegar
+          </button>
 
-  <button class="linkBtn shareBtn"
-    data-eid="${encodeURIComponent(ev.id)}"
-    data-title="${encodeURIComponent(ev.title || "")}">
-    Compartir
-  </button>
+          <button class="linkBtn shareBtn"
+            data-eid="${encodeURIComponent(ev.id)}"
+            data-title="${encodeURIComponent(ev.title || "")}">
+            Compartir
+          </button>
 
-  ${
-    canManageUI()
-      ? `<button class="linkBtn deleteEventBtn"
-          data-delete-eid="${encodeURIComponent(ev.id)}"
-          data-delete-title="${encodeURIComponent(ev.title || "")}">
-          Borrar
-        </button>`
-      : ""
-  }
-</div>
-    </article>
-  `;
-};
+          ${
+            canManageUI()
+              ? `<button class="linkBtn deleteEventBtn"
+                  data-delete-eid="${encodeURIComponent(ev.id)}"
+                  data-delete-title="${encodeURIComponent(ev.title || "")}">
+                  Borrar
+                </button>`
+              : ""
+          }
+        </div>
+      </article>
+    `;
+  };
 
   for (const g of groups) {
     const placeTitle = g.placeTitle;
@@ -232,25 +232,23 @@ async function deleteEventFromButton(btn) {
 
     li.innerHTML = `
       <details class="accordion" style="margin:6px 0">
-        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px">
-          <div style="font-weight:500" data-place-title>
-  ${placeTitle}
-            <span style="opacity:.65"> · ${count} ${count === 1 ? "evento" : "eventos"}</span>
-            ${badge ? `<span style="opacity:.7;font-size:.9em;margin-left:8px">${badge}</span>` : ""}
-          </div>
+       <summary style="display:flex;align-items:center;justify-content:space-between;gap:10px;cursor:pointer;font-weight:500">
+  <span>
+    📍 ${placeTitle} ▾
+    <span style="opacity:.65;margin-left:4px">
+      ${count} ${count === 1 ? "evento" : "eventos"}
+    </span>
+    ${badge ? `<span style="opacity:.7;font-size:.9em;margin-left:8px">${badge}</span>` : ""}
+  </span>
 
-          <button class="linkBtn mapPlaceBtn"
-            data-lat="${g.lat}"
-            data-lng="${g.lng}"
-            data-key="${g.key}"
-            type="button">
-            Ver en mapa
-          </button>
-        </div>
-
-        <summary style="cursor:pointer">
-          Ver eventos
-        </summary>
+  <button class="linkBtn mapPlaceBtn"
+    data-lat="${g.lat}"
+    data-lng="${g.lng}"
+    data-key="${g.key}"
+    type="button">
+    Ver en mapa
+  </button>
+</summary>
 
         <div style="padding:6px 8px">
           ${evs.map(renderEv).join("")}
@@ -343,6 +341,79 @@ function renderNearbyEvents(list) {
   renderGroupedList(ul, safeList);
 }
 
+function renderSingleEventItemHTML(ev) {
+  const time = util.formatTimeStart(ev);
+  const status = util.getEventStatus(ev);
+  const place = util.shortPlaceName(ev.placeName) || "";
+  const dateLabel = util.formatDateDisplay(ev.date);
+  const locationKey = util.smartLocationKey(ev, state.logic.events || []);
+
+  return `
+    <div class="eventCard">
+      <div class="eventCardDate">
+        ${dateLabel}
+      </div>
+
+      <div class="eventCardMain">
+        <div class="eventCardTitleRow">
+          <div class="eventCardTitleWrap">
+            <div class="eventCardTitle">
+              ${ev.title || "Sin título"}
+            </div>
+            <div class="eventCardCategory">
+              ${categoryTagHTML(ev)}
+            </div>
+          </div>
+        </div>
+
+        <div class="eventCardMeta">
+          ${time ? `<span class="eventCardTime">${time}</span>` : ""}
+          ${status ? `<span class="eventCardStatus">${status}</span>` : ""}
+        </div>
+
+        ${
+          place
+            ? `<div class="eventCardPlace">${place}</div>`
+            : ""
+        }
+
+        <div class="eventCardActions">
+          <button class="linkBtn mapFocusBtn"
+            data-eid="${encodeURIComponent(ev.id || "")}"
+            data-lat="${ev.lat}"
+            data-lng="${ev.lng}"
+            data-key="${locationKey}">
+            Ver en mapa
+          </button>
+
+          <button class="linkBtn routeBtn"
+            data-lat="${ev.lat}"
+            data-lng="${ev.lng}"
+            data-place="${encodeURIComponent(ev.title || ev.placeName || "")}">
+            Cómo llegar
+          </button>
+
+          <button class="linkBtn shareBtn"
+            data-eid="${encodeURIComponent(ev.id || "")}"
+            data-title="${encodeURIComponent(ev.title || "")}">
+            Compartir
+          </button>
+
+          ${
+            canManageUI()
+              ? `<button class="linkBtn deleteEventBtn"
+                  data-delete-eid="${encodeURIComponent(ev.id || "")}"
+                  data-delete-title="${encodeURIComponent(ev.title || "")}">
+                  Borrar
+                </button>`
+              : ""
+          }
+        </div>
+      </div>
+    </div>
+  `;
+}
+
  function renderEventsIntoUl(ulId, list, emptyMsg) {
   const ul = document.getElementById(ulId);
   if (!ul) return;
@@ -358,80 +429,9 @@ function renderNearbyEvents(list) {
   const sorted = [...filtered].sort(util.sortEventsByStatusThenTime);
 
   sorted.forEach((ev) => {
-    const time = util.formatTimeStart(ev);
-    const status = util.getEventStatus(ev);
-    const place = util.shortPlaceName(ev.placeName) || "";
-    const dateLabel = util.formatDateDisplay(ev.date);
-    const locationKey = util.smartLocationKey(ev, state.logic.events || []);
-
     const li = document.createElement("li");
     li.className = "eventListItem";
-
-    li.innerHTML = `
-      <div class="eventCard">
-        <div class="eventCardDate">
-          ${dateLabel}
-        </div>
-
-        <div class="eventCardMain">
-          <div class="eventCardTitleRow">
-            <div class="eventCardTitleWrap">
-              <div class="eventCardTitle">
-                ${ev.title || "Sin título"}
-              </div>
-              <div class="eventCardCategory">
-                ${categoryTagHTML(ev)}
-              </div>
-            </div>
-          </div>
-
-          <div class="eventCardMeta">
-            ${time ? `<span class="eventCardTime">${time}</span>` : ""}
-            ${status ? `<span class="eventCardStatus">${status}</span>` : ""}
-          </div>
-
-          ${
-            place
-              ? `<div class="eventCardPlace">${place}</div>`
-              : ""
-          }
-
-          <div class="eventCardActions">
-            <button class="linkBtn mapFocusBtn"
-              data-eid="${encodeURIComponent(ev.id || "")}"
-              data-lat="${ev.lat}"
-              data-lng="${ev.lng}"
-              data-key="${locationKey}">
-              Ver en mapa
-            </button>
-
-            <button class="linkBtn routeBtn"
-              data-lat="${ev.lat}"
-              data-lng="${ev.lng}"
-              data-place="${encodeURIComponent(ev.title || ev.placeName || "")}">
-              Cómo llegar
-            </button>
-
-            <button class="linkBtn shareBtn"
-              data-eid="${encodeURIComponent(ev.id || "")}"
-              data-title="${encodeURIComponent(ev.title || "")}">
-              Compartir
-            </button>
-
-            ${
-              canManageUI()
-                ? `<button class="linkBtn deleteEventBtn"
-                    data-delete-eid="${encodeURIComponent(ev.id || "")}"
-                    data-delete-title="${encodeURIComponent(ev.title || "")}">
-                    Borrar
-                  </button>`
-                : ""
-            }
-          </div>
-        </div>
-      </div>
-    `;
-
+    li.innerHTML = renderSingleEventItemHTML(ev);
     ul.appendChild(li);
   });
 }

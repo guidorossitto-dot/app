@@ -1995,3 +1995,46 @@ button:active {
   gap: 8px;
   margin-top: 9px;
 }
+.groupedEventListItem {
+  list-style: none;
+}
+
+.placeAccordion {
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+
+.placeAccordionSummary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 10px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.placeAccordionSummary::-webkit-details-marker {
+  display: none;
+}
+
+.placeAccordionTitle {
+  font-weight: 700;
+  font-size: 0.95rem;
+  line-height: 1.2;
+}
+
+.placeAccordionCount {
+  font-size: 0.82rem;
+  opacity: 0.72;
+  white-space: nowrap;
+}
+
+.placeAccordionBody {
+  padding: 0 0 4px 0;
+}
+
+.placeAccordionEvent .eventCard {
+  border-top: 1px solid rgba(255,255,255,0.05);
+  border-bottom: none;
+  margin-left: 8px;
+}
