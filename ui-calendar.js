@@ -255,9 +255,8 @@ if (
 
     li.innerHTML = `
       <details class="accordion" style="margin:6px 0">
-       <summary style="display:flex;align-items:center;justify-content:space-between;gap:10px;cursor:pointer;font-weight:500">
-  <span>
-    📍 ${placeTitle} ▾
+<summary style="display:flex;align-items:center;justify-content:space-between;gap:10px;cursor:pointer;font-weight:600;padding:10px 0;line-height:1.3">
+📍 ${placeTitle}
     <span style="opacity:.65;margin-left:4px">
       ${count} ${count === 1 ? "evento" : "eventos"}
     </span>

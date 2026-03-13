@@ -1146,6 +1146,20 @@ button:active {
   transition: opacity var(--ui-fast), color var(--ui-fast);
 }
 
+@media (max-width: 768px) {
+  .linkBtn {
+    min-height: 44px;
+    padding: 8px 12px;
+  }
+}
+
+@media (max-width: 768px) {
+  .eventMiniCard__actions,
+  .eventCardActions {
+    gap: 10px;
+  }
+}
+
 .linkBtn:hover {
   opacity: 1;
 }
@@ -2037,4 +2051,18 @@ button:active {
   border-top: 1px solid rgba(255,255,255,0.05);
   border-bottom: none;
   margin-left: 8px;
+}
+
+@media (max-width: 768px) {
+  #map {
+    height: 34vh;
+    min-height: 220px;
+    max-height: 320px;
+  }
+}
+
+@media (max-width: 768px) {
+  .accordion summary {
+    font-size: 0.98rem;
+  }
 }
