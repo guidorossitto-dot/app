@@ -71,7 +71,7 @@ function canManageUI() {
         <div class="popupList">
     `;
 
-    for (const e of sorted) {
+ for (const e of sorted) {
   const st = util.formatTimeStart(e);
   const status = util.getEventStatus(e);
   const eid = e.id != null ? String(e.id) : "";
@@ -99,29 +99,22 @@ function canManageUI() {
                 Compartir
               </button>
 
-              <button class="popupBtn routeBtn"
-                data-lat="${e.lat}"
-                data-lng="${e.lng}"
-                data-place="${encodeURIComponent(e.title || placeTitle || "")}">
-                Cómo llegar
-              </button>
-
               ${
-  canManageUI()
-    ? `
-      <button class="popupBtn popupEditBtn"
-        data-edit-eid="${encodeURIComponent(eid)}">
-        ✏️ Editar
-      </button>
+                canManageUI()
+                  ? `
+                    <button class="popupBtn popupEditBtn"
+                      data-edit-eid="${encodeURIComponent(eid)}">
+                      ✏️ Editar
+                    </button>
 
-      <button class="popupBtn deleteEventBtn"
-        data-delete-eid="${encodeURIComponent(eid)}"
-        data-delete-title="${encodeURIComponent(e.title || "")}">
-        🗑 Borrar
-      </button>
-    `
-    : ""
-}
+                    <button class="popupBtn deleteEventBtn"
+                      data-delete-eid="${encodeURIComponent(eid)}"
+                      data-delete-title="${encodeURIComponent(e.title || "")}">
+                      🗑 Borrar
+                    </button>
+                  `
+                  : ""
+              }
             </div>
           `
           : ""
