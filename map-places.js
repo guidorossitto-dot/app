@@ -265,6 +265,10 @@ function rebuildLocationMarkers(list = state.logic.events) {
           openMarkerPopupStable(marker, lat, lng, 17);
           return;
         }
+          if (btn.classList.contains("shareBtn")) {
+           await App.ui?.shareEventFromButton?.(btn);
+          return;
+}
 
         if (btn.classList.contains("popupRouteBtn")) {
           const toLat = Number(btn.dataset.lat);
@@ -290,39 +294,6 @@ function rebuildLocationMarkers(list = state.logic.events) {
             `&travelmode=walking`;
 
           window.open(url, "_blank", "noopener");
-          return;
-        }
-
-        if (btn.classList.contains("popupShareBtn")) {
-          const eventId = decodeURIComponent((btn.dataset.eid || "").trim());
-          if (!eventId) return;
-
-          const title = decodeURIComponent((btn.dataset.title || "").trim());
-          const url = `${location.origin}${location.pathname}#e=${encodeURIComponent(eventId)}`;
-          const shareText = title ? `Evento: ${title}\n${url}` : url;
-
-          if (navigator.share) {
-            try {
-              await navigator.share({
-                title: title || "Evento",
-                text: shareText,
-                url
-              });
-              return;
-            } catch {}
-          }
-
-          try {
-            await navigator.clipboard.writeText(shareText);
-            const prev = btn.textContent;
-            btn.textContent = "Link copiado ✅";
-            setTimeout(() => {
-              btn.textContent = prev || "Compartir";
-            }, 1200);
-          } catch {
-            window.prompt("Copiá este link:", shareText);
-          }
-
           return;
         }
 
@@ -857,43 +828,7 @@ async function createEventFromAdminForm() {
   /* =========================
      LISTENER: Ver en mapa
   ========================= */
-  document.addEventListener("click", async (e) => {
-  const btn = e.target.closest(".shareBtn");
-  if (!btn) return;
-
-  e.preventDefault();
-  e.stopPropagation();
-
-  const eventId = decodeURIComponent((btn.dataset.eid || "").trim());
-  if (!eventId) return;
-
-  const title = decodeURIComponent((btn.dataset.title || "").trim());
-  const url = `${location.origin}${location.pathname}#e=${encodeURIComponent(eventId)}`;
-  const shareText = title ? `Evento: ${title}\n${url}` : url;
-
-  if (navigator.share) {
-    try {
-      await navigator.share({
-        title: title || "Evento",
-        text: shareText,
-        url
-      });
-      return;
-    } catch {}
-  }
-
-  try {
-    await navigator.clipboard.writeText(shareText);
-    const prev = btn.textContent;
-    btn.textContent = "Link copiado ✅";
-    setTimeout(() => {
-      btn.textContent = prev || "Compartir";
-    }, 1200);
-  } catch {
-    window.prompt("Copiá este link:", shareText);
-  }
-}, true);
-
+  
   /* =========================
      NOMINATIM
   ========================= */
