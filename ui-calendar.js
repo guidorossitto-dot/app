@@ -343,75 +343,98 @@ function renderNearbyEvents(list) {
   renderGroupedList(ul, safeList);
 }
 
-  function renderEventsIntoUl(ulId, list, emptyMsg) {
-    const ul = document.getElementById(ulId);
-    if (!ul) return;
-    ul.innerHTML = "";
+ function renderEventsIntoUl(ulId, list, emptyMsg) {
+  const ul = document.getElementById(ulId);
+  if (!ul) return;
+  ul.innerHTML = "";
 
-    const filtered = util.filterByActiveCategory(list || []);
+  const filtered = util.filterByActiveCategory(list || []);
 
-    if (!filtered || filtered.length === 0) {
-      ul.innerHTML = `<li>${emptyMsg || "No hay eventos"}</li>`;
-      return;
-    }
+  if (!filtered || filtered.length === 0) {
+    ul.innerHTML = `<li class="eventEmpty">${emptyMsg || "No hay eventos"}</li>`;
+    return;
+  }
 
-    const sorted = [...filtered].sort(util.sortEventsByStatusThenTime);
+  const sorted = [...filtered].sort(util.sortEventsByStatusThenTime);
 
-    sorted.forEach((ev) => {
-      const time = util.formatTimeStart(ev);
-      const status = util.getEventStatus(ev);
+  sorted.forEach((ev) => {
+    const time = util.formatTimeStart(ev);
+    const status = util.getEventStatus(ev);
+    const place = util.shortPlaceName(ev.placeName) || "";
+    const dateLabel = util.formatDateDisplay(ev.date);
+    const locationKey = util.smartLocationKey(ev, state.logic.events || []);
 
-      const li = document.createElement("li");
-      li.innerHTML = `
-        <div class="eventItem">
-          <div class="eventDate">${util.formatDateDisplay(ev.date)}</div>
-          <div class="eventMain">
-            <div class="eventTitle">
-              ${time ? `<span style="opacity:.75;margin-right:6px">${time}</span>` : ""}
-              ${ev.title}${categoryTagHTML(ev)}
-              ${status ? `<span style="opacity:.6;font-size:.85em;margin-left:6px">${status}</span>` : ""}
-            </div>
-            <div class="eventPlace">
-              ${ev.placeName ? `<div>${util.shortPlaceName(ev.placeName)}</div>` : ""}
-              <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-                <button class="linkBtn mapFocusBtn"
-  data-eid="${encodeURIComponent(featured.id || "")}"
-  data-lat="${featured.lat}"
-  data-lng="${featured.lng}"
-  data-key="${featuredKey}">
-  Ver en mapa
-</button>
+    const li = document.createElement("li");
+    li.className = "eventListItem";
 
-                <button class="linkBtn routeBtn"
-                  data-lat="${ev.lat}"
-                  data-lng="${ev.lng}"
-                  data-place="${encodeURIComponent(ev.title || ev.placeName || "")}">
-                  Cómo llegar
-                </button>
+    li.innerHTML = `
+      <div class="eventCard">
+        <div class="eventCardDate">
+          ${dateLabel}
+        </div>
 
-                <button class="linkBtn shareBtn"
-                  data-eid="${encodeURIComponent(ev.id)}"
-                  data-title="${encodeURIComponent(ev.title || "")}">
-                  Compartir
-                </button>
-
-                ${
-  canManageUI()
-    ? `<button class="linkBtn deleteEventBtn"
-        data-delete-eid="${encodeURIComponent(ev.id)}"
-        data-delete-title="${encodeURIComponent(ev.title || "")}">
-        Borrar
-      </button>`
-    : ""
-}
+        <div class="eventCardMain">
+          <div class="eventCardTitleRow">
+            <div class="eventCardTitleWrap">
+              <div class="eventCardTitle">
+                ${ev.title || "Sin título"}
+              </div>
+              <div class="eventCardCategory">
+                ${categoryTagHTML(ev)}
               </div>
             </div>
           </div>
+
+          <div class="eventCardMeta">
+            ${time ? `<span class="eventCardTime">${time}</span>` : ""}
+            ${status ? `<span class="eventCardStatus">${status}</span>` : ""}
+          </div>
+
+          ${
+            place
+              ? `<div class="eventCardPlace">${place}</div>`
+              : ""
+          }
+
+          <div class="eventCardActions">
+            <button class="linkBtn mapFocusBtn"
+              data-eid="${encodeURIComponent(ev.id || "")}"
+              data-lat="${ev.lat}"
+              data-lng="${ev.lng}"
+              data-key="${locationKey}">
+              Ver en mapa
+            </button>
+
+            <button class="linkBtn routeBtn"
+              data-lat="${ev.lat}"
+              data-lng="${ev.lng}"
+              data-place="${encodeURIComponent(ev.title || ev.placeName || "")}">
+              Cómo llegar
+            </button>
+
+            <button class="linkBtn shareBtn"
+              data-eid="${encodeURIComponent(ev.id || "")}"
+              data-title="${encodeURIComponent(ev.title || "")}">
+              Compartir
+            </button>
+
+            ${
+              canManageUI()
+                ? `<button class="linkBtn deleteEventBtn"
+                    data-delete-eid="${encodeURIComponent(ev.id || "")}"
+                    data-delete-title="${encodeURIComponent(ev.title || "")}">
+                    Borrar
+                  </button>`
+                : ""
+            }
+          </div>
         </div>
-      `;
-      ul.appendChild(li);
-    });
-  }
+      </div>
+    `;
+
+    ul.appendChild(li);
+  });
+}
 
   function updateNearbyCount(list = state.logic.nearbyEvents) {
     const topEl = document.getElementById("nearbyCount");

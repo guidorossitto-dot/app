@@ -1910,3 +1910,88 @@ button:active {
     scroll-behavior: auto !important;
   }
 }
+
+.eventListItem {
+  list-style: none;
+}
+
+.eventEmpty {
+  opacity: 0.75;
+  padding: 12px 10px;
+}
+
+.eventCard {
+  display: grid;
+  grid-template-columns: 84px 1fr;
+  gap: 12px;
+  padding: 12px 10px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  align-items: start;
+}
+
+.eventCardDate {
+  font-size: 0.8rem;
+  opacity: 0.72;
+  line-height: 1.2;
+  padding-top: 2px;
+}
+
+.eventCardMain {
+  min-width: 0;
+}
+
+.eventCardTitleRow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.eventCardTitleWrap {
+  min-width: 0;
+  flex: 1;
+}
+
+.eventCardTitle {
+  font-size: 0.98rem;
+  font-weight: 700;
+  line-height: 1.2;
+  word-break: break-word;
+}
+
+.eventCardCategory {
+  margin-top: 3px;
+}
+
+.eventCardMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin-top: 6px;
+  font-size: 0.82rem;
+}
+
+.eventCardTime {
+  opacity: 0.92;
+  font-weight: 600;
+}
+
+.eventCardStatus {
+  opacity: 0.78;
+  font-size: 0.8rem;
+}
+
+.eventCardPlace {
+  margin-top: 5px;
+  font-size: 0.86rem;
+  opacity: 0.82;
+  line-height: 1.25;
+}
+
+.eventCardActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 9px;
+}
