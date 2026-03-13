@@ -1222,40 +1222,9 @@ function bindCategoryUI() {
   }
 });
 
-  document.addEventListener("click", (e) => {
-  const btn = e.target.closest(".popupEditBtn");
-  if (!btn) return;
 
-  if (!canManageUI()) {
-    alert("No tenés permisos para editar eventos.");
-    return;
-  }
 
-  const eventId = decodeURIComponent((btn.dataset.editEid || "").trim());
-  if (!eventId) return;
-
-  App.actions?.startEditingEvent?.(eventId);
-
-  if (state.runtime.map) {
-    state.runtime.map.closePopup();
-  }
-
-  App.commit?.({
-    persist: false,
-    purgePast: false,
-    rebuildMarkers: false,
-    recomputeNearby: false
-  });
-
-  const adminView = document.getElementById("adminView");
-  if (adminView && adminView.hidden) {
-    adminView.hidden = false;
-  }
-
-  adminView?.scrollIntoView({ behavior: "smooth", block: "start" });
-});
-
-  document.addEventListener("click", async (e) => {
+document.addEventListener("click", async (e) => {
   const btn = e.target.closest(".deleteEventBtn, .popupDeleteBtn");
   if (!btn) return;
 
