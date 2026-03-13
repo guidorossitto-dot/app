@@ -1214,8 +1214,10 @@ function bindCategoryUI() {
   state.runtime.deleteUIBound = true;
 
   document.addEventListener("click", (e) => {
+
   const btn = e.target.closest(".mapPlaceBtn");
   if (!btn) return;
+
 
   e.preventDefault();
   e.stopPropagation();
@@ -1231,12 +1233,23 @@ function bindCategoryUI() {
 
   const loc = key ? state.runtime.locationMarkers?.[key] : null;
 
+
   if (loc?.marker && state.runtime.map) {
-    const p = loc.marker.getLatLng();
+  const p = loc.marker.getLatLng();
+
+  if (App.map?.openMarkerPopupStable) {
+    App.map.openMarkerPopupStable(loc.marker, p.lat, p.lng, 16);
+  } else {
     state.runtime.map.setView([p.lat, p.lng], 16);
-    loc.marker.openPopup();
-    return;
+    setTimeout(() => {
+      try {
+        loc.marker.openPopup();
+      } catch {}
+    }, 140);
   }
+
+  return;
+}
 
   if (!state.runtime.map || !Number.isFinite(lat) || !Number.isFinite(lng)) {
     return;
@@ -1255,6 +1268,7 @@ function bindCategoryUI() {
     || btn.closest("li, .accordion, .panelCard")
       ?.querySelector("div")?.textContent?.trim()
     || "Lugar";
+
 
   const tempMarker = L.marker([lat, lng], {
     bubblingMouseEvents: false

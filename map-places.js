@@ -365,7 +365,7 @@ function rebuildLocationMarkers(list = state.logic.events) {
   ) {
     state.runtime.deepLinkLayer.clearLayers();
   }
-  
+
   return;
 }
 
@@ -1042,6 +1042,7 @@ async function clearAllEvents() {
   bindPlaceSearchUI,
   createEventFromAdminForm,
   focusEventById,
+  openMarkerPopupStable,
   clearAllEvents
 };
 
