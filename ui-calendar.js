@@ -189,7 +189,7 @@ async function deleteEventFromButton(btn) {
         <div style="padding:8px 0;border-top:1px solid #eee">
           <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
             <div>
-              <div style="font-weight:500">${placeTitle}</div>
+              <div style="font-weight:500" data-place-title>${placeTitle}</div>
               ${badge ? `<div style="opacity:.7;font-size:.9em;margin-top:2px">${badge}</div>` : ""}
             </div>
 
@@ -215,8 +215,8 @@ async function deleteEventFromButton(btn) {
     li.innerHTML = `
       <details class="accordion" style="margin:6px 0">
         <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px">
-          <div style="font-weight:500">
-            ${placeTitle}
+          <div style="font-weight:500" data-place-title>
+  ${placeTitle}
             <span style="opacity:.65"> · ${count} ${count === 1 ? "evento" : "eventos"}</span>
             ${badge ? `<span style="opacity:.7;font-size:.9em;margin-left:8px">${badge}</span>` : ""}
           </div>
@@ -1220,11 +1220,61 @@ function bindCategoryUI() {
     return;
   }
 
-  if (state.runtime.map && Number.isFinite(lat) && Number.isFinite(lng)) {
-    state.runtime.map.setView([lat, lng], 16);
+  if (!state.runtime.map || !Number.isFinite(lat) || !Number.isFinite(lng)) {
+    return;
   }
-});
 
+  if (
+    state.runtime.deepLinkLayer &&
+    typeof state.runtime.deepLinkLayer.clearLayers === "function"
+  ) {
+    state.runtime.deepLinkLayer.clearLayers();
+  }
+
+  const placeTitle =
+    btn.closest("li, .accordion, .panelCard, .featuredBox")
+      ?.querySelector("[data-place-title]")?.textContent?.trim()
+    || btn.closest("li, .accordion, .panelCard")
+      ?.querySelector("div")?.textContent?.trim()
+    || "Lugar";
+
+  const tempMarker = L.marker([lat, lng], {
+    bubblingMouseEvents: false
+  });
+
+  tempMarker.bindPopup(`
+    <div class="popupCard">
+      <div class="popupHeader">
+        <div>
+          <div class="popupPlace">${placeTitle}</div>
+          <div class="popupSub">Ubicación del lugar</div>
+        </div>
+      </div>
+    </div>
+  `, {
+    closeButton: true,
+    autoPan: true,
+    keepInView: true,
+    autoPanPadding: [16, 16],
+    offset: [0, -10],
+    maxWidth: 260,
+    minWidth: 180
+  });
+
+  if (state.runtime.deepLinkLayer) {
+    tempMarker.addTo(state.runtime.deepLinkLayer);
+  } else {
+    tempMarker.addTo(state.runtime.map);
+  }
+
+  state.runtime.map.setView([lat, lng], 16);
+
+  setTimeout(() => {
+    try {
+      tempMarker.openPopup();
+    } catch {}
+  }, 120);
+});
 
 
 document.addEventListener("click", async (e) => {
