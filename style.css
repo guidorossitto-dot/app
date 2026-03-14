@@ -1750,3 +1750,25 @@ button:active {
   margin: 0 0 12px;
   background: #fafafa;
 }
+
+#calendarDays,
+#calendar,
+#calendarHeader {
+  max-width: 760px;
+  margin-left: auto;
+  margin-right: auto;
+}
+@media (min-width: 768px) {
+  #calendarDays,
+  #calendar,
+  #calendarHeader {
+    max-width: 760px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+}
+@media (max-width: 768px) {
+  .day {
+    height: 110px;
+  }
+}
