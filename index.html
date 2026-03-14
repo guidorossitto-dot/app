@@ -13,73 +13,70 @@
 <body>
 
   <header>
-    <h1>Agenda de eventos</h1>
-    <button id="loginBtn">Login</button>
-    <button id="logoutBtn" hidden>Logout</button>
-  </header>
+  <h1>Agenda de eventos</h1>
+  <button id="loginBtn">Login</button>
+  <button id="logoutBtn" hidden>Logout</button>
+</header>
 
-  <section id="publicView">
-    <div class="pageShell">
-      <div class="topIntro">
-        <h2 class="pageTitle">Explorá eventos cerca tuyo</h2>
-        <p class="pageSubtitle">
-          Eventos cercanos, agenda y mapa interactivo.
-        </p>
+<section id="publicView">
+  <div class="pageShell">
+    <div class="topIntro">
+      <h2 class="pageTitle">Explorá eventos cerca tuyo</h2>
+      <p class="pageSubtitle">
+        Eventos cercanos, agenda y mapa interactivo.
+      </p>
+    </div>
+
+    <div class="controlsCard">
+      <div class="mapControls">
+        <div id="nearbyCount" class="nearbyCount"></div>
       </div>
 
-      <div class="filtersBar">
-        <div class="categoryLabel">Filtros</div>
+      <input id="userLat" type="number" step="0.000001" placeholder="Tu latitud" class="debugHidden">
+      <input id="userLng" type="number" step="0.000001" placeholder="Tu longitud" class="debugHidden">
+      <button id="searchNearbyBtn" class="debugHidden" tabindex="-1" aria-hidden="true">¿Qué hay cerca mío?</button>
+    </div>
 
-       <div class="chipRow" id="categoryChips">
-  <button type="button" class="chip isActive" data-cat="all">Todo</button>
-  <button type="button" class="chip" data-cat="music">🎵 Música</button>
-  <button type="button" class="chip" data-cat="dance">💃 Danza</button>
-  <button type="button" class="chip" data-cat="theatre">🎭 Teatro</button>
-  <button type="button" class="chip" data-cat="visual_arts">🖼️ Visuales</button>
-  <button type="button" class="chip" data-cat="cinema">🎬 Cine</button>
-</div>
-      </div>
-
-      <div class="controlsCard">
-        <div class="mapControls">
-          <div id="nearbyCount" class="nearbyCount"></div>
+    <div class="appLayout appLayout--leftSidebar">
+      <aside class="sideColumn sideColumn--left" id="leftSidebar">
+        <div class="sidebarToolbar">
+          <button type="button" id="toggleSidebarBtn" class="sidebarToggleBtn" aria-expanded="true">
+            ☰ Agenda
+          </button>
         </div>
 
-        <input id="userLat" type="number" step="0.000001" placeholder="Tu latitud" class="debugHidden">
-        <input id="userLng" type="number" step="0.000001" placeholder="Tu longitud" class="debugHidden">
-        <button id="searchNearbyBtn" class="debugHidden" tabindex="-1" aria-hidden="true">¿Qué hay cerca mío?</button>
-      </div>
+        <div class="panelCard sidebarPanel panelCard--today">
+          <details class="accordion" open>
+            <summary>☀️ Eventos de hoy</summary>
+            <ul id="todayEvents"></ul>
+          </details>
+        </div>
 
-      <div class="appLayout appLayout--leftSidebar">
-  <aside class="sideColumn sideColumn--left" id="leftSidebar">
-  <div class="sidebarToolbar">
-    <button type="button" id="toggleSidebarBtn" class="sidebarToggleBtn" aria-expanded="true">
-      ☰ Agenda
-    </button>
-  </div>
+        <div class="panelCard sidebarPanel panelCard--future">
+          <details class="accordion" open>
+            <summary>🗓️ Próximos eventos</summary>
+            <ul id="eventList"></ul>
+          </details>
+        </div>
+      </aside>
 
-  <div class="panelCard sidebarPanel panelCard--today">
-    <details class="accordion" open>
-      <summary>☀️ Eventos de hoy</summary>
-      <ul id="todayEvents"></ul>
-    </details>
-  </div>
+      <div class="mainColumn">
+        <div class="panelCard panelCard--map">
+          <div class="filtersBar filtersBar--map">
+            <div class="categoryLabel">Filtros</div>
 
-  <div class="panelCard sidebarPanel panelCard--future">
-    <details class="accordion" open>
-      <summary>🗓️ Próximos eventos</summary>
-      <ul id="eventList"></ul>
-    </details>
-  </div>
-</aside>
+            <div class="chipRow" id="categoryChips">
+              <button type="button" class="chip isActive" data-cat="all">Todo</button>
+              <button type="button" class="chip" data-cat="music">🎵 Música</button>
+              <button type="button" class="chip" data-cat="dance">💃 Danza</button>
+              <button type="button" class="chip" data-cat="theatre">🎭 Teatro</button>
+              <button type="button" class="chip" data-cat="visual_arts">🖼️ Visuales</button>
+              <button type="button" class="chip" data-cat="cinema">🎬 Cine</button>
+            </div>
+          </div>
 
-<div class="mainColumn">
-  <div class="panelCard panelCard--map">
-    <div class="panelHeader">
-      <h3>Mapa</h3>
-    </div>
-    <div id="map"></div>
-  </div>
+          <div id="map"></div>
+        </div>
 
   <div class="panelCard panelCard--nearby">
     <details class="accordion" open>

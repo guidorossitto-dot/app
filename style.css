@@ -1745,3 +1745,8 @@ button:active {
     white-space: nowrap;
   }
 }
+
+.panelCard--map .filtersBar {
+  margin: 0 0 12px;
+  background: #fafafa;
+}
