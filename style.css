@@ -1534,78 +1534,6 @@ button:active {
    Responsive
 ============== */
 
-@media (max-width: 768px) {
-  .leaflet-popup-content {
-    max-width: 82vw;
-    margin: 10px 10px;
-  }
-
-  .leaflet-popup-content-wrapper {
-    border-radius: 14px;
-  }
-
-  .popupCard {
-    width: 100%;
-    max-width: 100%;
-  }
-
-  .popupPlace {
-    font-size: 14px;
-    line-height: 1.2;
-  }
-
-  .popupSub,
-  .popupItemMeta {
-    font-size: 11.5px;
-  }
-
-  .popupActions {
-    gap: 8px;
-  }
-
-  .popupBtn {
-    min-height: 36px;
-    padding: 7px 10px;
-    font-size: 12px;
-  }
-
-  .popupList {
-    max-height: 160px;
-  }
-}
-
-@media (max-width: 760px) {
-  .sidebarToolbar {
-    margin-bottom: 8px;
-  }
-
-  .sidebarToggleBtn {
-    border-radius: 12px;
-  }
-
-  .sideColumn .panelCard {
-    padding: 10px 12px;
-  }
-
-  .sideColumn .accordion > summary {
-    font-size: 14px;
-    padding: 10px 2px;
-  }
-
-  .sideColumn .accordion > ul {
-    max-height: 260px;
-    padding: 0 0 6px;
-  }
-
-  .sideColumn li {
-    padding: 8px 8px;
-  }
-
-  .linkBtn {
-    font-size: 13px;
-  }
-}
-
 @media (max-width: 1100px) {
   .appLayout,
   .appLayout--leftSidebar,
@@ -1637,49 +1565,49 @@ button:active {
   }
 
   .panelCard--nearby {
-  border-left: 4px solid #7bb6ff;
-  background: linear-gradient(180deg, #f7fbff 0%, #ffffff 100%);
-}
+    border-left: 4px solid #7bb6ff;
+    background: linear-gradient(180deg, #f7fbff 0%, #ffffff 100%);
+  }
 
-.panelCard--today {
-  border-left: 4px solid #ffbf69;
-  background: linear-gradient(180deg, #fffaf3 0%, #ffffff 100%);
-}
+  .panelCard--today {
+    border-left: 4px solid #ffbf69;
+    background: linear-gradient(180deg, #fffaf3 0%, #ffffff 100%);
+  }
 
-.panelCard--future {
-  border-left: 4px solid #b8b8ff;
-  background: linear-gradient(180deg, #fafaff 0%, #ffffff 100%);
-}
+  .panelCard--future {
+    border-left: 4px solid #b8b8ff;
+    background: linear-gradient(180deg, #fafaff 0%, #ffffff 100%);
+  }
 
-.panelCard--nearby .accordion > summary,
-.panelCard--today .accordion > summary,
-.panelCard--future .accordion > summary {
-  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-}
+  .panelCard--nearby .accordion > summary,
+  .panelCard--today .accordion > summary,
+  .panelCard--future .accordion > summary {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  }
 
-.panelCard--nearby .accordion > summary {
-  background: rgba(123, 182, 255, 0.08);
-}
+  .panelCard--nearby .accordion > summary {
+    background: rgba(123, 182, 255, 0.08);
+  }
 
-.panelCard--today .accordion > summary {
-  background: rgba(255, 191, 105, 0.10);
-}
+  .panelCard--today .accordion > summary {
+    background: rgba(255, 191, 105, 0.10);
+  }
 
-.panelCard--future .accordion > summary {
-  background: rgba(184, 184, 255, 0.10);
-}
+  .panelCard--future .accordion > summary {
+    background: rgba(184, 184, 255, 0.10);
+  }
 
-.panelCard--nearby .accordion > summary:hover {
-  background: rgba(123, 182, 255, 0.14);
-}
+  .panelCard--nearby .accordion > summary:hover {
+    background: rgba(123, 182, 255, 0.14);
+  }
 
-.panelCard--today .accordion > summary:hover {
-  background: rgba(255, 191, 105, 0.16);
-}
+  .panelCard--today .accordion > summary:hover {
+    background: rgba(255, 191, 105, 0.16);
+  }
 
-.panelCard--future .accordion > summary:hover {
-  background: rgba(184, 184, 255, 0.16);
-}
+  .panelCard--future .accordion > summary:hover {
+    background: rgba(184, 184, 255, 0.16);
+  }
 
   .appLayout--leftSidebar.isCollapsed .sidebarPanel {
     opacity: 1;
@@ -1758,7 +1686,9 @@ button:active {
   }
 
   #map {
-    height: 420px;
+    height: 56vh;
+    min-height: 400px;
+    max-height: none;
   }
 }
 
@@ -1781,288 +1711,9 @@ button:active {
   }
 
   #map {
-    height: 390px;
-  }
-}
-
-@media (max-width: 768px) {
-  #calendar {
-    gap: 3px;
-  }
-
-  .day {
-    height: 80px;
-    padding: 3px;
-  }
-
-  .day-number {
-    font-size: 0.75rem;
-    margin-bottom: 2px;
-  }
-
-  .day .event {
-    font-size: 0.62rem;
-    line-height: 1.05;
-    padding: 1px 2px;
-    margin-bottom: 2px;
-  }
-
-  .day .event-more {
-    font-size: 0.62rem;
-  }
-
-  .calendarDayPopover__itemTitle {
-    gap: 4px;
-    font-size: 0.9rem;
-  }
-
-  .calendarEventIcon {
-    font-size: 0.95rem;
-  }
-
-  .leaflet-popup-content {
-    max-width: 75vw;
-    margin: 8px 9px;
+    height: 52vh;
+    min-height: 360px;
     max-height: none;
-    overflow: visible;
-  }
-
-  .popupCard {
-    width: 100%;
-    max-width: 100%;
-  }
-
-  .popupList {
-    max-height: 135px;
-  }
-}
-
-@media (max-width: 760px) {
-  .eventMiniCard {
-    padding: 9px 10px;
-  }
-
-  .eventMiniCard__top {
-    grid-template-columns: 28px minmax(0, 1fr);
-    gap: 8px;
-  }
-
-  .eventMiniCard__icon {
-    width: 28px;
-    height: 28px;
-    font-size: 14px;
-  }
-
-  .eventMiniCard__title {
-    font-size: 0.92rem;
-  }
-
-  .eventMiniCard__actions {
-    gap: 10px;
-  }
-}
-
-.eventMiniCard {
-  position: relative;
-  border-left: 4px solid #d9d9d9;
-}
-
-.eventMiniCard--music {
-  border-left-color: #7bb6ff;
-}
-
-.eventMiniCard--dance {
-  border-left-color: #f3a6c8;
-}
-
-.eventMiniCard--theatre {
-  border-left-color: #b39ddb;
-}
-
-.eventMiniCard--visual_arts {
-  border-left-color: #8fd3a8;
-}
-
-.eventMiniCard--cinema {
-  border-left-color: #f2c66d;
-}
-
-.eventMiniCard--music .eventMiniCard__icon {
-  background: #f2f8ff;
-  border-color: #d7e9ff;
-}
-
-.eventMiniCard--dance .eventMiniCard__icon {
-  background: #fff3f8;
-  border-color: #f7d6e6;
-}
-
-.eventMiniCard--theatre .eventMiniCard__icon {
-  background: #f6f2ff;
-  border-color: #e0d8f5;
-}
-
-.eventMiniCard--visual_arts .eventMiniCard__icon {
-  background: #f3fbf5;
-  border-color: #d8eedf;
-}
-
-.eventMiniCard--cinema .eventMiniCard__icon {
-  background: #fff8ee;
-  border-color: #f3dfb4;
-}
-
-/* ==============
-   Reduced motion
-============== */
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation: none !important;
-    transition: none !important;
-    scroll-behavior: auto !important;
-  }
-}
-
-.eventListItem {
-  list-style: none;
-}
-
-.eventEmpty {
-  opacity: 0.75;
-  padding: 12px 10px;
-}
-
-.eventCard {
-  display: grid;
-  grid-template-columns: 84px 1fr;
-  gap: 12px;
-  padding: 12px 10px;
-  border-bottom: 1px solid rgba(255,255,255,0.08);
-  align-items: start;
-}
-
-.eventCardDate {
-  font-size: 0.8rem;
-  opacity: 0.72;
-  line-height: 1.2;
-  padding-top: 2px;
-}
-
-.eventCardMain {
-  min-width: 0;
-}
-
-.eventCardTitleRow {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 8px;
-}
-
-.eventCardTitleWrap {
-  min-width: 0;
-  flex: 1;
-}
-
-.eventCardTitle {
-  font-size: 0.98rem;
-  font-weight: 700;
-  line-height: 1.2;
-  word-break: break-word;
-}
-
-.eventCardCategory {
-  margin-top: 3px;
-}
-
-.eventCardMeta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  align-items: center;
-  margin-top: 6px;
-  font-size: 0.82rem;
-}
-
-.eventCardTime {
-  opacity: 0.92;
-  font-weight: 600;
-}
-
-.eventCardStatus {
-  opacity: 0.78;
-  font-size: 0.8rem;
-}
-
-.eventCardPlace {
-  margin-top: 5px;
-  font-size: 0.86rem;
-  opacity: 0.82;
-  line-height: 1.25;
-}
-
-.eventCardActions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 9px;
-}
-.groupedEventListItem {
-  list-style: none;
-}
-
-.placeAccordion {
-  border-bottom: 1px solid rgba(255,255,255,0.08);
-}
-
-.placeAccordionSummary {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 10px;
-  padding: 12px 10px;
-  cursor: pointer;
-  list-style: none;
-}
-
-.placeAccordionSummary::-webkit-details-marker {
-  display: none;
-}
-
-.placeAccordionTitle {
-  font-weight: 700;
-  font-size: 0.95rem;
-  line-height: 1.2;
-}
-
-.placeAccordionCount {
-  font-size: 0.82rem;
-  opacity: 0.72;
-  white-space: nowrap;
-}
-
-.placeAccordionBody {
-  padding: 0 0 4px 0;
-}
-
-.placeAccordionEvent .eventCard {
-  border-top: 1px solid rgba(255,255,255,0.05);
-  border-bottom: none;
-  margin-left: 8px;
-}
-
-@media (max-width: 768px) {
-  #map {
-    height: 34vh;
-    min-height: 220px;
-    max-height: 320px;
-  }
-}
-
-@media (max-width: 768px) {
-  .accordion summary {
-    font-size: 0.98rem;
+ 
   }
 }
