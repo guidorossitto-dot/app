@@ -7,11 +7,7 @@
   /* =========================
      CATEGORY HTML HELPERS
   ========================= */
-  function canManageUI() {
-    const params = new URLSearchParams(window.location.search);
-    const isAdminMode = params.get("admin") === "1";
-    return !!state.logic.isLoggedIn && isAdminMode;
-  }
+
 
   async function shareEventFromButton(btn) {
     if (!btn) return { ok: false };
@@ -51,7 +47,7 @@
   async function deleteEventFromButton(btn) {
     if (!btn) return { ok: false };
 
-    if (!canManageUI()) {
+    if (!util.canManageUI()) {
       alert("No tenés permisos para borrar eventos.");
       return { ok: false, error: "FORBIDDEN" };
     }
@@ -237,7 +233,7 @@
             </button>
 
             ${
-              canManageUI()
+              util.canManageUI()
                 ? `<button class="linkBtn deleteEventBtn"
                     data-delete-eid="${encodeURIComponent(ev.id)}"
                     data-delete-title="${encodeURIComponent(ev.title || "")}">
@@ -326,7 +322,7 @@
     const params = new URLSearchParams(window.location.search);
     const adminMode = params.get("admin") === "1";
 
-    if (adminView) adminView.hidden = !canManageUI();
+    if (adminView) adminView.hidden = !util.canManageUI();
 
     if (!adminMode) {
       if (loginBtn) loginBtn.style.display = "none";
@@ -455,7 +451,7 @@
             </button>
 
             ${
-              canManageUI()
+              util.canManageUI()
                 ? `<button class="linkBtn deleteEventBtn"
                     data-delete-eid="${encodeURIComponent(ev.id || "")}"
                     data-delete-title="${encodeURIComponent(ev.title || "")}">
@@ -1402,7 +1398,7 @@
 
     if (addBtn) {
       addBtn.addEventListener("click", async () => {
-        if (!canManageUI()) {
+        if (!util.canManageUI()) {
           alert("No tenés permisos para cargar eventos.");
           return;
         }
@@ -1413,7 +1409,7 @@
 
     if (clearBtn) {
       clearBtn.addEventListener("click", () => {
-        if (!canManageUI()) {
+        if (!util.canManageUI()) {
           alert("No tenés permisos para borrar eventos.");
           return;
         }
@@ -1424,7 +1420,7 @@
 
     if (cancelBtn) {
       cancelBtn.addEventListener("click", () => {
-        if (!canManageUI()) {
+        if (!util.canManageUI()) {
           alert("No tenés permisos para editar eventos.");
           return;
         }
@@ -1461,7 +1457,7 @@
 
     if (venueSearchInput) {
       venueSearchInput.addEventListener("input", (e) => {
-        if (!canManageUI()) {
+        if (!util.canManageUI()) {
           const box = document.getElementById("venueSuggestions");
           if (box) box.innerHTML = "";
           return;
@@ -1521,7 +1517,7 @@
     const btn = e.target.closest(".venueSuggestionItem");
     if (!btn) return;
 
-    if (!canManageUI()) {
+    if (!util.canManageUI()) {
       alert("No tenés permisos para editar eventos.");
       return;
     }

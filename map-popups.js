@@ -10,13 +10,8 @@
     return t ? ` <span class="catTag">${t}</span>` : "";
   }
 
-function canManageUI() {
-  const params = new URLSearchParams(window.location.search);
-  const isAdminMode = params.get("admin") === "1";
-  return !!state.logic.isLoggedIn && isAdminMode;
-}
 
-  function buildPlacePopupHTML(loc) {
+    function buildPlacePopupHTML(loc) {
     if (!loc) return "";
 
     const placeNameFull =
@@ -27,7 +22,7 @@ function canManageUI() {
     const sorted = [...(loc.events || [])].sort(util.sortEventsByStatusThenTime);
     const total = sorted.length;
 
-    const actionBtn = canManageUI()
+    const actionBtn = util.canManageUI()
   ? `<button class="popupBtn popupBtnPrimary popupAddBtn"
         data-lat="${loc.lat}"
         data-lng="${loc.lng}"
@@ -100,7 +95,7 @@ function canManageUI() {
               </button>
 
               ${
-                canManageUI()
+                util.canManageUI()
                   ? `
                     <button class="popupBtn popupEditBtn"
                       data-edit-eid="${encodeURIComponent(eid)}">

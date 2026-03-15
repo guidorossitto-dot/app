@@ -373,6 +373,12 @@ ALLOWED_CATEGORIES: ["music", "dance", "theatre", "visual_arts", "cinema"]
     return locationKey(ev.lat, ev.lng);
   }
 
+  function canManageUI() {
+    const params = new URLSearchParams(window.location.search);
+    const isAdminMode = params.get("admin") === "1";
+    return !!App.state?.logic?.isLoggedIn && isAdminMode;
+  }
+
   /* =========================
      EXPORTS
   ========================= */
@@ -382,6 +388,7 @@ ALLOWED_CATEGORIES: ["music", "dance", "theatre", "visual_arts", "cinema"]
     shortPlaceName,
     locationKey,
     normalizePlaceText,
+    canManageUI,
 
     todayStrYYYYMMDD,
     addDaysYYYYMMDD,
