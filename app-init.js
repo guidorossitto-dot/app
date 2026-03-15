@@ -7,48 +7,42 @@
 
   async function hydrateInitialState() {
 
-  const venuesRemote = await App.venues?.loadVenuesRemote?.();
+  const venuesRemote = await App.venues.loadVenuesRemote();
 
 if (!venuesRemote?.ok) {
   await App.storage?.loadVenues?.();
 }
 
-  await App.storage?.loadEvents?.();
+  await App.storage.loadEvents();
 
   (state.logic.events || []).forEach((ev) => {
   if (!ev?.placeName || !Number.isFinite(ev?.lat) || !Number.isFinite(ev?.lng)) return;
 
-  App.venues?.addVenue?.(
+  App.venues.addVenue(
     { name: ev.placeName, address: ev.placeName, lat: ev.lat, lng: ev.lng },
     { persist: false }
   );
 });
 
-  if (App.events?.hydrateLoginFromStorage) {
-    App.events.hydrateLoginFromStorage();
-  } else if (App.storage?.readLoginState) {
-    state.logic.isLoggedIn = App.storage.readLoginState();
-  }
+  App.events.hydrateLoginFromStorage();
 
-  if (App.events?.purgePastEventsInState) {
-    const purged = App.events.purgePastEventsInState();
-    if (purged?.changed) {
-      console.warn("Hay eventos pasados en estado.");
-    }
-  }
+  const purged = App.events.purgePastEventsInState();
+if (purged?.changed) {
+  console.warn("Hay eventos pasados en estado.");
+}
 
-  App.events?.setCalendarCursor?.(new Date());
+  App.events.setCalendarCursor(new Date());
 }
 
   function bindUI() {
-    App.ui?.bindLoginUI?.();
-    App.ui?.bindPublicUI?.();
-    App.ui?.bindAdminUI?.();
-    App.ui?.bindCalendarUI?.();
-    App.ui?.bindCategoryUI?.();
-    App.ui?.bindDeleteEventUI?.();
-    App.ui?.bindSidebarUI?.();
-  }
+  App.ui.bindLoginUI();
+  App.ui.bindPublicUI();
+  App.ui.bindSidebarUI();
+  App.ui.bindCalendarUI();
+  App.ui.bindCategoryUI();
+  App.ui.bindDeleteEventUI();
+  App.ui.bindAdminUI();
+}
 
   function initMapState() {
     App.map.bindAdminCategoryChips();
