@@ -330,15 +330,13 @@ const adminMode = !!util.isAdminMode();
       return;
     }
 
-    if (loginBtn) {
-      loginBtn.style.display = "";
-      loginBtn.hidden = state.logic.isLoggedIn;
-    }
+if (loginBtn) {
+  loginBtn.style.display = "";
+}
 
-    if (logoutBtn) {
-      logoutBtn.style.display = "";
-      logoutBtn.hidden = !state.logic.isLoggedIn;
-    }
+if (logoutBtn) {
+  logoutBtn.style.display = "";
+}
   }
 
   /* =========================

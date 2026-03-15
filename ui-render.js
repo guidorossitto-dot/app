@@ -15,15 +15,13 @@
     const isAdmin = !!App.util?.isAdminMode?.();
     const isLoggedIn = !!App.state?.logic?.isLoggedIn;
 
-      if (!isAdmin) {
-        loginBtn.hidden = true;
-        logoutBtn.hidden = true;
-        adminView.hidden = true;
-       return;
+if (!isAdmin) {
+  loginBtn.hidden = true;
+  logoutBtn.hidden = true;
+  return;
 }
+ 
 
-      adminView.hidden = !App.util?.canManageUI?.();
-      
       const canManage = !!App.util?.canManageUI?.();
 
       loginBtn.hidden = !isAdmin || isLoggedIn;
