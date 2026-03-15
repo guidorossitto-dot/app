@@ -8,9 +8,7 @@
   function renderLoginUI() {
     const loginBtn = document.getElementById("loginBtn");
     const logoutBtn = document.getElementById("logoutBtn");
-    const adminView = document.getElementById("adminView");
-
-    if (!loginBtn || !logoutBtn || !adminView) return;
+    if (!loginBtn || !logoutBtn) return;
 
     const isAdmin = !!App.util?.isAdminMode?.();
     const isLoggedIn = !!App.state?.logic?.isLoggedIn;
