@@ -66,8 +66,7 @@ if (!venuesRemote?.ok) {
         );
       }
 
-      App.renderAll?.({ rebuildMarkers: false });
-      App.ui?.renderLoginUI?.();
+        App.renderAll?.({ rebuildMarkers: false });
     }, App.CFG.REFRESH_MS);
   }
 
@@ -78,8 +77,7 @@ if (!venuesRemote?.ok) {
     bindUI();
     initMapState();
 
-    App.renderAll?.({ rebuildMarkers: true });
-    App.ui?.renderLoginUI?.();
+    App.renderAll?.({ rebuildMarkers: true });  
 
     if (App.events?.setBootReady) {
       App.events.setBootReady(true);
