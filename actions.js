@@ -26,25 +26,16 @@ function selectCategory(category) {
 }
 
   function setCalendarMonth(date) {
-    return App.store?.dispatch?.({
-      type: "SET_CALENDAR_CURSOR",
-      value: date
-    });
-  }
+  return App.events?.setCalendarCursor?.(date);
+}
 
   function startEditingEvent(eventId) {
-    return App.store?.dispatch?.({
-      type: "SET_EDITING_EVENT_ID",
-      value: eventId
-    });
-  }
+  return App.events?.setEditingEventId?.(eventId);
+}
 
   function stopEditingEvent() {
-    return App.store?.dispatch?.({
-      type: "SET_EDITING_EVENT_ID",
-      value: null
-    });
-  }
+  return App.events?.setEditingEventId?.(null);
+}
 
   function setNearbyCenter(center) {
     return App.events?.setNearbyCenter?.(center);
@@ -58,30 +49,20 @@ function selectCategory(category) {
      RUNTIME
   ========================= */
   function queueDeepLink(eventId) {
-    return App.store?.dispatch?.({
-      type: "SET_PENDING_DEEP_LINK_EVENT_ID",
-      value: eventId
-    });
-  }
+  return App.events?.setPendingDeepLinkEventId?.(eventId);
+}
 
   function clearQueuedDeepLink() {
-    return App.store?.dispatch?.({
-      type: "CLEAR_PENDING_DEEP_LINK_EVENT_ID"
-    });
-  }
+  return App.events?.clearPendingDeepLinkEventId?.();
+} 
 
   function highlightPendingPopupEvent(eventId) {
-    return App.store?.dispatch?.({
-      type: "SET_PENDING_OPEN_EVENT_ID",
-      value: eventId
-    });
-  }
+  return App.events?.setPendingOpenEventId?.(eventId);
+}
 
-  function clearPendingPopupEvent() {
-    return App.store?.dispatch?.({
-      type: "CLEAR_PENDING_OPEN_EVENT_ID"
-    });
-  }
+ function clearPendingPopupEvent() {
+  return App.events?.clearPendingOpenEventId?.();
+}
 
   function setBootReady(flag) {
     return App.store?.dispatch?.({
