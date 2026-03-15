@@ -18,17 +18,18 @@
   }
 
   function mapRowToEvent(row) {
-    return util.normalizeEvent({
-      id: row.id,
-      title: row.title,
-      placeName: row.place_name || "",
-      date: row.date || "",
-      startTime: row.start_time || "",
-      category: row.category || "music",
-      lat: Number(row.lat),
-      lng: Number(row.lng)
-    });
-  }
+  return util.normalizeEvent({
+    id: row.id,
+    title: row.title,
+    placeName: row.place_name || "",
+    date: row.date || "",
+    startTime: row.start_time || "",
+    category: row.category || "music",
+    link: row.link || "",
+    lat: Number(row.lat),
+    lng: Number(row.lng)
+  });
+}
 
   function mapRowToVenue(row) {
   return {
@@ -90,20 +91,21 @@ function loadVenues() {
 }
 
   function mapEventToRow(ev) {
-    const safe = util.normalizeEvent(ev);
+  const safe = util.normalizeEvent(ev);
 
-    return {
-      id: safe.id,
-      title: safe.title,
-      place_name: safe.placeName || "",
-      date: safe.date || null,
-      start_time: safe.startTime || null,
-      category: safe.category || "music",
-      lat: Number(safe.lat),
-      lng: Number(safe.lng),
-      updated_at: new Date().toISOString()
-    };
-  }
+  return {
+    id: safe.id,
+    title: safe.title,
+    place_name: safe.placeName || "",
+    date: safe.date || null,
+    start_time: safe.startTime || null,
+    category: safe.category || "music",
+    link: safe.link || "",
+    lat: Number(safe.lat),
+    lng: Number(safe.lng),
+    updated_at: new Date().toISOString()
+  };
+}
 
   async function loadEvents() {
     const db = App.supabase;

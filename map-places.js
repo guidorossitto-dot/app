@@ -612,11 +612,11 @@ async function createEventFromAdminForm() {
   const placeEl = document.getElementById("eventPlace");
   const startEl = document.getElementById("eventStart");
   const catEl = document.getElementById("eventCategory");
+  const linkEl = document.getElementById("eventLink");
   const addBtn = document.getElementById("addEventBtn");
   const cancelBtn = document.getElementById("cancelEditBtn");
   const createModeEl = document.getElementById("eventCreateMode");
-const endDateEl = document.getElementById("eventEndDate");
-
+  const endDateEl = document.getElementById("eventEndDate");
 
   if (!titleEl || !dateEl || !latEl || !lngEl) return;
 
@@ -627,6 +627,7 @@ const endDateEl = document.getElementById("eventEndDate");
   let placeName = placeEl ? placeEl.value.trim() : "";
   const startTime = startEl ? startEl.value.trim() : "";
   const category = catEl ? catEl.value : "music";
+  const link = linkEl ? linkEl.value.trim() : "";
 
   if (
     !title ||
@@ -657,7 +658,8 @@ const endDateEl = document.getElementById("eventEndDate");
     lng,
     placeName,
     startTime,
-    category
+    category,
+    link
   };
 
   const editingId = String(state.logic.editingEventId || "").trim() || null;
@@ -671,78 +673,77 @@ const endDateEl = document.getElementById("eventEndDate");
     }
 
     App.actions?.stopEditingEvent?.();
-   } else {
-  const mode = createModeEl?.value || "single";
-  const endDate = endDateEl?.value?.trim() || "";
-
-  const baseEvent = {
-    ...patch
-  };
-
-  let eventsToCreate = [];
-
-  if (mode === "dailyRange") {
-    if (!date || !endDate) {
-      alert("Completá fecha inicio y fecha fin.");
-      return;
-    }
-
-    eventsToCreate = generateDailyOccurrences(baseEvent, date, endDate);
-
-    if (!eventsToCreate.length) {
-      alert("No se pudieron generar ocurrencias. Revisá el rango de fechas.");
-      return;
-    }
-
-    if (eventsToCreate.length > 60) {
-      alert("Demasiadas ocurrencias. Reducí el rango.");
-      return;
-    }
   } else {
-    eventsToCreate = [
-      {
-        id: util.newId(),
-        ...baseEvent
+    const mode = createModeEl?.value || "single";
+    const endDate = endDateEl?.value?.trim() || "";
+
+    const baseEvent = {
+      ...patch
+    };
+
+    let eventsToCreate = [];
+
+    if (mode === "dailyRange") {
+      if (!date || !endDate) {
+        alert("Completá fecha inicio y fecha fin.");
+        return;
       }
-    ];
-  }
 
-  for (const ev of eventsToCreate) {
-    const result = await App.events?.addEventRemote?.(ev);
+      eventsToCreate = generateDailyOccurrences(baseEvent, date, endDate);
 
-    if (!result?.ok) {
-      alert("No se pudo guardar uno de los eventos.");
-      return;
+      if (!eventsToCreate.length) {
+        alert("No se pudieron generar ocurrencias. Revisá el rango de fechas.");
+        return;
+      }
+
+      if (eventsToCreate.length > 60) {
+        alert("Demasiadas ocurrencias. Reducí el rango.");
+        return;
+      }
+    } else {
+      eventsToCreate = [
+        {
+          id: util.newId(),
+          ...baseEvent
+        }
+      ];
+    }
+
+    for (const ev of eventsToCreate) {
+      const result = await App.events?.addEventRemote?.(ev);
+
+      if (!result?.ok) {
+        alert("No se pudo guardar uno de los eventos.");
+        return;
+      }
+    }
+
+    // Crear venue automático si no existe uno igual
+    if (App.venues?.addVenue && App.venues?.listVenues) {
+      const existingVenue = App.venues
+        .listVenues()
+        .find((v) => {
+          const sameName =
+            String(v?.name || "").trim().toLowerCase() === placeName.toLowerCase();
+          const sameLat = Number(v?.lat) === lat;
+          const sameLng = Number(v?.lng) === lng;
+          return sameName && sameLat && sameLng;
+        });
+
+      if (!existingVenue) {
+        await App.venues.addVenueRemote({
+          name: placeName,
+          address: placeName,
+          lat,
+          lng
+        });
+      }
+    }
+
+    if (eventsToCreate.length > 1) {
+      alert(`Se crearon ${eventsToCreate.length} eventos.`);
     }
   }
-
-  // Crear venue automático si no existe uno igual
-  if (App.venues?.addVenue && App.venues?.listVenues) {
-    const existingVenue = App.venues
-      .listVenues()
-      .find((v) => {
-        const sameName =
-          String(v?.name || "").trim().toLowerCase() === placeName.toLowerCase();
-        const sameLat = Number(v?.lat) === lat;
-        const sameLng = Number(v?.lng) === lng;
-        return sameName && sameLat && sameLng;
-      });
-
-    if (!existingVenue) {
-      await App.venues.addVenueRemote({
-        name: placeName,
-        address: placeName,
-        lat,
-        lng
-      });
-    }
-  }
-
-  if (eventsToCreate.length > 1) {
-    alert(`Se crearon ${eventsToCreate.length} eventos.`);
-  }
-}
-
 
   titleEl.value = "";
   dateEl.value = "";
@@ -751,14 +752,16 @@ const endDateEl = document.getElementById("eventEndDate");
   if (placeEl) placeEl.value = "";
   if (startEl) startEl.value = "";
   if (catEl) catEl.value = "music";
+  if (linkEl) linkEl.value = "";
   if (createModeEl) createModeEl.value = "single";
-if (endDateEl) {
-  endDateEl.value = "";
-  endDateEl.hidden = true;
-}
-const endDateLabelEl = document.getElementById("eventEndDateLabel");
-if (endDateLabelEl) endDateLabelEl.hidden = true;
 
+  if (endDateEl) {
+    endDateEl.value = "";
+    endDateEl.hidden = true;
+  }
+
+  const endDateLabelEl = document.getElementById("eventEndDateLabel");
+  if (endDateLabelEl) endDateLabelEl.hidden = true;
 
   const venueSearchInput = document.getElementById("venueSearchInput");
   const venueSuggestions = document.getElementById("venueSuggestions");
@@ -806,7 +809,7 @@ if (endDateLabelEl) endDateLabelEl.hidden = true;
       uiSetView(lat, lng, 15);
 
   // if (util.canManageUI()) prepareEventCreation(lat, lng);
-  
+
       App.renderAll?.({ rebuildMarkers: false });
     },
     (err) => {

@@ -273,7 +273,8 @@ function formatTimeStart(ev) {
       lng,
       placeName: (raw?.placeName ?? "").toString().trim(),
       startTime: (raw?.startTime ?? "").toString().trim(),
-      category: normalizeCategory(raw?.category)
+      category: normalizeCategory(raw?.category),
+      link: (raw?.link ?? "").toString().trim()
     };
   }
 

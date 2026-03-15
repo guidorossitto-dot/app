@@ -87,30 +87,38 @@
         eid
           ? `
             <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:6px;">
-              <button class="popupBtn shareBtn"
-                data-eid="${encodeURIComponent(eid)}"
-                data-title="${encodeURIComponent(e.title || "")}"
-                title="Copiar link de este evento">
-                Compartir
-              </button>
+  ${
+    e.link
+      ? `<a class="popupBtn" href="${e.link}" target="_blank" rel="noopener noreferrer">
+          Ver info
+        </a>`
+      : ""
+  }
 
-              ${
-                util.canManageUI()
-                  ? `
-                    <button class="popupBtn popupEditBtn"
-                      data-edit-eid="${encodeURIComponent(eid)}">
-                      ✏️ Editar
-                    </button>
+  <button class="popupBtn shareBtn"
+    data-eid="${encodeURIComponent(eid)}"
+    data-title="${encodeURIComponent(e.title || "")}"
+    title="Copiar link de este evento">
+    Compartir
+  </button>
 
-                    <button class="popupBtn deleteEventBtn"
-                      data-delete-eid="${encodeURIComponent(eid)}"
-                      data-delete-title="${encodeURIComponent(e.title || "")}">
-                      🗑 Borrar
-                    </button>
-                  `
-                  : ""
-              }
-            </div>
+  ${
+    util.canManageUI()
+      ? `
+        <button class="popupBtn popupEditBtn"
+          data-edit-eid="${encodeURIComponent(eid)}">
+          ✏️ Editar
+        </button>
+
+        <button class="popupBtn deleteEventBtn"
+          data-delete-eid="${encodeURIComponent(eid)}"
+          data-delete-title="${encodeURIComponent(e.title || "")}">
+          🗑 Borrar
+        </button>
+      `
+      : ""
+  }
+</div>
           `
           : ""
       }

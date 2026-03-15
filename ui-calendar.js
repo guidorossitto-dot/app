@@ -219,29 +219,37 @@
           </div>
 
           <div class="eventMiniCard__actions">
-            <button class="linkBtn routeBtn"
-              data-lat="${ev.lat}"
-              data-lng="${ev.lng}"
-              data-place="${encodeURIComponent(ev.title || ev.placeName || "")}">
-              Cómo llegar
-            </button>
+  ${
+    ev.link
+      ? `<a class="linkBtn" href="${ev.link}" target="_blank" rel="noopener noreferrer">
+          Ver info
+        </a>`
+      : ""
+  }
 
-            <button class="linkBtn shareBtn"
-              data-eid="${encodeURIComponent(ev.id)}"
-              data-title="${encodeURIComponent(ev.title || "")}">
-              Compartir
-            </button>
+  <button class="linkBtn routeBtn"
+    data-lat="${ev.lat}"
+    data-lng="${ev.lng}"
+    data-place="${encodeURIComponent(ev.title || ev.placeName || "")}">
+    Cómo llegar
+  </button>
 
-            ${
-              util.canManageUI()
-                ? `<button class="linkBtn deleteEventBtn"
-                    data-delete-eid="${encodeURIComponent(ev.id)}"
-                    data-delete-title="${encodeURIComponent(ev.title || "")}">
-                    Borrar
-                  </button>`
-                : ""
-            }
-          </div>
+  <button class="linkBtn shareBtn"
+    data-eid="${encodeURIComponent(ev.id)}"
+    data-title="${encodeURIComponent(ev.title || "")}">
+    Compartir
+  </button>
+
+  ${
+    util.canManageUI()
+      ? `<button class="linkBtn deleteEventBtn"
+          data-delete-eid="${encodeURIComponent(ev.id)}"
+          data-delete-title="${encodeURIComponent(ev.title || "")}">
+          Borrar
+        </button>`
+      : ""
+  }
+</div>
         </article>
       `;
     };
@@ -426,37 +434,45 @@ if (logoutBtn) {
           }
 
           <div class="eventCardActions">
-            <button class="linkBtn mapFocusBtn"
-              data-eid="${encodeURIComponent(ev.id || "")}"
-              data-lat="${ev.lat}"
-              data-lng="${ev.lng}"
-              data-key="${locationKey}">
-              Ver en mapa
-            </button>
+  <button class="linkBtn mapFocusBtn"
+    data-eid="${encodeURIComponent(ev.id || "")}"
+    data-lat="${ev.lat}"
+    data-lng="${ev.lng}"
+    data-key="${locationKey}">
+    Ver en mapa
+  </button>
 
-            <button class="linkBtn routeBtn"
-              data-lat="${ev.lat}"
-              data-lng="${ev.lng}"
-              data-place="${encodeURIComponent(ev.title || ev.placeName || "")}">
-              Cómo llegar
-            </button>
+  ${
+    ev.link
+      ? `<a class="linkBtn" href="${ev.link}" target="_blank" rel="noopener noreferrer">
+          Ver info
+        </a>`
+      : ""
+  }
 
-            <button class="linkBtn shareBtn"
-              data-eid="${encodeURIComponent(ev.id || "")}"
-              data-title="${encodeURIComponent(ev.title || "")}">
-              Compartir
-            </button>
+  <button class="linkBtn routeBtn"
+    data-lat="${ev.lat}"
+    data-lng="${ev.lng}"
+    data-place="${encodeURIComponent(ev.title || ev.placeName || "")}">
+    Cómo llegar
+  </button>
 
-            ${
-              util.canManageUI()
-                ? `<button class="linkBtn deleteEventBtn"
-                    data-delete-eid="${encodeURIComponent(ev.id || "")}"
-                    data-delete-title="${encodeURIComponent(ev.title || "")}">
-                    Borrar
-                  </button>`
-                : ""
-            }
-          </div>
+  <button class="linkBtn shareBtn"
+    data-eid="${encodeURIComponent(ev.id || "")}"
+    data-title="${encodeURIComponent(ev.title || "")}">
+    Compartir
+  </button>
+
+  ${
+    util.canManageUI()
+      ? `<button class="linkBtn deleteEventBtn"
+          data-delete-eid="${encodeURIComponent(ev.id || "")}"
+          data-delete-title="${encodeURIComponent(ev.title || "")}">
+          Borrar
+        </button>`
+      : ""
+  }
+</div>
         </div>
       </div>
     `;
