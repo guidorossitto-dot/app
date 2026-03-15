@@ -355,7 +355,7 @@ function rebuildLocationMarkers(list = state.logic.events) {
 
   return;
 }
-      if (!state.logic.isLoggedIn) return;
+      if (!util.canManageUI()) return;
       if (btn.classList.contains("deleteEventBtn")) {
   await App.ui?.deleteEventFromButton?.(btn);
 

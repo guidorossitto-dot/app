@@ -285,9 +285,7 @@ function logout() {
   return state.logic.isLoggedIn;
 }
 
- function isAdminMode() {
-  return !!util.isAdminMode();
-}
+ const isAdminMode = util.isAdminMode;
 
 function setActiveCategory(category) {
     const value =
