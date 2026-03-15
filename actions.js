@@ -21,15 +21,9 @@ function logout() {
   /* =========================
      LOGIC STATE
   ========================= */
-  function selectCategory(category) {
-    return App.store?.dispatch?.({
-      type: "SET_ACTIVE_CATEGORY",
-      value:
-        category === App.CFG.CATEGORY_ALL
-          ? App.CFG.CATEGORY_ALL
-          : App.util.normalizeCategory(category)
-    });
-  }
+function selectCategory(category) {
+  return App.events?.setActiveCategory?.(category);
+}
 
   function setCalendarMonth(date) {
     return App.store?.dispatch?.({
