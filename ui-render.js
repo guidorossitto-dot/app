@@ -15,16 +15,19 @@
     const isAdmin = !!App.util?.isAdminMode?.();
     const isLoggedIn = !!App.state?.logic?.isLoggedIn;
 
-    if (!isAdmin) {
-      loginBtn.hidden = true;
-      logoutBtn.hidden = true;
-      adminView.hidden = true;
-      return;
-    }
+      if (!isAdmin) {
+        loginBtn.hidden = true;
+        logoutBtn.hidden = true;
+        adminView.hidden = true;
+       return;
+}
 
-    loginBtn.hidden = isLoggedIn;
-    logoutBtn.hidden = !isLoggedIn;
-    adminView.hidden = !isLoggedIn;
+      adminView.hidden = !App.util?.canManageUI?.();
+      
+      const canManage = !!App.util?.canManageUI?.();
+
+      loginBtn.hidden = !isAdmin || isLoggedIn;
+      logoutBtn.hidden = !canManage;
   }
 
   function bindLoginUI() {
@@ -72,8 +75,9 @@
       }
     }
 
-    App.ui?.renderLoginUI?.();
+    
     App.ui?.renderAppShell?.();
+    App.ui?.renderLoginUI?.();
     App.ui?.renderList?.();
     App.ui?.renderCalendar?.();
 
