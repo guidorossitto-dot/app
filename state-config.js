@@ -373,10 +373,13 @@ ALLOWED_CATEGORIES: ["music", "dance", "theatre", "visual_arts", "cinema"]
     return locationKey(ev.lat, ev.lng);
   }
 
-  function canManageUI() {
+  function isAdminMode() {
     const params = new URLSearchParams(window.location.search);
-    const isAdminMode = params.get("admin") === "1";
-    return !!App.state?.logic?.isLoggedIn && isAdminMode;
+    return params.get("admin") === "1";
+  }
+
+    function canManageUI() {
+    return !!App.state?.logic?.isLoggedIn && isAdminMode();
   }
 
   /* =========================
@@ -388,6 +391,7 @@ ALLOWED_CATEGORIES: ["music", "dance", "theatre", "visual_arts", "cinema"]
     shortPlaceName,
     locationKey,
     normalizePlaceText,
+    isAdminMode,
     canManageUI,
 
     todayStrYYYYMMDD,

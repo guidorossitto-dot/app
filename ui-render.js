@@ -12,7 +12,7 @@
 
     if (!loginBtn || !logoutBtn || !adminView) return;
 
-    const isAdmin = !!App.events?.isAdminMode?.();
+    const isAdmin = !!App.util?.isAdminMode?.();
     const isLoggedIn = !!App.state?.logic?.isLoggedIn;
 
     if (!isAdmin) {

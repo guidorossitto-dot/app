@@ -285,9 +285,8 @@ function logout() {
   return state.logic.isLoggedIn;
 }
 
-  function isAdminMode() {
-  const params = new URLSearchParams(window.location.search);
-  return params.get("admin") === "1";
+ function isAdminMode() {
+  return !!util.isAdminMode();
 }
 
 function setActiveCategory(category) {
