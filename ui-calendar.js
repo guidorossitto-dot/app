@@ -319,8 +319,7 @@
     const loginBtn = document.getElementById("loginBtn");
     const logoutBtn = document.getElementById("logoutBtn");
 
-    const params = new URLSearchParams(window.location.search);
-const adminMode = !!util.isAdminMode();
+    const adminMode = !!util.isAdminMode();
 
     if (adminView) adminView.hidden = !util.canManageUI();
 

@@ -378,9 +378,9 @@ ALLOWED_CATEGORIES: ["music", "dance", "theatre", "visual_arts", "cinema"]
     return params.get("admin") === "1";
   }
 
-    function canManageUI() {
-    return !!App.state?.logic?.isLoggedIn && isAdminMode();
-  }
+   function canManageUI() {
+  return !!App.state.logic.isLoggedIn && isAdminMode();
+}
 
   /* =========================
      EXPORTS

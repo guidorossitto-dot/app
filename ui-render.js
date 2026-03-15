@@ -10,8 +10,8 @@
     const logoutBtn = document.getElementById("logoutBtn");
     if (!loginBtn || !logoutBtn) return;
 
-    const isAdmin = !!App.util?.isAdminMode?.();
-    const isLoggedIn = !!App.state?.logic?.isLoggedIn;
+    const isAdmin = App.util.isAdminMode();
+    const isLoggedIn = !!App.state.logic.isLoggedIn;
 
 if (!isAdmin) {
   loginBtn.hidden = true;
@@ -20,7 +20,7 @@ if (!isAdmin) {
 }
  
 
-      const canManage = !!App.util?.canManageUI?.();
+      const canManage = App.util.canManageUI();
 
       loginBtn.hidden = !isAdmin || isLoggedIn;
       logoutBtn.hidden = !canManage;
@@ -72,10 +72,10 @@ if (!isAdmin) {
     }
 
     
-    App.ui?.renderAppShell?.();
-    App.ui?.renderLoginUI?.();
-    App.ui?.renderList?.();
-    App.ui?.renderCalendar?.();
+    App.ui.renderAppShell();
+    App.ui.renderLoginUI();
+    App.ui.renderList();
+    App.ui.renderCalendar();
 
     App.map?.renderMap?.({
       rebuildMarkers: finalOpts.rebuildMarkers
