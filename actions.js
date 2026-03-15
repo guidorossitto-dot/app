@@ -8,8 +8,8 @@
      SESSION
   ========================= */
   function setLogin(isLoggedIn) {
-    return App.events?.setLoginState?.(!!isLoggedIn);
-  }
+  return App.events?.setLoginState?.(isLoggedIn);
+}
 
   function login() {
   return App.events?.login?.();
@@ -65,28 +65,19 @@ function selectCategory(category) {
 }
 
   function setBootReady(flag) {
-    return App.store?.dispatch?.({
-      type: "SET_BOOT_READY",
-      value: flag
-    });
-  }
+  return App.events?.setBootReady?.(flag);
+}
 
   /* =========================
      INFRA / TRANSITION
   ========================= */
   function commitAndRender(opts = {}) {
-    return App.commit?.(opts);
-  }
+  return App.events?.commit?.(opts);
+}
 
   function saveAndRefresh(opts = {}) {
-    return App.commit?.({
-      persist: true,
-      purgePast: false,
-      rebuildMarkers: true,
-      recomputeNearby: true,
-      ...opts
-    });
-  }
+  return App.events?.saveAndRefresh?.(opts);
+}
 
   App.actions = {
     setLogin,
