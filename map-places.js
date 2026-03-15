@@ -216,8 +216,7 @@ function rebuildLocationMarkers(list = state.logic.events) {
           } catch {}
         }, 120);
 
-        if (state.logic.isLoggedIn) prepareEventCreation(lat, lng);
-
+        if (util.canManageUI()) prepareEventCreation(lat, lng);
         App.renderAll?.({ rebuildMarkers: false });
       });
     }
@@ -806,7 +805,7 @@ if (endDateLabelEl) endDateLabelEl.hidden = true;
       recomputeNearbyEvents(lat, lng);
       uiSetView(lat, lng, 15);
 
-      if (state.logic.isLoggedIn) prepareEventCreation(lat, lng);
+      if (util.canManageUI()) prepareEventCreation(lat, lng);
 
       App.renderAll?.({ rebuildMarkers: false });
     },
@@ -934,8 +933,8 @@ if (endDateLabelEl) endDateLabelEl.hidden = true;
           titleEl.value = r.name || r.display_name.split(",")[0];
         }
 
-        if (state.logic.isLoggedIn) prepareEventCreation(lat, lng);
-
+        if (util.canManageUI()) prepareEventCreation(lat, lng);
+        
         const resultsUl = document.getElementById("placeResults");
         if (resultsUl) resultsUl.innerHTML = "";
 
