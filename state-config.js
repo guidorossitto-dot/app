@@ -129,11 +129,12 @@ ALLOWED_CATEGORIES: ["music", "dance", "theatre", "visual_arts", "cinema"]
     return `${day}/${month}/${year}`;
   }
 
-  function formatTimeStart(ev) {
-    const s = (ev?.startTime || "").toString().trim();
-    return s || "";
-  }
+function formatTimeStart(ev) {
+  const s = (ev?.startTime || "").toString().trim();
+  if (!s) return "";
 
+  return s.slice(0, 5);
+}
   function minutesToStart(ev) {
     if (!ev?.date) return null;
 
