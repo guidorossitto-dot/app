@@ -65,10 +65,10 @@ if (!isAdmin) {
     };
 
     if (finalOpts.recomputeNearby) {
-      const center = App.state?.logic?.nearbyCenter;
-      if (center && App.map?.recomputeNearbyEvents) {
-        App.map.recomputeNearbyEvents(center.lat, center.lng);
-      }
+      const center = App.state.logic.nearbyCenter;
+      if (center) {
+       App.map.recomputeNearbyEvents(center.lat, center.lng);
+    }
     }
 
     
@@ -77,9 +77,9 @@ if (!isAdmin) {
     App.ui.renderList();
     App.ui.renderCalendar();
 
-    App.map?.renderMap?.({
-      rebuildMarkers: finalOpts.rebuildMarkers
-    });
+    App.map.renderMap({
+  rebuildMarkers: finalOpts.rebuildMarkers
+});
   }
 
   function commit(opts = {}) {

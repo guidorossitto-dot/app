@@ -59,12 +59,12 @@ if (!venuesRemote?.ok) {
 
   function startAutoRefresh() {
     setInterval(() => {
-      if (state.logic.nearbyCenter && App.map?.recomputeNearbyEvents) {
-        App.map.recomputeNearbyEvents(
-          state.logic.nearbyCenter.lat,
-          state.logic.nearbyCenter.lng
-        );
-      }
+      if (state.logic.nearbyCenter) {
+  App.map.recomputeNearbyEvents(
+    state.logic.nearbyCenter.lat,
+    state.logic.nearbyCenter.lng
+  );
+}
 
         App.renderAll?.({ rebuildMarkers: false });
     }, App.CFG.REFRESH_MS);
@@ -77,7 +77,7 @@ if (!venuesRemote?.ok) {
     bindUI();
     initMapState();
 
-    App.renderAll?.({ rebuildMarkers: true });  
+    App.renderAll({ rebuildMarkers: true });
 
     if (App.events?.setBootReady) {
       App.events.setBootReady(true);
@@ -85,7 +85,7 @@ if (!venuesRemote?.ok) {
       state.runtime.bootReady = true;
     }
 
-    App.ui?.processQueuedDeepLink?.();
+    App.ui.processQueuedDeepLink();
     startAutoRefresh();
   }
 
