@@ -805,8 +805,8 @@ if (endDateLabelEl) endDateLabelEl.hidden = true;
       recomputeNearbyEvents(lat, lng);
       uiSetView(lat, lng, 15);
 
-      if (util.canManageUI()) prepareEventCreation(lat, lng);
-
+  // if (util.canManageUI()) prepareEventCreation(lat, lng);
+  
       App.renderAll?.({ rebuildMarkers: false });
     },
     (err) => {

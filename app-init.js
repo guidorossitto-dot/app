@@ -51,10 +51,10 @@ if (!venuesRemote?.ok) {
   }
 
   function initMapState() {
-    App.map?.bindAdminCategoryChips?.();
-    App.map?.initMap?.(App.CFG.DEFAULT_LAT, App.CFG.DEFAULT_LNG);
-    App.map?.setUserLocation?.(App.CFG.DEFAULT_LAT, App.CFG.DEFAULT_LNG);
-    App.map?.recomputeNearbyEvents?.(App.CFG.DEFAULT_LAT, App.CFG.DEFAULT_LNG);
+    App.map.bindAdminCategoryChips();
+    App.map.initMap(App.CFG.DEFAULT_LAT, App.CFG.DEFAULT_LNG);
+    App.map.setUserLocation(App.CFG.DEFAULT_LAT, App.CFG.DEFAULT_LNG);
+    App.map.recomputeNearbyEvents(App.CFG.DEFAULT_LAT, App.CFG.DEFAULT_LNG);
   }
 
   function startAutoRefresh() {
@@ -92,7 +92,7 @@ if (!venuesRemote?.ok) {
   App.init = App.init || {};
   App.init.bootAfterMapReady = bootAfterMapReady;
 
-  document.addEventListener("DOMContentLoaded", async () => {
-    await App.init?.bootAfterMapReady?.();
+document.addEventListener("DOMContentLoaded", async () => {
+  await App.init.bootAfterMapReady();
   });
 })();
