@@ -9,27 +9,33 @@
 
   const venuesRemote = await App.venues.loadVenuesRemote();
 
-if (!venuesRemote?.ok) {
-  await App.storage?.loadVenues?.();
-}
+  if (!venuesRemote?.ok) {
+    await App.storage?.loadVenues?.();
+  }
 
-  await App.storage.loadEvents();
+  const loadedEvents = await App.storage.loadEvents();
+
+  if (loadedEvents?.ok) {
+    App.events?.setAllEvents?.(loadedEvents.events || []);
+  } else {
+    App.events?.setAllEvents?.([]);
+  }
 
   (state.logic.events || []).forEach((ev) => {
-  if (!ev?.placeName || !Number.isFinite(ev?.lat) || !Number.isFinite(ev?.lng)) return;
+    if (!ev?.placeName || !Number.isFinite(ev?.lat) || !Number.isFinite(ev?.lng)) return;
 
-  App.venues.addVenue(
-    { name: ev.placeName, address: ev.placeName, lat: ev.lat, lng: ev.lng },
-    { persist: false }
-  );
-});
+    App.venues.addVenue(
+      { name: ev.placeName, address: ev.placeName, lat: ev.lat, lng: ev.lng },
+      { persist: false }
+    );
+  });
 
   App.events.hydrateLoginFromStorage();
 
   const purged = App.events.purgePastEventsInState();
-if (purged?.changed) {
-  console.warn("Hay eventos pasados en estado.");
-}
+  if (purged?.changed) {
+    console.warn("Hay eventos pasados en estado.");
+  }
 
   App.events.setCalendarCursor(new Date());
 }

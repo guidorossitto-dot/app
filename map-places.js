@@ -309,23 +309,25 @@ function rebuildLocationMarkers(list = state.logic.events) {
   App.actions?.startEditingEvent?.(eventId);
   App.actions?.selectCategory?.("all");
 
-  const titleEl = document.getElementById("eventTitle");
-  const dateEl = document.getElementById("eventDate");
-  const latEl = document.getElementById("eventLat");
-  const lngEl = document.getElementById("eventLng");
-  const placeEl = document.getElementById("eventPlace");
-  const startEl = document.getElementById("eventStart");
-  const catEl = document.getElementById("eventCategory");
-  const addBtn = document.getElementById("addEventBtn");
-  const cancelBtn = document.getElementById("cancelEditBtn");
+const titleEl = document.getElementById("eventTitle");
+const dateEl = document.getElementById("eventDate");
+const latEl = document.getElementById("eventLat");
+const lngEl = document.getElementById("eventLng");
+const placeEl = document.getElementById("eventPlace");
+const startEl = document.getElementById("eventStart");
+const catEl = document.getElementById("eventCategory");
+const linkEl = document.getElementById("eventLink");
+const addBtn = document.getElementById("addEventBtn");
+const cancelBtn = document.getElementById("cancelEditBtn");
 
-  if (titleEl) titleEl.value = evData.title || "";
-  if (dateEl) dateEl.value = evData.date || "";
-  if (latEl) latEl.value = Number(evData.lat).toFixed(6);
-  if (lngEl) lngEl.value = Number(evData.lng).toFixed(6);
-  if (placeEl) placeEl.value = evData.placeName || "";
-  if (startEl) startEl.value = evData.startTime || "";
-  if (catEl) catEl.value = evData.category || "music";
+if (titleEl) titleEl.value = evData.title || "";
+if (dateEl) dateEl.value = evData.date || "";
+if (latEl) latEl.value = Number(evData.lat).toFixed(6);
+if (lngEl) lngEl.value = Number(evData.lng).toFixed(6);
+if (placeEl) placeEl.value = evData.placeName || "";
+if (startEl) startEl.value = evData.startTime || "";
+if (catEl) catEl.value = evData.category || "music";
+if (linkEl) linkEl.value = evData.link || "";
 
   const adminRow = document.getElementById("adminCategoryChips");
   if (adminRow) {

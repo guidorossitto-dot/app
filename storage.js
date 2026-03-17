@@ -108,32 +108,29 @@ function loadVenues() {
 }
 
   async function loadEvents() {
-    const db = App.supabase;
-    if (!db) {
-      console.error("App.supabase no está inicializado");
-      state.logic.events = [];
-      return [];
-    }
-
-    const { data, error } = await db
-      .from("events")
-      .select("*")
-      .order("date", { ascending: true })
-      .order("start_time", { ascending: true });
-
-    if (error) {
-      console.error("Error cargando eventos:", error);
-      state.logic.events = [];
-      return [];
-    }
-
-    const events = Array.isArray(data)
-      ? data.map(mapRowToEvent).filter((ev) => util.isValidEvent(ev))
-      : [];
-
-    state.logic.events = events;
-    return events;
+  const db = App.supabase;
+  if (!db) {
+    console.error("App.supabase no está inicializado");
+    return { ok: false, error: "SUPABASE_NOT_READY", events: [] };
   }
+
+  const { data, error } = await db
+    .from("events")
+    .select("*")
+    .order("date", { ascending: true })
+    .order("start_time", { ascending: true });
+
+  if (error) {
+    console.error("Error cargando eventos:", error);
+    return { ok: false, error, events: [] };
+  }
+
+  const events = Array.isArray(data)
+    ? data.map(mapRowToEvent).filter((ev) => util.isValidEvent(ev))
+    : [];
+
+  return { ok: true, events };
+}
 
   async function insertEvent(ev) {
     const db = App.supabase;
@@ -334,15 +331,16 @@ async function deleteVenueRemote(venueId) {
     });
 
     const { data, error } = await db.rpc("update_event_by_id", {
-      p_id: id,
-      p_title: safe.title,
-      p_place_name: safe.placeName || "",
-      p_date: safe.date || null,
-      p_start_time: safe.startTime || null,
-      p_category: safe.category || "music",
-      p_lat: Number(safe.lat),
-      p_lng: Number(safe.lng)
-    });
+  p_id: id,
+  p_title: safe.title,
+  p_place_name: safe.placeName || "",
+  p_date: safe.date || null,
+  p_start_time: safe.startTime || null,
+  p_category: safe.category || "music",
+  p_link: safe.link || "",
+  p_lat: Number(safe.lat),
+  p_lng: Number(safe.lng)
+});
 
     if (error) {
       console.error("Error actualizando evento:", error);
