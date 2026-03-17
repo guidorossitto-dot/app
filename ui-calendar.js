@@ -1251,43 +1251,7 @@ if (logoutBtn) {
   /* =========================
      BIND: login + public + admin
   ========================= */
-  function bindLoginUI() {
-    const loginBtn = document.getElementById("loginBtn");
-    const logoutBtn = document.getElementById("logoutBtn");
-
-    if (loginBtn) {
-      loginBtn.addEventListener("click", () => {
-        App.actions?.login?.();
-
-        if (state.runtime.map) state.runtime.map.closePopup();
-
-        commit({
-          persist: true,
-          purgePast: false,
-          rebuildMarkers: true,
-          recomputeNearby: true
-        });
-      });
-    }
-
-    if (logoutBtn) {
-      logoutBtn.addEventListener("click", () => {
-        App.actions?.logout?.();
-
-        if (state.runtime.map) state.runtime.map.closePopup();
-
-        App.map?.clearEventCreationMarker?.();
-
-        commit({
-          persist: true,
-          purgePast: false,
-          rebuildMarkers: true,
-          recomputeNearby: true
-        });
-      });
-    }
-  }
-
+  
   function bindPublicUI() {
     const searchBtn = document.getElementById("searchNearbyBtn");
 
@@ -1726,7 +1690,6 @@ if (logoutBtn) {
     renderCalendar,
     updateNearbyCount,
 
-    bindLoginUI,
     bindPublicUI,
     bindAdminUI,
     bindCalendarUI,

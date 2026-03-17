@@ -73,11 +73,7 @@ if (purged?.changed) {
 
     App.renderAll({ rebuildMarkers: true });
 
-    if (App.events?.setBootReady) {
-      App.events.setBootReady(true);
-    } else {
-      state.runtime.bootReady = true;
-    }
+    App.events?.setBootReady?.(true);
 
     App.ui.processQueuedDeepLink();
     startAutoRefresh();

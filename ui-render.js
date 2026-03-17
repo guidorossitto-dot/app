@@ -26,35 +26,46 @@ if (!isAdmin) {
       logoutBtn.hidden = !canManage;
   }
 
-  function bindLoginUI() {
-    const loginBtn = document.getElementById("loginBtn");
-    const logoutBtn = document.getElementById("logoutBtn");
+function bindLoginUI() {
+  const loginBtn = document.getElementById("loginBtn");
+  const logoutBtn = document.getElementById("logoutBtn");
 
-    if (!loginBtn || !logoutBtn) return;
+  if (!loginBtn || !logoutBtn) return;
 
-    loginBtn.addEventListener("click", () => {
-      App.actions?.login?.();
-      App.commit?.({
-        persist: true,
-        purgePast: false,
-        rebuildMarkers: true,
-        recomputeNearby: true
-      });
+  loginBtn.addEventListener("click", () => {
+    App.actions?.login?.();
+
+    if (App.state.runtime.map) {
+      App.state.runtime.map.closePopup();
+    }
+
+    App.commit?.({
+      persist: true,
+      purgePast: false,
+      rebuildMarkers: true,
+      recomputeNearby: true
     });
+  });
 
-    logoutBtn.addEventListener("click", () => {
-      App.actions?.logout?.();
-      App.commit?.({
-        persist: true,
-        purgePast: false,
-        rebuildMarkers: true,
-        recomputeNearby: true
-      });
+  logoutBtn.addEventListener("click", () => {
+    App.actions?.logout?.();
+
+    if (App.state.runtime.map) {
+      App.state.runtime.map.closePopup();
+    }
+
+    App.map?.clearEventCreationMarker?.();
+
+    App.commit?.({
+      persist: true,
+      purgePast: false,
+      rebuildMarkers: true,
+      recomputeNearby: true
     });
+  });
 
-    renderLoginUI();
-  }
-
+  renderLoginUI();
+}
   function renderAll(opts = {}) {
     const finalOpts = {
       persist: false,
