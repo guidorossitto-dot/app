@@ -303,14 +303,18 @@ async function replaceSeries(seriesId, patch = {}) {
 
   for (const ev of seriesEvents) {
     const nextPatch = {
-      ...patch,
-      seriesId: ev.seriesId || id,
-      recurrenceType: ev.recurrenceType || patch.recurrenceType || "",
-      recurrenceInterval: Number.isFinite(ev.recurrenceInterval)
-        ? ev.recurrenceInterval
-        : (patch.recurrenceInterval ?? null),
-      recurrenceUntil: ev.recurrenceUntil || patch.recurrenceUntil || ""
-    };
+  ...patch,
+
+  id: ev.id,
+  date: ev.date,
+
+  seriesId: ev.seriesId || id,
+  recurrenceType: ev.recurrenceType || patch.recurrenceType || "",
+  recurrenceInterval: Number.isFinite(ev.recurrenceInterval)
+    ? ev.recurrenceInterval
+    : (patch.recurrenceInterval ?? null),
+  recurrenceUntil: ev.recurrenceUntil || patch.recurrenceUntil || ""
+};
 
     const result = await replaceEvent(ev.id, nextPatch);
 

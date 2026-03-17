@@ -1562,12 +1562,12 @@ if (logoutBtn) {
   const endDateLabelEl = document.getElementById("eventEndDateLabel");
 
   function syncCreateModeUI() {
-    const mode = createModeEl?.value || "single";
-    const showEndDate = mode === "dailyRange";
+  const mode = createModeEl?.value || "single";
+  const showEndDate = mode === "dailyRange" || mode === "weeklyRange";
 
-    if (endDateEl) endDateEl.hidden = !showEndDate;
-    if (endDateLabelEl) endDateLabelEl.hidden = !showEndDate;
-  }
+  if (endDateEl) endDateEl.hidden = !showEndDate;
+  if (endDateLabelEl) endDateLabelEl.hidden = !showEndDate;
+}
 
   if (createModeEl) {
     createModeEl.addEventListener("change", syncCreateModeUI);
