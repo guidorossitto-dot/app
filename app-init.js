@@ -30,8 +30,8 @@
     );
   });
 
-  App.events.hydrateLoginFromStorage();
-
+  await App.auth?.syncSessionToState?.();
+  
   const purged = App.events.purgePastEventsInState();
   if (purged?.changed) {
     console.warn("Hay eventos pasados en estado.");
@@ -74,15 +74,16 @@
     if (state.runtime.bootReady) return;
 
     await hydrateInitialState();
-    bindUI();
-    initMapState();
+      bindUI();
+      App.auth?.bindAuthListener?.();
+      initMapState();
 
-    App.renderAll({ rebuildMarkers: true });
+      App.renderAll({ rebuildMarkers: true });
 
-    App.events?.setBootReady?.(true);
+      App.events?.setBootReady?.(true);
 
-    App.ui.processQueuedDeepLink();
-    startAutoRefresh();
+      App.ui.processQueuedDeepLink();
+      startAutoRefresh();
   }
 
   App.init = App.init || {};

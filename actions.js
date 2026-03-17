@@ -7,16 +7,16 @@
   /* =========================
      SESSION
   ========================= */
-  function setLogin(isLoggedIn) {
+ function setLogin(isLoggedIn) {
   return App.events?.setLoginState?.(isLoggedIn);
 }
 
-  function login() {
-  return App.events?.login?.();
+async function login() {
+  return await App.auth?.login?.();
 }
 
-function logout() {
-  return App.events?.logout?.();
+async function logout() {
+  return await App.auth?.logout?.();
 }
   /* =========================
      LOGIC STATE

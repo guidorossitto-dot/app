@@ -32,23 +32,35 @@ function bindLoginUI() {
 
   if (!loginBtn || !logoutBtn) return;
 
-  loginBtn.addEventListener("click", () => {
-    App.actions?.login?.();
+  loginBtn.addEventListener("click", async () => {
+    const result = await App.actions?.login?.();
+
+    if (!result?.ok) {
+      if (result?.error !== "MISSING_EMAIL" && result?.error !== "MISSING_PASSWORD") {
+        alert("No se pudo iniciar sesión.");
+      }
+      return;
+    }
 
     if (App.state.runtime.map) {
       App.state.runtime.map.closePopup();
     }
 
     App.commit?.({
-      persist: true,
+      persist: false,
       purgePast: false,
       rebuildMarkers: true,
       recomputeNearby: true
     });
   });
 
-  logoutBtn.addEventListener("click", () => {
-    App.actions?.logout?.();
+  logoutBtn.addEventListener("click", async () => {
+    const result = await App.actions?.logout?.();
+
+    if (!result?.ok) {
+      alert("No se pudo cerrar sesión.");
+      return;
+    }
 
     if (App.state.runtime.map) {
       App.state.runtime.map.closePopup();
@@ -57,7 +69,7 @@ function bindLoginUI() {
     App.map?.clearEventCreationMarker?.();
 
     App.commit?.({
-      persist: true,
+      persist: false,
       purgePast: false,
       rebuildMarkers: true,
       recomputeNearby: true
@@ -66,6 +78,7 @@ function bindLoginUI() {
 
   renderLoginUI();
 }
+
   function renderAll(opts = {}) {
     const finalOpts = {
       persist: false,
