@@ -27,7 +27,12 @@
     category: row.category || "music",
     link: row.link || "",
     lat: Number(row.lat),
-    lng: Number(row.lng)
+    lng: Number(row.lng),
+
+    seriesId: row.series_id || "",
+    recurrenceType: row.recurrence_type || "",
+    recurrenceInterval: row.recurrence_interval,
+    recurrenceUntil: row.recurrence_until || ""
   });
 }
 
@@ -103,6 +108,14 @@ function loadVenues() {
     link: safe.link || "",
     lat: Number(safe.lat),
     lng: Number(safe.lng),
+
+    series_id: safe.seriesId || null,
+    recurrence_type: safe.recurrenceType || null,
+    recurrence_interval: Number.isFinite(safe.recurrenceInterval)
+      ? safe.recurrenceInterval
+      : null,
+    recurrence_until: safe.recurrenceUntil || null,
+
     updated_at: new Date().toISOString()
   };
 }

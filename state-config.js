@@ -262,21 +262,31 @@ function formatTimeStart(ev) {
      EVENT MODEL
   ========================= */
   function normalizeEvent(raw) {
-    const lat = Number(raw?.lat);
-    const lng = Number(raw?.lng);
+  const lat = Number(raw?.lat);
+  const lng = Number(raw?.lng);
 
-    return {
-      id: (raw?.id ?? newId()).toString().trim(),
-      title: (raw?.title ?? "").toString().trim(),
-      date: (raw?.date ?? "").toString().trim(),
-      lat,
-      lng,
-      placeName: (raw?.placeName ?? "").toString().trim(),
-      startTime: (raw?.startTime ?? "").toString().trim(),
-      category: normalizeCategory(raw?.category),
-      link: (raw?.link ?? "").toString().trim()
-    };
-  }
+  const recurrenceIntervalRaw = Number(raw?.recurrenceInterval);
+  const recurrenceInterval = Number.isFinite(recurrenceIntervalRaw)
+    ? recurrenceIntervalRaw
+    : null;
+
+  return {
+    id: (raw?.id ?? newId()).toString().trim(),
+    title: (raw?.title ?? "").toString().trim(),
+    date: (raw?.date ?? "").toString().trim(),
+    lat,
+    lng,
+    placeName: (raw?.placeName ?? "").toString().trim(),
+    startTime: (raw?.startTime ?? "").toString().trim(),
+    category: normalizeCategory(raw?.category),
+    link: (raw?.link ?? "").toString().trim(),
+
+    seriesId: (raw?.seriesId ?? "").toString().trim(),
+    recurrenceType: (raw?.recurrenceType ?? "").toString().trim(),
+    recurrenceInterval,
+    recurrenceUntil: (raw?.recurrenceUntil ?? "").toString().trim()
+  };
+}
 
   function isValidEvent(ev) {
     return !!(

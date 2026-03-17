@@ -35,6 +35,21 @@
     return ensureEventsArray().find((ev) => String(ev.id) === id) || null;
   }
 
+  function getEventsBySeriesId(seriesId) {
+  const id = String(seriesId || "").trim();
+  if (!id) return [];
+
+  const list = Array.isArray(state.logic.events) ? state.logic.events : [];
+  return list.filter((ev) => String(ev?.seriesId || "").trim() === id);
+}
+
+function isRecurringEvent(eventId) {
+  const ev = findEventById(eventId);
+  if (!ev) return false;
+
+  return !!String(ev.seriesId || "").trim();
+}
+
   /* =========================
      HYDRATION / PERSISTENCE BRIDGE
   ========================= */
@@ -249,6 +264,75 @@
   };
 }
 
+async function removeSeries(seriesId) {
+  const id = String(seriesId || "").trim();
+  if (!id) return { ok: false, error: "INVALID_SERIES_ID" };
+
+  const seriesEvents = getEventsBySeriesId(id);
+  if (!seriesEvents.length) {
+    return { ok: false, error: "SERIES_NOT_FOUND" };
+  }
+
+  for (const ev of seriesEvents) {
+    const result = await removeEvent(ev.id);
+    if (!result?.ok) {
+      return {
+        ok: false,
+        error: result?.error || "REMOVE_SERIES_FAILED",
+        failedEventId: ev.id
+      };
+    }
+  }
+
+  return {
+    ok: true,
+    removedCount: seriesEvents.length
+  };
+}
+
+async function replaceSeries(seriesId, patch = {}) {
+  const id = String(seriesId || "").trim();
+  if (!id) return { ok: false, error: "INVALID_SERIES_ID" };
+
+  const seriesEvents = getEventsBySeriesId(id);
+  if (!seriesEvents.length) {
+    return { ok: false, error: "SERIES_NOT_FOUND" };
+  }
+
+  const updatedEvents = [];
+
+  for (const ev of seriesEvents) {
+    const nextPatch = {
+      ...patch,
+      seriesId: ev.seriesId || id,
+      recurrenceType: ev.recurrenceType || patch.recurrenceType || "",
+      recurrenceInterval: Number.isFinite(ev.recurrenceInterval)
+        ? ev.recurrenceInterval
+        : (patch.recurrenceInterval ?? null),
+      recurrenceUntil: ev.recurrenceUntil || patch.recurrenceUntil || ""
+    };
+
+    const result = await replaceEvent(ev.id, nextPatch);
+
+    if (!result?.ok) {
+      return {
+        ok: false,
+        error: result?.error || "REPLACE_SERIES_FAILED",
+        failedEventId: ev.id,
+        updatedEvents
+      };
+    }
+
+    updatedEvents.push(result.event || null);
+  }
+
+  return {
+    ok: true,
+    updatedCount: updatedEvents.length,
+    events: updatedEvents
+  };
+}
+
  async function clearAllEvents() {
   const deleted = await storage?.deleteAllEvents?.();
 
@@ -423,6 +507,11 @@ function setActiveCategory(category) {
     hydrateEventsFromStorage,
     purgePastEventsInState,
     persistEvents,
+
+    getEventsBySeriesId,
+    isRecurringEvent,
+    removeSeries,
+    replaceSeries,
 
     setLoginState,
     hydrateLoginFromStorage,

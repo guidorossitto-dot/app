@@ -589,12 +589,17 @@ function generateDailyOccurrences(baseEvent, startDate, endDate) {
   if (start > end) return out;
 
   const cur = new Date(start);
+  const seriesId = util.newId();
 
   while (cur <= end) {
     out.push({
       ...baseEvent,
       id: util.newId(),
-      date: formatYMD(cur)
+      date: formatYMD(cur),
+      seriesId,
+      recurrenceType: "daily",
+      recurrenceInterval: 1,
+      recurrenceUntil: endDate
     });
 
     cur.setDate(cur.getDate() + 1);
@@ -703,13 +708,17 @@ async function createEventFromAdminForm() {
         return;
       }
     } else {
-      eventsToCreate = [
-        {
-          id: util.newId(),
-          ...baseEvent
+        eventsToCreate = [
+      {
+        id: util.newId(),
+        seriesId: "",
+        recurrenceType: "",
+        recurrenceInterval: null,
+        recurrenceUntil: "",
+        ...baseEvent
+      }
+    ];
         }
-      ];
-    }
 
     for (const ev of eventsToCreate) {
       const result = await App.events?.addEventRemote?.(ev);
