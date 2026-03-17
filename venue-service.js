@@ -4,7 +4,7 @@
 
   const App = (window.App = window.App || {});
   const { state } = App;
-
+  
   /* =========================
      HELPERS
   ========================= */
@@ -172,8 +172,10 @@
       };
     }
 
-    state.logic.venues.push(venue);
-
+        App.store?.dispatch?.({
+        type: "ADD_VENUE",
+        venue
+  });
     if (options.persist) {
       App.storage?.saveVenues?.();
     }
@@ -213,7 +215,11 @@
     normalized.createdAt = current.createdAt;
     normalized.updatedAt = new Date().toISOString();
 
-    state.logic.venues[idx] = normalized;
+App.store?.dispatch?.({
+  type: "REPLACE_VENUE",
+  venueId,
+  venue: normalized
+});
 
     if (options.persist) {
       App.storage?.saveVenues?.();
@@ -233,7 +239,12 @@
       return { ok: false, error: "VENUE_NOT_FOUND" };
     }
 
-    const removed = state.logic.venues[idx];
+const removed = state.logic.venues[idx];
+
+App.store?.dispatch?.({
+  type: "REMOVE_VENUE",
+  venueId
+});
     state.logic.venues.splice(idx, 1);
 
     if (options.persist) {
@@ -255,7 +266,10 @@
           .filter((venue) => validateVenue(venue).ok)
       : [];
 
-    state.logic.venues = next;
+App.store?.dispatch?.({
+  type: "SET_ALL_VENUES",
+  venues: next
+});
 
     return {
       ok: true,
@@ -287,7 +301,10 @@
   const remote = await App.storage?.insertVenue?.(venue);
   if (!remote?.ok) return remote;
 
-  state.logic.venues.push(remote.venue);
+App.store?.dispatch?.({
+  type: "ADD_VENUE",
+  venue: remote.venue
+});
 
   if (App.storage?.saveVenues) {
     App.storage.saveVenues();
@@ -319,7 +336,10 @@ async function loadVenuesRemote() {
       return { ok: false, error: "VENUE_NOT_FOUND" };
     }
 
-    state.logic.selectedVenueId = venue.id;
+App.store?.dispatch?.({
+  type: "SET_SELECTED_VENUE_ID",
+  value: venue.id
+});
     state.logic.adminVenueQuery = venue.name;
     state.logic.adminVenueSuggestions = [];
 
@@ -332,7 +352,10 @@ async function loadVenuesRemote() {
   function clearSelectedVenueForAdmin() {
     ensureVenueUIState();
 
-    state.logic.selectedVenueId = null;
+App.store?.dispatch?.({
+  type: "SET_SELECTED_VENUE_ID",
+  value: null
+});
     state.logic.adminVenueQuery = "";
     state.logic.adminVenueSuggestions = [];
 

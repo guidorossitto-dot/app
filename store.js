@@ -138,6 +138,63 @@
         break;
       }
 
+            case "SET_ALL_VENUES": {
+        state.logic.venues = Array.isArray(action.venues) ? action.venues : [];
+        result = { ok: true };
+        break;
+      }
+
+      case "ADD_VENUE": {
+        if (!action.venue || typeof action.venue !== "object") {
+          return { ok: false, error: "INVALID_VENUE" };
+        }
+
+        if (!Array.isArray(state.logic.venues)) state.logic.venues = [];
+        state.logic.venues.push(action.venue);
+        result = { ok: true };
+        break;
+      }
+
+      case "REPLACE_VENUE": {
+        const id = String(action.venueId || "").trim();
+        if (!id) return { ok: false, error: "MISSING_VENUE_ID" };
+
+        if (!action.venue || typeof action.venue !== "object") {
+          return { ok: false, error: "INVALID_VENUE" };
+        }
+
+        if (!Array.isArray(state.logic.venues)) state.logic.venues = [];
+        const idx = state.logic.venues.findIndex((v) => String(v.id) === id);
+        if (idx === -1) return { ok: false, error: "VENUE_NOT_FOUND" };
+
+        state.logic.venues[idx] = action.venue;
+        result = { ok: true };
+        break;
+      }
+
+      case "REMOVE_VENUE": {
+        const id = String(action.venueId || "").trim();
+        if (!id) return { ok: false, error: "MISSING_VENUE_ID" };
+
+        if (!Array.isArray(state.logic.venues)) state.logic.venues = [];
+        const before = state.logic.venues.length;
+        state.logic.venues = state.logic.venues.filter((v) => String(v.id) !== id);
+
+        result =
+          state.logic.venues.length !== before
+            ? { ok: true }
+            : { ok: false, error: "VENUE_NOT_FOUND" };
+        break;
+      }
+
+      case "SET_SELECTED_VENUE_ID": {
+        state.logic.selectedVenueId = action.value
+          ? String(action.value).trim()
+          : null;
+        result = { ok: true };
+        break;
+      }
+
       /* =========================
          RUNTIME
       ========================= */
