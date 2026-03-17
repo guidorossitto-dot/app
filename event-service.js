@@ -105,13 +105,12 @@ function isRecurringEvent(eventId) {
   }
 
   function hydrateLoginFromStorage() {
-    const value = !!storage?.readLoginState?.();
-    App.store?.dispatch?.({
-      type: "SET_LOGIN_STATE",
-      value
-    });
-    return state.logic.isLoggedIn;
-  }
+  return state.logic.isLoggedIn;
+}
+
+function persistLoginState() {
+  return state.logic.isLoggedIn;
+}
 
   function persistLoginState() {
     storage?.saveLoginState?.(state.logic.isLoggedIn);
@@ -361,15 +360,11 @@ async function replaceSeries(seriesId, patch = {}) {
   /* =========================
      UI / APP STATE WRITES
   ========================= */
-  function login() {
-  setLoginState(true);
-  persistLoginState();
+ function login() {
   return state.logic.isLoggedIn;
 }
 
 function logout() {
-  setLoginState(false);
-  persistLoginState();
   return state.logic.isLoggedIn;
 }
 
@@ -518,8 +513,6 @@ function setActiveCategory(category) {
     replaceSeries,
 
     setLoginState,
-    hydrateLoginFromStorage,
-    persistLoginState,
 
     addEvent,
     replaceEvent,
@@ -527,8 +520,6 @@ function setActiveCategory(category) {
     addEventRemote,
     clearAllEvents,
 
-    login,
-    logout,
     isAdminMode,
     setActiveCategory,
     setCalendarCursor,
