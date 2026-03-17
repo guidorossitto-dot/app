@@ -325,6 +325,33 @@ async function deleteVenueRemote(venueId) {
     };
   }
 
+  async function deletePastEvents() {
+  const db = App.supabase;
+  if (!db) {
+    const error = new Error("App.supabase no está inicializado");
+    console.error(error.message);
+    return { ok: false, error };
+  }
+
+  const today = util.todayStrYYYYMMDD();
+
+  const { data, error } = await db
+    .from("events")
+    .delete()
+    .lt("date", today)
+    .select("id");
+
+  if (error) {
+    console.error("Error borrando eventos pasados:", error);
+    return { ok: false, error };
+  }
+
+  return {
+    ok: true,
+    deletedCount: Array.isArray(data) ? data.length : 0
+  };
+}
+
   async function updateEvent(eventId, patch) {
     const db = App.supabase;
     if (!db) {
@@ -386,6 +413,7 @@ async function deleteVenueRemote(venueId) {
   insertEvent,
   deleteEvent,
   deleteAllEvents,
+  deletePastEvents,
   updateEvent,
   saveLoginState,
   readLoginState,

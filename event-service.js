@@ -357,6 +357,32 @@ async function replaceSeries(seriesId, patch = {}) {
   };
 }
 
+async function clearPastEvents() {
+  const deleted = await storage?.deletePastEvents?.();
+
+  if (!deleted?.ok) {
+    return {
+      ok: false,
+      error: deleted?.error || "REMOTE_CLEAR_PAST_ERROR"
+    };
+  }
+
+  const current = ensureEventsArray();
+  const today = util.todayStrYYYYMMDD();
+  const next = current.filter((ev) => (ev?.date || "") >= today);
+
+  const out = App.store?.dispatch?.({
+    type: "SET_ALL_EVENTS",
+    events: next
+  });
+
+  return {
+    ok: !!out?.ok,
+    error: out?.ok ? null : out?.error || "STORE_ERROR",
+    deletedCount: deleted?.deletedCount || 0
+  };
+}
+
   /* =========================
      UI / APP STATE WRITES
   ========================= */
@@ -519,6 +545,7 @@ function setActiveCategory(category) {
     removeEvent,
     addEventRemote,
     clearAllEvents,
+    clearPastEvents,
 
     isAdminMode,
     setActiveCategory,

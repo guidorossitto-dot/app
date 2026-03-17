@@ -1423,10 +1423,11 @@ if (logoutBtn) {
   }
 
   function bindAdminUI() {
-    const addBtn = document.getElementById("addEventBtn");
-    const clearBtn = document.getElementById("clearEventsBtn");
-    const cancelBtn = document.getElementById("cancelEditBtn");
-    const venueSearchInput = document.getElementById("venueSearchInput");
+  const addBtn = document.getElementById("addEventBtn");
+  const clearBtn = document.getElementById("clearEventsBtn");
+  const clearPastBtn = document.getElementById("clearPastEventsBtn");
+  const cancelBtn = document.getElementById("cancelEditBtn");
+  const venueSearchInput = document.getElementById("venueSearchInput");
 
     if (addBtn) {
       addBtn.addEventListener("click", async () => {
@@ -1449,7 +1450,33 @@ if (logoutBtn) {
         App.map?.clearAllEvents?.();
       });
     }
+      if (clearPastBtn) {
+  clearPastBtn.addEventListener("click", async () => {
+    if (!util.canManageUI()) {
+      alert("No tenés permisos para borrar eventos.");
+      return;
+    }
 
+    const confirmDelete = confirm("¿Seguro que querés borrar todos los eventos pasados?");
+    if (!confirmDelete) return;
+
+    const result = await App.events?.clearPastEvents?.();
+
+    if (!result?.ok) {
+      alert("No se pudieron borrar los eventos pasados.");
+      return;
+    }
+
+    alert(`Se borraron ${result.deletedCount || 0} eventos pasados.`);
+
+    App.commit?.({
+      persist: false,
+      purgePast: false,
+      rebuildMarkers: true,
+      recomputeNearby: true
+    });
+  });
+}
     if (cancelBtn) {
       cancelBtn.addEventListener("click", () => {
         if (!util.canManageUI()) {

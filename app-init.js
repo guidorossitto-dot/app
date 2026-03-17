@@ -32,10 +32,7 @@
 
   await App.auth?.syncSessionToState?.();
   
-  const purged = App.events.purgePastEventsInState();
-  if (purged?.changed) {
-    console.warn("Hay eventos pasados en estado.");
-  }
+  App.events.purgePastEventsInState();
 
   App.events.setCalendarCursor(new Date());
 }
