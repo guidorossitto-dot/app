@@ -312,17 +312,31 @@ function rebuildLocationMarkers(list = state.logic.events) {
   }
 
   const seriesId = String(evData.seriesId || "").trim();
-  let editMode = "single";
+let editMode = "single";
 
-  if (seriesId) {
-    const editWholeSeries = confirm(
-      `El evento "${evData.title || "sin título"}" pertenece a una serie.\n\n` +
-      `Aceptá para editar TODA la serie.\n` +
-      `Cancelá para editar solo este evento.`
-    );
+if (seriesId) {
+  const choice = window.prompt(
+    `El evento "${evData.title || "sin título"}" pertenece a una serie.\n\n` +
+    `Escribí:\n` +
+    `1 = editar solo este evento\n` +
+    `2 = editar toda la serie`
+  );
 
-    editMode = editWholeSeries ? "series" : "single";
+  if (choice === null) {
+    return;
   }
+
+  const normalizedChoice = String(choice).trim();
+
+  if (normalizedChoice === "2") {
+    editMode = "series";
+  } else if (normalizedChoice === "1") {
+    editMode = "single";
+  } else {
+    alert("Opción no válida. Escribí 1 o 2.");
+    return;
+  }
+}
 
   App.actions?.startEditingEvent?.(eventId);
   App.actions?.selectCategory?.("all");

@@ -75,44 +75,48 @@
   let result = null;
 
   if (isRecurring) {
-    const deleteWholeSeries = confirm(
-      `El evento "${title || "sin título"}" pertenece a una serie.\n\n` +
-      `Aceptá para borrar TODA la serie.\n` +
-      `Cancelá para elegir borrar solo este evento.`
-    );
+  const choice = window.prompt(
+    `El evento "${title || "sin título"}" pertenece a una serie.\n\n` +
+    `Escribí:\n` +
+    `1 = borrar solo este evento\n` +
+    `2 = borrar toda la serie`
+  );
 
-    if (deleteWholeSeries) {
-      const confirmSeries = confirm(
-        `¿Seguro que querés borrar toda la serie?`
-      );
+  if (choice === null) {
+    return { ok: false, error: "CANCELLED" };
+  }
 
-      if (!confirmSeries) {
-        return { ok: false, error: "CANCELLED" };
-      }
+  const normalizedChoice = String(choice).trim();
 
-      result = await App.events?.removeSeries?.(seriesId);
+  if (normalizedChoice === "2") {
+    const confirmSeries = confirm("¿Seguro que querés borrar toda la serie?");
+    if (!confirmSeries) {
+      return { ok: false, error: "CANCELLED" };
+    }
 
-      if (!result?.ok) {
-        alert("No se pudo borrar la serie.");
-        return { ok: false, error: result?.error || "DELETE_SERIES_FAILED" };
-      }
-    } else {
-      const confirmSingle = confirm(
-        `¿Seguro que querés borrar solo este evento?`
-      );
+    result = await App.events?.removeSeries?.(seriesId);
 
-      if (!confirmSingle) {
-        return { ok: false, error: "CANCELLED" };
-      }
+    if (!result?.ok) {
+      alert("No se pudo borrar la serie.");
+      return { ok: false, error: result?.error || "DELETE_SERIES_FAILED" };
+    }
+  } else if (normalizedChoice === "1") {
+    const confirmSingle = confirm("¿Seguro que querés borrar solo este evento?");
+    if (!confirmSingle) {
+      return { ok: false, error: "CANCELLED" };
+    }
 
-      result = await App.events?.removeEvent?.(eventId);
+    result = await App.events?.removeEvent?.(eventId);
 
-      if (!result?.ok) {
-        alert("No se pudo borrar el evento.");
-        return { ok: false, error: result?.error || "DELETE_FAILED" };
-      }
+    if (!result?.ok) {
+      alert("No se pudo borrar el evento.");
+      return { ok: false, error: result?.error || "DELETE_FAILED" };
     }
   } else {
+    alert("Opción no válida. Escribí 1 o 2.");
+    return { ok: false, error: "INVALID_CHOICE" };
+  }
+} else {
     const msg = title
       ? `¿Seguro que querés borrar "${title}"?`
       : "¿Seguro que querés borrar este evento?";
