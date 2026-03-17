@@ -45,24 +45,74 @@
   }
 
   async function deleteEventFromButton(btn) {
-    if (!btn) return { ok: false };
+  if (!btn) return { ok: false };
 
-    if (!util.canManageUI()) {
-      alert("No tenés permisos para borrar eventos.");
-      return { ok: false, error: "FORBIDDEN" };
-    }
+  if (!util.canManageUI()) {
+    alert("No tenés permisos para borrar eventos.");
+    return { ok: false, error: "FORBIDDEN" };
+  }
 
-    const eventId = decodeURIComponent(
-      (btn.dataset.deleteEid || btn.dataset.eid || btn.dataset.id || "").trim()
+  const eventId = decodeURIComponent(
+    (btn.dataset.deleteEid || btn.dataset.eid || btn.dataset.id || "").trim()
+  );
+
+  if (!eventId) {
+    return { ok: false, error: "MISSING_ID" };
+  }
+
+  const ev = App.events?.findEventById?.(eventId) || null;
+  if (!ev) {
+    return { ok: false, error: "NOT_FOUND" };
+  }
+
+  const title = decodeURIComponent(
+    (btn.dataset.deleteTitle || btn.dataset.title || ev.title || "").trim()
+  );
+
+  const seriesId = String(ev.seriesId || "").trim();
+  const isRecurring = !!seriesId;
+
+  let result = null;
+
+  if (isRecurring) {
+    const deleteWholeSeries = confirm(
+      `El evento "${title || "sin título"}" pertenece a una serie.\n\n` +
+      `Aceptá para borrar TODA la serie.\n` +
+      `Cancelá para elegir borrar solo este evento.`
     );
-    if (!eventId) {
-      return { ok: false, error: "MISSING_ID" };
+
+    if (deleteWholeSeries) {
+      const confirmSeries = confirm(
+        `¿Seguro que querés borrar toda la serie?`
+      );
+
+      if (!confirmSeries) {
+        return { ok: false, error: "CANCELLED" };
+      }
+
+      result = await App.events?.removeSeries?.(seriesId);
+
+      if (!result?.ok) {
+        alert("No se pudo borrar la serie.");
+        return { ok: false, error: result?.error || "DELETE_SERIES_FAILED" };
+      }
+    } else {
+      const confirmSingle = confirm(
+        `¿Seguro que querés borrar solo este evento?`
+      );
+
+      if (!confirmSingle) {
+        return { ok: false, error: "CANCELLED" };
+      }
+
+      result = await App.events?.removeEvent?.(eventId);
+
+      if (!result?.ok) {
+        alert("No se pudo borrar el evento.");
+        return { ok: false, error: result?.error || "DELETE_FAILED" };
+      }
     }
-
-    const title = decodeURIComponent(
-      (btn.dataset.deleteTitle || btn.dataset.title || "").trim()
-    );
-
+  } else {
     const msg = title
       ? `¿Seguro que querés borrar "${title}"?`
       : "¿Seguro que querés borrar este evento?";
@@ -71,30 +121,31 @@
       return { ok: false, error: "CANCELLED" };
     }
 
-    const result = await App.events?.removeEvent?.(eventId);
+    result = await App.events?.removeEvent?.(eventId);
 
     if (!result?.ok) {
       alert("No se pudo borrar el evento.");
       return { ok: false, error: result?.error || "DELETE_FAILED" };
     }
-
-    if (state.logic.editingEventId === eventId) {
-      App.actions?.stopEditingEvent?.();
-    }
-
-    if (state.runtime.map) {
-      state.runtime.map.closePopup();
-    }
-
-    App.commit?.({
-      persist: true,
-      purgePast: false,
-      rebuildMarkers: true,
-      recomputeNearby: true
-    });
-
-    return { ok: true, eventId };
   }
+
+  if (state.logic.editingEventId === eventId) {
+    App.actions?.stopEditingEvent?.();
+  }
+
+  if (state.runtime.map) {
+    state.runtime.map.closePopup();
+  }
+
+  App.commit?.({
+    persist: false,
+    purgePast: false,
+    rebuildMarkers: true,
+    recomputeNearby: true
+  });
+
+  return { ok: true, eventId, recurring: isRecurring };
+}
 
   function categoryTagHTML(ev) {
     const t = util.categoryLabel(ev?.category);

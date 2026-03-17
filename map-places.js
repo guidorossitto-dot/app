@@ -300,14 +300,38 @@ function rebuildLocationMarkers(list = state.logic.events) {
   const eventId = decodeURIComponent((btn.dataset.editEid || "").trim());
   if (!eventId) return;
 
+  if (!util.canManageUI()) {
+    alert("No tenés permisos para editar eventos.");
+    return;
+  }
+
   const evData = App.events?.findEventById?.(eventId);
   if (!evData) {
     alert("No se encontró el evento.");
     return;
   }
 
+  const seriesId = String(evData.seriesId || "").trim();
+  let editMode = "single";
+
+  if (seriesId) {
+    const editWholeSeries = confirm(
+      `El evento "${evData.title || "sin título"}" pertenece a una serie.\n\n` +
+      `Aceptá para editar TODA la serie.\n` +
+      `Cancelá para editar solo este evento.`
+    );
+
+    editMode = editWholeSeries ? "series" : "single";
+  }
+
   App.actions?.startEditingEvent?.(eventId);
   App.actions?.selectCategory?.("all");
+
+  const adminView = document.getElementById("adminView");
+  if (adminView) {
+    adminView.dataset.editMode = editMode;
+    adminView.dataset.editSeriesId = seriesId || "";
+  }
 
 const titleEl = document.getElementById("eventTitle");
 const dateEl = document.getElementById("eventDate");
@@ -344,10 +368,7 @@ if (linkEl) linkEl.value = evData.link || "";
     prepareEventCreation(evData.lat, evData.lng);
     uiSetView(evData.lat, evData.lng, 15);
   }
-
-  const adminView = document.getElementById("adminView");
-  if (adminView) adminView.hidden = false;
-
+          
   const titleTarget = document.getElementById("eventTitle");
   if (titleTarget) {
     titleTarget.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -671,16 +692,31 @@ async function createEventFromAdminForm() {
 
   const editingId = String(state.logic.editingEventId || "").trim() || null;
 
-  if (editingId) {
-    const result = await App.events?.replaceEvent?.(editingId, patch);
+if (editingId) {
+  const adminView = document.getElementById("adminView");
+  const editMode = adminView?.dataset?.editMode || "single";
+  const editSeriesId = String(adminView?.dataset?.editSeriesId || "").trim();
 
-    if (!result?.ok) {
-      alert("No se pudo guardar la edición.");
-      return;
-    }
+  let result = null;
 
-    App.actions?.stopEditingEvent?.();
+  if (editMode === "series" && editSeriesId) {
+    result = await App.events?.replaceSeries?.(editSeriesId, patch);
   } else {
+    result = await App.events?.replaceEvent?.(editingId, patch);
+  }
+
+  if (!result?.ok) {
+    alert("No se pudo guardar la edición.");
+    return;
+  }
+
+  App.actions?.stopEditingEvent?.();
+
+  if (adminView) {
+    adminView.dataset.editMode = "";
+    adminView.dataset.editSeriesId = "";
+  }
+} else {
     const mode = createModeEl?.value || "single";
     const endDate = endDateEl?.value?.trim() || "";
 
@@ -790,9 +826,15 @@ async function createEventFromAdminForm() {
   }
 
   if (addBtn) addBtn.textContent = "Agregar evento";
-  if (cancelBtn) cancelBtn.hidden = true;
+if (cancelBtn) cancelBtn.hidden = true;
 
-  clearEventCreationMarker();
+const adminView = document.getElementById("adminView");
+if (adminView) {
+  adminView.dataset.editMode = "";
+  adminView.dataset.editSeriesId = "";
+}
+
+clearEventCreationMarker();
 
   App.commit?.({
     persist: true,
