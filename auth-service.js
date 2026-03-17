@@ -21,11 +21,8 @@
   }
 
   const isLoggedIn = !!sessionData?.session?.user;
-
-console.log("[AUTH] session check:", {
-  session: sessionData?.session,
-  isLoggedIn
-});
+  
+  
 
 App.store?.dispatch?.({
   type: "SET_LOGIN_STATE",
@@ -50,14 +47,14 @@ return {
   const password = window.prompt("Contraseña:");
   if (!password) return { ok: false, error: "MISSING_PASSWORD" };
 
-  console.log("[AUTH] intentando login...", { email });
+  
 
   const { data, error } = await App.supabase.auth.signInWithPassword({
     email: email.trim(),
     password
   });
 
-  console.log("[AUTH] login response:", { data, error });
+  
 
   if (error) {
     console.error("Error de login:", error);
@@ -72,11 +69,11 @@ return {
     return { ok: false, error: "SUPABASE_AUTH_NOT_READY" };
   }
 
-  console.log("[AUTH] intentando logout...");
+  
 
   const { error } = await App.supabase.auth.signOut({ scope: "local" });
 
-  console.log("[AUTH] logout response:", { error });
+  
 
   if (error) {
     console.error("Error de logout:", error);
@@ -85,7 +82,7 @@ return {
 
   const sync = await syncSessionToState();
 
-  console.log("[AUTH] post-logout sync:", sync);
+  
 
   if (!sync?.ok) {
     App.store?.dispatch?.({
