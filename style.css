@@ -1901,6 +1901,15 @@ a.popupBtn:active {
   border-color: #cfe7d5;
 }
 
+.eventMiniCard__icon--games {
+  background: #fff4f0;
+  border-color: #f2cfc2;
+}
+
+.eventMiniCard--games {
+  border-left: 4px solid #f2cfc2;
+}
+
 .eventMiniCard--music {
   border-left: 4px solid #cfe4ff;
 }

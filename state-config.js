@@ -16,7 +16,7 @@
 
     CATEGORY_ALL: "all",
     DEFAULT_CATEGORY: "music",
-ALLOWED_CATEGORIES: ["music", "dance", "theatre", "visual_arts", "cinema"]
+ALLOWED_CATEGORIES: ["music", "dance", "theatre", "visual_arts", "cinema", "games"]
   };
 
   /* =========================

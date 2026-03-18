@@ -24,6 +24,7 @@
     case "theatre": return "🎭";
     case "visual_arts": return "🖼️";
     case "cinema": return "🎬";
+    case "games": return "🎯";
     default: return "📍";
   }
 }
