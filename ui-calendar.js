@@ -1210,8 +1210,11 @@ if (state.runtime.map && Number.isFinite(ev.lat) && Number.isFinite(ev.lng)) {
       if (evs.length > maxVisible) {
         const more = document.createElement("div");
         more.className = "event event-more";
-        more.textContent = `+${evs.length - maxVisible} más`;
-
+        const hiddenCount = evs.length - maxVisible;
+        more.textContent = `+${hiddenCount}`;
+        more.title = hiddenCount === 1
+          ? "1 evento más"
+          : `${hiddenCount} eventos más`;
         more.addEventListener("click", (e) => {
           e.preventDefault();
           e.stopPropagation();
