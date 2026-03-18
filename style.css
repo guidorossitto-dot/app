@@ -1842,3 +1842,48 @@ button:active {
     text-overflow: clip;
   }
 }
+
+.eventMiniCard__icon--music {
+  background: #eef7ff;
+  border-color: #cfe4ff;
+}
+
+.eventMiniCard__icon--dance {
+  background: #fff1f7;
+  border-color: #f3cfe0;
+}
+
+.eventMiniCard__icon--theatre {
+  background: #f7f2ff;
+  border-color: #ddd0ff;
+}
+
+.eventMiniCard__icon--visual_arts {
+  background: #fff8ec;
+  border-color: #f1dfb8;
+}
+
+.eventMiniCard__icon--cinema {
+  background: #eefaf1;
+  border-color: #cfe7d5;
+}
+
+.eventMiniCard--music {
+  border-left: 4px solid #cfe4ff;
+}
+
+.eventMiniCard--dance {
+  border-left: 4px solid #f3cfe0;
+}
+
+.eventMiniCard--theatre {
+  border-left: 4px solid #ddd0ff;
+}
+
+.eventMiniCard--visual_arts {
+  border-left: 4px solid #f1dfb8;
+}
+
+.eventMiniCard--cinema {
+  border-left: 4px solid #cfe7d5;
+}
