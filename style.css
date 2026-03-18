@@ -1920,3 +1920,14 @@ a.popupBtn:active {
 .eventMiniCard--cinema {
   border-left: 4px solid #cfe7d5;
 }
+
+.pageShell {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 16px;
+}
+
+.appLayout--leftSidebar {
+  grid-template-columns: minmax(320px, 0.9fr) minmax(0, 2fr);
+  transition: grid-template-columns 220ms ease;
+}
