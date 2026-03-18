@@ -18,16 +18,9 @@
      CATEGORY ICONS
   ========================= */
   function categoryEmoji(cat) {
-  switch (cat) {
-    case "music": return "🎵";
-    case "dance": return "💃";
-    case "theatre": return "🎭";
-    case "visual_arts": return "🖼️";
-    case "cinema": return "🎬";
-    case "games": return "🎯";
-    default: return "📍";
-  }
+  return util.categoryEmoji(cat) || "📍";
 }
+
   const _catIconCache = new Map();
 
   function getCategoryIcon(cat) {

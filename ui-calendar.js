@@ -234,13 +234,7 @@
         soonBadge = `🔥 ${status}`;
       }
 
-      const icon =
-        ev.category === "music" ? "🎵" :
-        ev.category === "dance" ? "💃" :
-        ev.category === "theatre" ? "🎭" :
-        ev.category === "visual_arts" ? "🖼️" :
-        ev.category === "cinema" ? "🎬" :
-        "📍";
+const icon = util.categoryEmoji(ev.category) || "📍";
 
       return `
         <article class="eventMiniCard eventMiniCard--${ev.category || "default"}">
@@ -870,13 +864,8 @@ if (logoutBtn) {
     const time = util.formatTimeStart(ev);
     const place = util.shortPlaceName(ev.placeName) || "Lugar sin nombre";
     const dateText = util.formatDateDisplay(ev.date);
-    const icon =
-      ev.category === "music" ? "🎵" :
-      ev.category === "dance" ? "💃" :
-      ev.category === "theatre" ? "🎭" :
-      ev.category === "visual_arts" ? "🖼️" :
-      ev.category === "cinema" ? "🎬" :
-      "📍";
+    
+    const icon = util.categoryEmoji(ev.category) || "📍";
 
     pop.innerHTML = `
       <div class="calendarEventPopover__title">
@@ -994,13 +983,7 @@ if (state.runtime.map && Number.isFinite(ev.lat) && Number.isFinite(ev.lng)) {
                 const time = util.formatTimeStart(ev);
                 const place = util.shortPlaceName(ev.placeName) || "Lugar sin nombre";
                 const status = util.getEventStatus(ev);
-                const icon =
-                  ev.category === "music" ? "🎵 " :
-                  ev.category === "dance" ? "💃 " :
-                  ev.category === "theatre" ? "🎭 " :
-                  ev.category === "visual_arts" ? "🖼️ " :
-                  ev.category === "cinema" ? "🎬 " :
-                  "";
+                const icon = util.categoryEmoji(ev.category) || "📍";
 
                 return `
                   <div class="calendarDayPopover__item" data-eid="${encodeURIComponent(ev.id || "")}" style="cursor:pointer;">
@@ -1186,13 +1169,7 @@ if (state.runtime.map && Number.isFinite(ev.lat) && Number.isFinite(ev.lng)) {
         const b = document.createElement("div");
         b.className = "event";
 
-        const icon =
-          ev.category === "music" ? "🎵 " :
-          ev.category === "dance" ? "💃 " :
-          ev.category === "theatre" ? "🎭 " :
-          ev.category === "visual_arts" ? "🖼️ " :
-          ev.category === "cinema" ? "🎬 " :
-          "";
+       const icon = util.categoryEmoji(ev.category) || "📍";
 
         b.textContent = `${icon}${ev.title}`;
         b.dataset.eid = ev.id || "";

@@ -8,16 +8,44 @@
      CONFIG
   ========================= */
   App.CFG = {
-    SEARCH_RADIUS_KM: 2,
-    PIN_PRECISION: 4,
-    DEFAULT_LAT: -34.6037,
-    DEFAULT_LNG: -58.3816,
-    REFRESH_MS: 60000,
+  SEARCH_RADIUS_KM: 2,
+  PIN_PRECISION: 4,
+  DEFAULT_LAT: -34.6037,
+  DEFAULT_LNG: -58.3816,
+  REFRESH_MS: 60000,
 
-    CATEGORY_ALL: "all",
-    DEFAULT_CATEGORY: "music",
-ALLOWED_CATEGORIES: ["music", "dance", "theatre", "visual_arts", "cinema", "games"]
-  };
+  CATEGORY_ALL: "all",
+  DEFAULT_CATEGORY: "music",
+
+  CATEGORIES: {
+    music: {
+      label: "Música",
+      emoji: "🎵"
+    },
+    dance: {
+      label: "Danza",
+      emoji: "💃"
+    },
+    theatre: {
+      label: "Teatro",
+      emoji: "🎭"
+    },
+    visual_arts: {
+      label: "Visuales",
+      emoji: "🖼️"
+    },
+    cinema: {
+      label: "Cine",
+      emoji: "🎬"
+    },
+    games: {
+      label: "Juegos",
+      emoji: "🎯"
+    }
+  }
+};
+
+App.CFG.ALLOWED_CATEGORIES = Object.keys(App.CFG.CATEGORIES);
 
   /* =========================
      APP STATE
@@ -245,25 +273,24 @@ function formatTimeStart(ev) {
      CATEGORY
   ========================= */
   function normalizeCategory(raw) {
-    const v = (raw ?? "").toString().trim();
-    return App.CFG.ALLOWED_CATEGORIES.includes(v) ? v : App.CFG.DEFAULT_CATEGORY;
-  }
+  const v = (raw ?? "").toString().trim();
+  return App.CFG.ALLOWED_CATEGORIES.includes(v) ? v : App.CFG.DEFAULT_CATEGORY;
+}
 
-  function categoryLabel(cat) {
-  switch (cat) {
-    case "music":
-      return "🎵 Música";
-    case "dance":
-      return "💃 Danza";
-    case "theatre":
-      return "🎭 Teatro";
-    case "visual_arts":
-      return "🖼️ Visuales";
-    case "cinema":
-      return "🎬 Cine";
-    default:
-      return "";
-  }
+function categoryEmoji(cat) {
+  const key = normalizeCategory(cat);
+  return App.CFG.CATEGORIES[key]?.emoji || "";
+}
+
+function categoryName(cat) {
+  const key = normalizeCategory(cat);
+  return App.CFG.CATEGORIES[key]?.label || "";
+}
+
+function categoryLabel(cat) {
+  const emoji = categoryEmoji(cat);
+  const name = categoryName(cat);
+  return emoji && name ? `${emoji} ${name}` : "";
 }
 
   /* =========================
@@ -425,6 +452,8 @@ function formatTimeStart(ev) {
     sortEventsByStatusThenTime,
 
     normalizeCategory,
+    categoryEmoji,
+    categoryName,
     categoryLabel,
 
     normalizeEvent,
