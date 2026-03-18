@@ -352,47 +352,60 @@ async function deleteVenueRemote(venueId) {
   };
 }
 
-  async function updateEvent(eventId, patch) {
-    const db = App.supabase;
-    if (!db) {
-      const error = new Error("App.supabase no está inicializado");
-      console.error(error.message);
-      return { ok: false, error };
-    }
-
-    const id = String(eventId || "").trim();
-    if (!id) {
-      return { ok: false, error: "INVALID_ID" };
-    }
-
-    const safe = util.normalizeEvent({
-      id,
-      ...patch
-    });
-
-    const { data, error } = await db.rpc("update_event_by_id", {
-  p_id: id,
-  p_title: safe.title,
-  p_place_name: safe.placeName || "",
-  p_date: safe.date || null,
-  p_start_time: safe.startTime || null,
-  p_category: safe.category || "music",
-  p_link: safe.link || "",
-  p_lat: Number(safe.lat),
-  p_lng: Number(safe.lng)
-});
-
-    if (error) {
-      console.error("Error actualizando evento:", error);
-      return { ok: false, error };
-    }
-
-    if (!data) {
-      return { ok: false, error: "UPDATE_FAILED" };
-    }
-
-    return { ok: true, event: safe };
+ async function updateEvent(eventId, patch) {
+  const db = App.supabase;
+  if (!db) {
+    const error = new Error("App.supabase no está inicializado");
+    console.error(error.message);
+    return { ok: false, error };
   }
+
+  const id = String(eventId || "").trim();
+  if (!id) {
+    return { ok: false, error: "INVALID_ID" };
+  }
+
+  const safe = util.normalizeEvent({
+    id,
+    ...patch
+  });
+
+  const row = {
+    title: safe.title,
+    place_name: safe.placeName || "",
+    date: safe.date || null,
+    start_time: safe.startTime || null,
+    category: safe.category || "music",
+    link: safe.link || "",
+    lat: Number(safe.lat),
+    lng: Number(safe.lng),
+
+    series_id: safe.seriesId || null,
+    recurrence_type: safe.recurrenceType || null,
+    recurrence_interval: Number.isFinite(safe.recurrenceInterval)
+      ? safe.recurrenceInterval
+      : null,
+    recurrence_until: safe.recurrenceUntil || null
+  };
+
+  const { data, error } = await db
+    .from("events")
+    .update(row)
+    .eq("id", id)
+    .select()
+    .single();
+
+  if (error) {
+    console.error("Error actualizando evento:", error);
+    return { ok: false, error };
+  }
+
+  if (!data) {
+    return { ok: false, error: "UPDATE_FAILED" };
+  }
+
+  return { ok: true, event: mapRowToEvent(data) };
+}
 
   function saveLoginState(value = state.logic.isLoggedIn) {
     localStorage.setItem(STORAGE_KEYS.LOGIN, JSON.stringify(!!value));
