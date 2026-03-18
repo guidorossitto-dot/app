@@ -257,8 +257,7 @@
 
                 <span class="eventMiniCard__title">${ev.title || "Evento"}</span>
 
-                ${categoryTagHTML(ev)}
-
+                
                 ${
                   soonBadge
                     ? `<span class="eventMiniCard__status">${soonBadge}</span>`
@@ -1195,8 +1194,7 @@ if (state.runtime.map && Number.isFinite(ev.lat) && Number.isFinite(ev.lng)) {
           ev.category === "cinema" ? "🎬 " :
           "";
 
-        const isMobile = window.innerWidth <= 768;
-b.textContent = isMobile ? (ev.title || "Evento") : `${icon}${ev.title}`;
+        b.textContent = `${icon}${ev.title}`;
         b.dataset.eid = ev.id || "";
 
         b.addEventListener("click", (e) => {
