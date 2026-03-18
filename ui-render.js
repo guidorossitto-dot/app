@@ -109,9 +109,14 @@ function bindLoginUI() {
 });
   }
 
+  // commit()
+// No persiste datos.
+// Solo re-renderiza la UI con defaults consistentes.
+// La persistencia ocurre en storage / services (addEventRemote, updateEvent, etc).
+
   function commit(opts = {}) {
     const finalOpts = {
-      persist: true,
+      persist: false,
       purgePast: false,
       rebuildMarkers: true,
       recomputeNearby: true,
