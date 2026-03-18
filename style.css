@@ -1146,6 +1146,19 @@ button:active {
   transition: opacity var(--ui-fast), color var(--ui-fast);
 }
 
+.linkBtn,
+.linkBtn:visited,
+.linkBtn:hover,
+.linkBtn:active {
+  color: inherit;
+}
+
+a.linkBtn {
+  display: inline-flex;
+  align-items: center;
+  text-decoration: underline;
+}
+
 @media (max-width: 768px) {
   .linkBtn {
     min-height: 44px;
@@ -1272,23 +1285,43 @@ button:active {
   align-items: center;
 }
 
-.popupBtn {
+
+.popupBtn,
+a.popupBtn,
+button.popupBtn {
   margin: 0;
   padding: 5px 8px;
   font-size: 11.5px;
+  line-height: 1;
   border-radius: 9px;
+  border: 1px solid #ddd;
+  background: #fff;
+  color: #111;
+  text-decoration: none;
+  font-family: inherit;
+  box-sizing: border-box;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  vertical-align: middle;
 }
 
-.popupBtn:hover {
+.popupBtn:hover,
+a.popupBtn:hover,
+button.popupBtn:hover {
   border-color: #cfcfcf;
+}
+
+a.popupBtn:visited,
+a.popupBtn:active {
+  color: #111;
+  text-decoration: none;
 }
 
 .popupActions .popupBtn,
 .popupAddBtn {
-  display: inline-flex !important;
-  align-items: center;
-  justify-content: center;
-  white-space: nowrap;
   visibility: visible !important;
   opacity: 1 !important;
 }
