@@ -232,30 +232,33 @@ App.store?.dispatch?.({
   }
 
   function removeVenue(venueId, options = {}) {
-    ensureVenueState();
+  ensureVenueState();
 
-    const idx = findVenueIndexById(venueId);
-    if (idx < 0) {
-      return { ok: false, error: "VENUE_NOT_FOUND" };
-    }
-
-const removed = state.logic.venues[idx];
-
-App.store?.dispatch?.({
-  type: "REMOVE_VENUE",
-  venueId
-});
-    state.logic.venues.splice(idx, 1);
-
-    if (options.persist) {
-      App.storage?.saveVenues?.();
-    }
-
-    return {
-      ok: true,
-      venue: cloneVenue(removed)
-    };
+  const idx = findVenueIndexById(venueId);
+  if (idx < 0) {
+    return { ok: false, error: "VENUE_NOT_FOUND" };
   }
+
+  const removed = state.logic.venues[idx];
+
+  const out = App.store?.dispatch?.({
+    type: "REMOVE_VENUE",
+    venueId
+  });
+
+  if (!out?.ok) {
+    return { ok: false, error: out?.error || "REMOVE_VENUE_FAILED" };
+  }
+
+  if (options.persist) {
+    App.storage?.saveVenues?.();
+  }
+
+  return {
+    ok: true,
+    venue: cloneVenue(removed)
+  };
+}
 
   function replaceAllVenues(rawVenues = []) {
     ensureVenueState();

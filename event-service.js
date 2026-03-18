@@ -108,10 +108,6 @@ function isRecurringEvent(eventId) {
   return state.logic.isLoggedIn;
 }
 
-function persistLoginState() {
-  return state.logic.isLoggedIn;
-}
-
   function persistLoginState() {
     storage?.saveLoginState?.(state.logic.isLoggedIn);
     return state.logic.isLoggedIn;
