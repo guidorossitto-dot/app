@@ -262,12 +262,7 @@ button:active {
 }
 
 .appLayout--leftSidebar {
-
   transition: grid-template-columns 220ms ease;
-}
-
-.appLayout--leftSidebar.isCollapsed {
-  grid-template-columns: 72px minmax(0, 1fr);
 }
 
 .mainColumn,
@@ -276,17 +271,18 @@ button:active {
   animation: softRise 320ms ease;
 }
 
-.sideColumn--left {
+/* Mobile / tablet: primero contenido principal, después agenda */
+.mainColumn {
   order: 1;
 }
 
-.mainColumn {
+.sideColumn--left {
   order: 2;
 }
 
 .sideColumn--left .panelCard {
-  position: sticky;
-  top: 16px;
+  position: relative;
+  top: auto;
   padding: 14px;
 }
 
@@ -1568,29 +1564,6 @@ a.popupBtn:active {
 ============== */
 
 @media (max-width: 1100px) {
-  .appLayout,
-  .appLayout--leftSidebar,
-  .appLayout--leftSidebar.isCollapsed {
-    grid-template-columns: 1fr;
-  }
-
-  .mainColumn {
-    order: 1;
-  }
-
-  .sideColumn--left {
-    order: 2;
-  }
-
-  .sideColumn .panelCard {
-    margin-top: 0;
-  }
-
-  .sideColumn--left .panelCard {
-    position: relative;
-    top: auto;
-  }
-
   .panelCard--nearby {
     border-left: 4px solid #7bb6ff;
     background: linear-gradient(180deg, #f7fbff 0%, #ffffff 100%);
@@ -1927,12 +1900,9 @@ a.popupBtn:active {
 @media (min-width: 1101px) {
   .appLayout {
     display: grid;
-    grid-template-columns: minmax(0, 1.65fr) minmax(320px, 0.95fr);
-    align-items: start;
-  }
-
-  .appLayout--leftSidebar {
     grid-template-columns: minmax(300px, 0.8fr) minmax(0, 1.8fr);
+    gap: 18px;
+    align-items: start;
   }
 
   .appLayout--leftSidebar.isCollapsed {
@@ -1945,5 +1915,10 @@ a.popupBtn:active {
 
   .sideColumn--left {
     order: 1;
+  }
+
+  .sideColumn--left .panelCard {
+    position: sticky;
+    top: 16px;
   }
 }
