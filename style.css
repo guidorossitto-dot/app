@@ -1582,12 +1582,6 @@ a.popupBtn:active {
     order: 2;
   }
 
-  .sideColumn {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 16px;
-  }
-
   .sideColumn .panelCard {
     margin-top: 0;
   }
@@ -1931,12 +1925,12 @@ a.popupBtn:active {
 }
 
 .pageShell {
-  max-width: 1400px;
+  max-width: 1280px;
   margin: 0 auto;
   padding: 16px;
 }
 
 .appLayout--leftSidebar {
-  grid-template-columns: minmax(320px, 0.9fr) minmax(0, 2fr);
+  grid-template-columns: minmax(300px, 0.8fr) minmax(0, 1.8fr);
   transition: grid-template-columns 220ms ease;
 }
