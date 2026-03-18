@@ -37,6 +37,14 @@ function selectCategory(category) {
   return App.events?.setEditingEventId?.(null);
 }
 
+function setEditingMode(mode) {
+  return App.events?.setEditingMode?.(mode);
+}
+
+function setEditingSeriesId(seriesId) {
+  return App.events?.setEditingSeriesId?.(seriesId);
+}
+
   function setNearbyCenter(center) {
     return App.events?.setNearbyCenter?.(center);
   }
@@ -89,6 +97,9 @@ function selectCategory(category) {
 
     startEditingEvent,
     stopEditingEvent,
+
+    setEditingMode,
+    setEditingSeriesId,
 
     setNearbyCenter,
     setNearbyEvents,

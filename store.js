@@ -126,6 +126,22 @@
         break;
       }
 
+case "SET_EDITING_MODE": {
+  state.logic.editingMode = action.value
+    ? String(action.value).trim()
+    : null;
+  result = { ok: true };
+  break;
+}
+
+case "SET_EDITING_SERIES_ID": {
+  state.logic.editingSeriesId = action.value
+    ? String(action.value).trim()
+    : null;
+  result = { ok: true };
+  break;
+}
+
       case "SET_NEARBY_CENTER": {
         state.logic.nearbyCenter = action.value || null;
         result = { ok: true };

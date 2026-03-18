@@ -104,6 +104,24 @@ function isRecurringEvent(eventId) {
     return state.logic.isLoggedIn;
   }
 
+function setEditingMode(mode) {
+  App.store?.dispatch?.({
+    type: "SET_EDITING_MODE",
+    value: mode
+  });
+
+  return state.logic.editingMode;
+}
+
+function setEditingSeriesId(seriesId) {
+  App.store?.dispatch?.({
+    type: "SET_EDITING_SERIES_ID",
+    value: seriesId
+  });
+
+  return state.logic.editingSeriesId;
+}
+
   function hydrateLoginFromStorage() {
   return state.logic.isLoggedIn;
 }
@@ -547,6 +565,8 @@ function setActiveCategory(category) {
     setActiveCategory,
     setCalendarCursor,
     setEditingEventId,
+    setEditingMode,
+    setEditingSeriesId,
     setNearbyCenter,
     setNearbyEvents,
 

@@ -341,11 +341,8 @@ if (seriesId) {
   App.actions?.startEditingEvent?.(eventId);
   App.actions?.selectCategory?.("all");
 
-  const adminView = document.getElementById("adminView");
-  if (adminView) {
-    adminView.dataset.editMode = editMode;
-    adminView.dataset.editSeriesId = seriesId || "";
-  }
+  App.actions?.setEditingMode?.(editMode);
+App.actions?.setEditingSeriesId?.(seriesId || null);
 
 const titleEl = document.getElementById("eventTitle");
 const dateEl = document.getElementById("eventDate");
@@ -742,9 +739,8 @@ async function createEventFromAdminForm() {
   const editingId = String(state.logic.editingEventId || "").trim() || null;
 
 if (editingId) {
-  const adminView = document.getElementById("adminView");
-  const editMode = adminView?.dataset?.editMode || "single";
-  const editSeriesId = String(adminView?.dataset?.editSeriesId || "").trim();
+  const editMode = state.logic.editingMode || "single";
+const editSeriesId = String(state.logic.editingSeriesId || "").trim();
 
   let result = null;
 
@@ -894,11 +890,8 @@ if (editingId) {
   if (addBtn) addBtn.textContent = "Agregar evento";
 if (cancelBtn) cancelBtn.hidden = true;
 
-const adminView = document.getElementById("adminView");
-if (adminView) {
-  adminView.dataset.editMode = "";
-  adminView.dataset.editSeriesId = "";
-}
+App.actions?.setEditingMode?.(null);
+App.actions?.setEditingSeriesId?.(null);
 
 clearEventCreationMarker();
 

@@ -1534,6 +1534,8 @@ if (state.runtime.map && Number.isFinite(ev.lat) && Number.isFinite(ev.lng)) {
         }
 
         App.actions?.stopEditingEvent?.();
+        App.actions?.setEditingMode?.(null);
+        App.actions?.setEditingSeriesId?.(null);
 
         const titleEl = document.getElementById("eventTitle");
         const dateEl = document.getElementById("eventDate");

@@ -26,19 +26,21 @@ ALLOWED_CATEGORIES: ["music", "dance", "theatre", "visual_arts", "cinema"]
   ========================= */
   App.state = {
     logic: {
-      isLoggedIn: false,
-      events: [],
-      venues: [],
-      calendarCursor: new Date(),
-      activeCategory: App.CFG.CATEGORY_ALL,
-      editingEventId: null,
+  isLoggedIn: false,
+  events: [],
+  venues: [],
+  calendarCursor: new Date(),
+  activeCategory: App.CFG.CATEGORY_ALL,
+  editingEventId: null,
+  editingMode: null,
+  editingSeriesId: null,
 
-      adminVenueQuery: "",
-      adminVenueSuggestions: [],
-      selectedVenueId: null,
-      nearbyCenter: null, // { lat, lng } | null
-      nearbyEvents: []
-    },
+  adminVenueQuery: "",
+  adminVenueSuggestions: [],
+  selectedVenueId: null,
+  nearbyCenter: null,
+  nearbyEvents: []
+},
 
     runtime: {
   map: null,
