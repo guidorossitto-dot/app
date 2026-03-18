@@ -1422,9 +1422,12 @@ if (state.runtime.map && Number.isFinite(ev.lat) && Number.isFinite(ev.lng)) {
           ?.querySelector("div")?.textContent?.trim()
         || "Lugar";
 
+App.map?.clearTemporaryFocusMarker?.();
+
       const tempMarker = L.marker([lat, lng], {
         bubblingMouseEvents: false
       });
+      App.map?.setTemporaryFocusMarker?.(tempMarker);
 
       tempMarker.bindPopup(`
         <div class="popupCard">
@@ -1444,6 +1447,12 @@ if (state.runtime.map && Number.isFinite(ev.lat) && Number.isFinite(ev.lng)) {
         maxWidth: 260,
         minWidth: 180
       });
+
+   tempMarker.on("popupclose", () => {
+  if (state.runtime.temporaryFocusMarker === tempMarker) {
+    App.map?.clearTemporaryFocusMarker?.();
+  }
+});
 
       if (state.runtime.deepLinkLayer) {
         tempMarker.addTo(state.runtime.deepLinkLayer);

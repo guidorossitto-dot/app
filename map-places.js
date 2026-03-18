@@ -93,6 +93,26 @@
   return loc;
 }
 
+function clearTemporaryFocusMarker() {
+  const marker = state.runtime.temporaryFocusMarker;
+  if (!marker) return;
+
+  try {
+    if (state.runtime.deepLinkLayer && state.runtime.deepLinkLayer.hasLayer?.(marker)) {
+      state.runtime.deepLinkLayer.removeLayer(marker);
+    } else if (state.runtime.map && state.runtime.map.hasLayer?.(marker)) {
+      state.runtime.map.removeLayer(marker);
+    }
+  } catch {}
+
+  state.runtime.temporaryFocusMarker = null;
+}
+
+function setTemporaryFocusMarker(marker) {
+  clearTemporaryFocusMarker();
+  state.runtime.temporaryFocusMarker = marker || null;
+}
+
  function highlightNearbyMarkers(filteredEvents) {
   const nearbyKeys = new Set(
     (filteredEvents || []).map((ev) => util.smartLocationKey(ev, state.logic.events || []))
@@ -755,13 +775,11 @@ const editSeriesId = String(state.logic.editingSeriesId || "").trim();
     return;
   }
 
-  App.actions?.stopEditingEvent?.();
-
-  if (adminView) {
-    adminView.dataset.editMode = "";
-    adminView.dataset.editSeriesId = "";
-  }
-} else {
+App.actions?.stopEditingEvent?.();
+App.actions?.setEditingMode?.(null);
+App.actions?.setEditingSeriesId?.(null);
+}
+ else {
     const mode = createModeEl?.value || "single";
     const endDate = endDateEl?.value?.trim() || "";
 
@@ -1187,6 +1205,11 @@ clearEventCreationMarker();
     maxWidth: 260,
     minWidth: 180
   });
+  m.on("popupclose", () => {
+  if (state.runtime.temporaryFocusMarker === m) {
+    clearTemporaryFocusMarker();
+  }
+});
 
   if (state.runtime.deepLinkLayer) {
     m.addTo(state.runtime.deepLinkLayer);
@@ -1194,6 +1217,8 @@ clearEventCreationMarker();
     m.addTo(state.runtime.map);
   }
 
+  clearTemporaryFocusMarker();
+  setTemporaryFocusMarker(m);
   openMarkerPopupStable(m, ev.lat, ev.lng, 17);
 
   setTimeout(() => {
@@ -1242,6 +1267,8 @@ function focusPlaceByCoords(lat, lng, placeTitle = "Lugar", eventTitle = "", zoo
       state.runtime.map.invalidateSize();
     } catch {}
 
+    clearTemporaryFocusMarker();
+
     if (
       state.runtime.deepLinkLayer &&
       typeof state.runtime.deepLinkLayer.clearLayers === "function"
@@ -1274,11 +1301,19 @@ function focusPlaceByCoords(lat, lng, placeTitle = "Lugar", eventTitle = "", zoo
       minWidth: 180
     });
 
+    tempMarker.on("popupclose", () => {
+      if (state.runtime.temporaryFocusMarker === tempMarker) {
+        clearTemporaryFocusMarker();
+      }
+    });
+
     if (state.runtime.deepLinkLayer) {
       tempMarker.addTo(state.runtime.deepLinkLayer);
     } else {
       tempMarker.addTo(state.runtime.map);
     }
+
+    setTemporaryFocusMarker(tempMarker);
 
     state.runtime.map.setView([lat, lng], zoom);
 
@@ -1292,7 +1327,7 @@ function focusPlaceByCoords(lat, lng, placeTitle = "Lugar", eventTitle = "", zoo
   return true;
 }
 
-  /* =========================
+/* =========================
      EXPORT MAP MODULE
   ========================= */
   App.map = {
@@ -1305,7 +1340,9 @@ function focusPlaceByCoords(lat, lng, placeTitle = "Lugar", eventTitle = "", zoo
   filterEventsByDistance,
   setUserLocation,
   prepareEventCreation,
+  setTemporaryFocusMarker,
   clearEventCreationMarker,
+  clearTemporaryFocusMarker,
   useMyLocation,
   searchNearbyFromInputs,
   bindAdminCategoryChips,

@@ -50,6 +50,7 @@ ALLOWED_CATEGORIES: ["music", "dance", "theatre", "visual_arts", "cinema"]
   deepLinkLayer: null,
   locationMarkers: {},
   eventMarkers: [],
+  temporaryFocusMarker: null,
 
   pendingOpenEventId: null,
   pendingDeepLinkEventId: null,
