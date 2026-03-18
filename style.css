@@ -1772,3 +1772,24 @@ button:active {
     height: 110px;
   }
 }
+
+.calendarEventPopover,
+.calendarDayPopover__item,
+.calendarDayPopover__itemTitle,
+.calendarEventTitleText {
+  min-width: 0;
+}
+
+.calendarDayPopover__itemTitle {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  overflow: hidden;
+}
+
+.calendarEventTitleText {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  line-height: 1.25;
+}
