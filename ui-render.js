@@ -27,6 +27,9 @@ if (!isAdmin) {
   }
 
 function bindLoginUI() {
+  if (App.state.runtime.bindings.loginUI) return;
+  App.state.runtime.bindings.loginUI = true;
+
   const loginBtn = document.getElementById("loginBtn");
   const logoutBtn = document.getElementById("logoutBtn");
 

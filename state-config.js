@@ -41,19 +41,24 @@ ALLOWED_CATEGORIES: ["music", "dance", "theatre", "visual_arts", "cinema"]
     },
 
     runtime: {
-      map: null,
-      userMarker: null,
-      eventCreationMarker: null,
-      markerCluster: null,
-      deepLinkLayer: null,
-      locationMarkers: {},
-      eventMarkers: [],
+  map: null,
+  userMarker: null,
+  eventCreationMarker: null,
+  markerCluster: null,
+  deepLinkLayer: null,
+  locationMarkers: {},
+  eventMarkers: [],
 
-      pendingOpenEventId: null,
-      pendingDeepLinkEventId: null,
-      bootReady: false,
-      uiPanZoomInProgress: false
-    }
+  pendingOpenEventId: null,
+  pendingDeepLinkEventId: null,
+  bootReady: false,
+  uiPanZoomInProgress: false,
+
+  // 👇 NUEVO
+  bindings: {
+    loginUI: false
+  }
+}
   };
 
   /* =========================
