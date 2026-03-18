@@ -1195,7 +1195,8 @@ if (state.runtime.map && Number.isFinite(ev.lat) && Number.isFinite(ev.lng)) {
           ev.category === "cinema" ? "🎬 " :
           "";
 
-        b.textContent = `${icon}${ev.title}`;
+        const isMobile = window.innerWidth <= 768;
+b.textContent = isMobile ? (ev.title || "Evento") : `${icon}${ev.title}`;
         b.dataset.eid = ev.id || "";
 
         b.addEventListener("click", (e) => {
