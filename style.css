@@ -255,14 +255,14 @@ button:active {
    Layout
 ============== */
 .appLayout {
-  display: grid;
-  grid-template-columns: minmax(0, 1.65fr) minmax(320px, 0.95fr);
+  display: flex;
+  flex-direction: column;
   gap: 18px;
-  align-items: start;
+  align-items: stretch;
 }
 
 .appLayout--leftSidebar {
-  grid-template-columns: minmax(300px, 0.8fr) minmax(0, 1.8fr);
+
   transition: grid-template-columns 220ms ease;
 }
 
@@ -1924,13 +1924,26 @@ a.popupBtn:active {
   border-left: 4px solid #cfe7d5;
 }
 
-.pageShell {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 16px;
-}
+@media (min-width: 1101px) {
+  .appLayout {
+    display: grid;
+    grid-template-columns: minmax(0, 1.65fr) minmax(320px, 0.95fr);
+    align-items: start;
+  }
 
-.appLayout--leftSidebar {
-  grid-template-columns: minmax(300px, 0.8fr) minmax(0, 1.8fr);
-  transition: grid-template-columns 220ms ease;
+  .appLayout--leftSidebar {
+    grid-template-columns: minmax(300px, 0.8fr) minmax(0, 1.8fr);
+  }
+
+  .appLayout--leftSidebar.isCollapsed {
+    grid-template-columns: 72px minmax(0, 1fr);
+  }
+
+  .mainColumn {
+    order: 2;
+  }
+
+  .sideColumn--left {
+    order: 1;
+  }
 }
