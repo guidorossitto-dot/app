@@ -1235,6 +1235,70 @@ async function clearAllEvents() {
   });
 }
 
+function focusPlaceByCoords(lat, lng, placeTitle = "Lugar", eventTitle = "", zoom = 16) {
+  if (!state.runtime.map) return false;
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) return false;
+
+  const mapEl = document.getElementById("map");
+  if (mapEl) {
+    mapEl.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  setTimeout(() => {
+    try {
+      state.runtime.map.invalidateSize();
+    } catch {}
+
+    if (
+      state.runtime.deepLinkLayer &&
+      typeof state.runtime.deepLinkLayer.clearLayers === "function"
+    ) {
+      try {
+        state.runtime.deepLinkLayer.clearLayers();
+      } catch {}
+    }
+
+    const tempMarker = L.marker([lat, lng], {
+      bubblingMouseEvents: false
+    });
+
+    tempMarker.bindPopup(`
+      <div class="popupCard">
+        <div class="popupHeader">
+          <div>
+            <div class="popupPlace">${placeTitle || "Lugar"}</div>
+            <div class="popupSub">${eventTitle || "Ubicación del lugar"}</div>
+          </div>
+        </div>
+      </div>
+    `, {
+      closeButton: true,
+      autoPan: true,
+      keepInView: true,
+      autoPanPadding: [16, 16],
+      offset: [0, -10],
+      maxWidth: 260,
+      minWidth: 180
+    });
+
+    if (state.runtime.deepLinkLayer) {
+      tempMarker.addTo(state.runtime.deepLinkLayer);
+    } else {
+      tempMarker.addTo(state.runtime.map);
+    }
+
+    state.runtime.map.setView([lat, lng], zoom);
+
+    setTimeout(() => {
+      try {
+        tempMarker.openPopup();
+      } catch {}
+    }, 120);
+  }, 220);
+
+  return true;
+}
+
   /* =========================
      EXPORT MAP MODULE
   ========================= */
@@ -1255,6 +1319,7 @@ async function clearAllEvents() {
   bindPlaceSearchUI,
   createEventFromAdminForm,
   focusEventById,
+  focusPlaceByCoords,
   openMarkerPopupStable,
   clearAllEvents
 };

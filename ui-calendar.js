@@ -926,15 +926,31 @@ if (logoutBtn) {
         const key = util.smartLocationKey(ev, state.logic.events || []);
         const loc = state.runtime.locationMarkers?.[key];
 
-        if (App.map?.focusEventById && ev.id) {
-          App.map.focusEventById(ev.id);
-          return;
-        }
+        const today = util.todayStrYYYYMMDD();
+const isToday = String(ev.date || "").slice(0, 10) === today;
 
-        if (state.runtime.map && Number.isFinite(ev.lat) && Number.isFinite(ev.lng)) {
-          state.runtime.map.setView([ev.lat, ev.lng], 16);
-          if (loc?.marker) loc.marker.openPopup();
-        }
+if (isToday && App.map?.focusEventById && ev.id) {
+  const ok = App.map.focusEventById(ev.id);
+  if (ok) return;
+}
+
+const placeTitle = util.shortPlaceName(ev.placeName) || "Lugar sin nombre";
+const eventTitle = ev.title || "Evento";
+
+if (App.map?.focusPlaceByCoords && Number.isFinite(ev.lat) && Number.isFinite(ev.lng)) {
+  App.map.focusPlaceByCoords(
+    Number(ev.lat),
+    Number(ev.lng),
+    placeTitle,
+    eventTitle,
+    16
+  );
+  return;
+}
+
+if (state.runtime.map && Number.isFinite(ev.lat) && Number.isFinite(ev.lng)) {
+  state.runtime.map.setView([ev.lat, ev.lng], 16);
+}
       });
     }
 
@@ -1032,23 +1048,48 @@ if (logoutBtn) {
     }
 
     pop.querySelectorAll(".calendarDayPopover__item[data-eid]").forEach((item) => {
-      item.addEventListener("click", (e) => {
-        e.preventDefault();
-        e.stopPropagation();
+  item.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
 
-        const eventId = decodeURIComponent(item.dataset.eid || "");
-        if (!eventId) return;
+    const eventId = decodeURIComponent(item.dataset.eid || "");
+    if (!eventId) return;
 
-        removeCalendarPopover();
+    const ev = App.events?.findEventById?.(eventId) || null;
+    if (!ev) return;
 
-        const mapEl = document.getElementById("map");
-        if (mapEl) mapEl.scrollIntoView({ behavior: "smooth", block: "start" });
+    removeCalendarPopover();
 
-        if (App.map?.focusEventById) {
-          App.map.focusEventById(eventId);
-        }
-      });
-    });
+    const today = util.todayStrYYYYMMDD();
+    const isToday = String(ev.date || "").slice(0, 10) === today;
+
+    if (isToday && App.map?.focusEventById) {
+      const ok = App.map.focusEventById(eventId);
+      if (ok) return;
+    }
+
+    const placeTitle = util.shortPlaceName(ev.placeName) || "Lugar sin nombre";
+    const eventTitle = ev.title || "Evento";
+
+    if (App.map?.focusPlaceByCoords && Number.isFinite(ev.lat) && Number.isFinite(ev.lng)) {
+      App.map.focusPlaceByCoords(
+        Number(ev.lat),
+        Number(ev.lng),
+        placeTitle,
+        eventTitle,
+        16
+      );
+      return;
+    }
+
+    const mapEl = document.getElementById("map");
+    if (mapEl) mapEl.scrollIntoView({ behavior: "smooth", block: "start" });
+
+    if (state.runtime.map && Number.isFinite(ev.lat) && Number.isFinite(ev.lng)) {
+      state.runtime.map.setView([ev.lat, ev.lng], 16);
+    }
+  });
+});
 
     requestAnimationFrame(() => {
       const onDocClick = (e) => {
