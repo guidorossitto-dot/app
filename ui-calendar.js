@@ -405,20 +405,28 @@ if (logoutBtn) {
      LISTAS
   ========================= */
   function renderEvents(list, emptyMsg = "No hay próximos eventos") {
-    const ul = document.getElementById("eventList");
-    if (!ul) return;
+  const ul = document.getElementById("eventList");
+  if (!ul) return;
 
-    const safeList = Array.isArray(list)
-      ? list
-      : selectors.getVisibleFutureEvents(state.logic.events || []);
+  const baseList = Array.isArray(list)
+    ? list
+    : selectors.getVisibleFutureEvents(state.logic.events || []);
 
-    if (!safeList || safeList.length === 0) {
-      ul.innerHTML = `<li>${emptyMsg}</li>`;
-      return;
-    }
+  const today = util.todayStrYYYYMMDD();
+  const maxDate = util.addDaysYYYYMMDD(today, 2);
 
-    renderGroupedList(ul, safeList);
+  const safeList = (baseList || []).filter((ev) => {
+    const d = String(ev.date || "").slice(0, 10);
+    return d > today && d <= maxDate;
+  });
+
+  if (!safeList || safeList.length === 0) {
+    ul.innerHTML = `<li>${emptyMsg}</li>`;
+    return;
   }
+
+  renderGroupedList(ul, safeList);
+}
 
   function renderTodayEvents(list, emptyMsg = "No hay eventos hoy") {
     const ul = document.getElementById("todayEvents");
