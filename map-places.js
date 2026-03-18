@@ -406,27 +406,24 @@ if (linkEl) linkEl.value = evData.link || "";
 }
 
         if (btn.classList.contains("popupAddBtn")) {
-          const lat = Number(btn.dataset.lat);
-          const lng = Number(btn.dataset.lng);
-          const place = decodeURIComponent(btn.dataset.place || "");
+  const lat = Number(btn.dataset.lat);
+  const lng = Number(btn.dataset.lng);
+  const place = decodeURIComponent(btn.dataset.place || "");
 
-          if (!Number.isFinite(lat) || !Number.isFinite(lng) || !state.runtime.map) return;
+  if (!Number.isFinite(lat) || !Number.isFinite(lng) || !state.runtime.map) return;
 
-          setUserLocation(lat, lng);
-          recomputeNearbyEvents(lat, lng);
-          uiSetView(lat, lng, 15);
+  uiSetView(lat, lng, 15);
+  prepareEventCreation(lat, lng);
 
-          prepareEventCreation(lat, lng);
+  const placeEl = document.getElementById("eventPlace");
+  if (placeEl && place && !placeEl.value.trim()) placeEl.value = place;
 
-          const placeEl = document.getElementById("eventPlace");
-          if (placeEl && place && !placeEl.value.trim()) placeEl.value = place;
+  const titleEl = document.getElementById("eventTitle");
+  if (titleEl) titleEl.focus();
 
-          const titleEl = document.getElementById("eventTitle");
-          if (titleEl) titleEl.focus();
-
-          App.renderAll?.({ rebuildMarkers: false });
-          return;
-        }
+  App.renderAll?.({ rebuildMarkers: false });
+  return;
+}
       };
 
       root.addEventListener("click", onClick, true);
@@ -536,6 +533,11 @@ if (linkEl) linkEl.value = evData.link || "";
   if (eLng) eLng.value = Number(lng).toFixed(6);
 
   if (!state.runtime.map) return;
+
+    if (state.runtime.userMarker) {
+    state.runtime.userMarker.remove();
+    state.runtime.userMarker = null;
+  }
 
   if (state.runtime.eventCreationMarker) {
     state.runtime.eventCreationMarker.setLatLng([lat, lng]);
@@ -977,18 +979,25 @@ clearEventCreationMarker();
   state.runtime.deepLinkLayer = L.layerGroup().addTo(state.runtime.map);
 
   state.runtime.map.on("click", (e) => {
-    const t = e.originalEvent?.target;
-    if (t && (t.closest?.(".leaflet-marker-icon") || t.closest?.(".leaflet-popup"))) return;
+  const t = e.originalEvent?.target;
+  if (t && (t.closest?.(".leaflet-marker-icon") || t.closest?.(".leaflet-popup"))) return;
 
-    const clat = e.latlng.lat;
-    const clng = e.latlng.lng;
+  const clat = e.latlng.lat;
+  const clng = e.latlng.lng;
 
-    setUserLocation(clat, clng);
-    recomputeNearbyEvents(clat, clng);
+  if (util.canManageUI() && state.runtime.eventCreationMarker) {
+    prepareEventCreation(clat, clng);
     uiSetView(clat, clng, 15);
-
     App.renderAll?.({ rebuildMarkers: false });
-  });
+    return;
+  }
+
+  setUserLocation(clat, clng);
+  recomputeNearbyEvents(clat, clng);
+  uiSetView(clat, clng, 15);
+
+  App.renderAll?.({ rebuildMarkers: false });
+});
 
   state.runtime.map.on("dragstart", () => {
     if (state.runtime.uiPanZoomInProgress) return;
