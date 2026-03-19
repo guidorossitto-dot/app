@@ -22,6 +22,79 @@
     return ensureEventsArray().some((ev) => String(ev.id) === id);
   }
 
+    function formatYMD(dateObj) {
+    const y = dateObj.getFullYear();
+    const m = String(dateObj.getMonth() + 1).padStart(2, "0");
+    const d = String(dateObj.getDate()).padStart(2, "0");
+    return `${y}-${m}-${d}`;
+  }
+
+  function generateDailyOccurrences(baseEvent, startDate, endDate) {
+    const out = [];
+
+    if (!baseEvent || !startDate || !endDate) return out;
+
+    const start = new Date(`${startDate}T00:00:00`);
+    const end = new Date(`${endDate}T00:00:00`);
+
+    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return out;
+    if (start > end) return out;
+
+    const cur = new Date(start);
+    const seriesId = util.newId();
+
+    while (cur <= end) {
+      out.push({
+        ...baseEvent,
+        id: util.newId(),
+        date: formatYMD(cur),
+        seriesId,
+        recurrenceType: "daily",
+        recurrenceInterval: 1,
+        recurrenceUntil: endDate
+      });
+
+      cur.setDate(cur.getDate() + 1);
+
+      if (out.length > 60) break;
+    }
+
+    return out;
+  }
+
+  function generateWeeklyOccurrences(baseEvent, startDate, endDate) {
+    const out = [];
+
+    if (!baseEvent || !startDate || !endDate) return out;
+
+    const start = new Date(`${startDate}T00:00:00`);
+    const end = new Date(`${endDate}T00:00:00`);
+
+    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return out;
+    if (start > end) return out;
+
+    const cur = new Date(start);
+    const seriesId = util.newId();
+
+    while (cur <= end) {
+      out.push({
+        ...baseEvent,
+        id: util.newId(),
+        date: formatYMD(cur),
+        seriesId,
+        recurrenceType: "weekly",
+        recurrenceInterval: 1,
+        recurrenceUntil: endDate
+      });
+
+      cur.setDate(cur.getDate() + 7);
+
+      if (out.length > 60) break;
+    }
+
+    return out;
+  }
+
   /* =========================
      READ API
   ========================= */
@@ -538,7 +611,7 @@ function setActiveCategory(category) {
     });
   }
 
-  App.events = {
+    App.events = {
     getAllEvents,
     findEventById,
 
@@ -549,6 +622,8 @@ function setActiveCategory(category) {
 
     getEventsBySeriesId,
     isRecurringEvent,
+    generateDailyOccurrences,
+    generateWeeklyOccurrences,
     removeSeries,
     replaceSeries,
 
