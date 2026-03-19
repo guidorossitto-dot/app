@@ -310,98 +310,14 @@ function rebuildLocationMarkers(list = state.logic.events) {
           return;
         }
 
-        if (btn.classList.contains("popupEditBtn")) {
-  const eventId = decodeURIComponent((btn.dataset.editEid || "").trim());
-  if (!eventId) return;
+                if (btn.classList.contains("popupEditBtn")) {
+          const eventId = decodeURIComponent((btn.dataset.editEid || "").trim());
+          if (!eventId) return;
 
-  if (!util.canManageUI()) {
-    alert("No tenés permisos para editar eventos.");
-    return;
-  }
-
-  const evData = App.events?.findEventById?.(eventId);
-  if (!evData) {
-    alert("No se encontró el evento.");
-    return;
-  }
-
-  const seriesId = String(evData.seriesId || "").trim();
-let editMode = "single";
-
-if (seriesId) {
-  const choice = window.prompt(
-    `El evento "${evData.title || "sin título"}" pertenece a una serie.\n\n` +
-    `Escribí:\n` +
-    `1 = editar solo este evento\n` +
-    `2 = editar toda la serie`
-  );
-
-  if (choice === null) {
-    return;
-  }
-
-  const normalizedChoice = String(choice).trim();
-
-  if (normalizedChoice === "2") {
-    editMode = "series";
-  } else if (normalizedChoice === "1") {
-    editMode = "single";
-  } else {
-    alert("Opción no válida. Escribí 1 o 2.");
-    return;
-  }
-}
-
-  App.actions?.startEditingEvent?.(eventId);
-  App.actions?.selectCategory?.("all");
-
-  App.actions?.setEditingMode?.(editMode);
-App.actions?.setEditingSeriesId?.(seriesId || null);
-
-const titleEl = document.getElementById("eventTitle");
-const dateEl = document.getElementById("eventDate");
-const latEl = document.getElementById("eventLat");
-const lngEl = document.getElementById("eventLng");
-const placeEl = document.getElementById("eventPlace");
-const startEl = document.getElementById("eventStart");
-const catEl = document.getElementById("eventCategory");
-const linkEl = document.getElementById("eventLink");
-const addBtn = document.getElementById("addEventBtn");
-const cancelBtn = document.getElementById("cancelEditBtn");
-
-if (titleEl) titleEl.value = evData.title || "";
-if (dateEl) dateEl.value = evData.date || "";
-if (latEl) latEl.value = Number(evData.lat).toFixed(6);
-if (lngEl) lngEl.value = Number(evData.lng).toFixed(6);
-if (placeEl) placeEl.value = evData.placeName || "";
-if (startEl) startEl.value = evData.startTime || "";
-if (catEl) catEl.value = evData.category || "music";
-if (linkEl) linkEl.value = evData.link || "";
-
-  const adminRow = document.getElementById("adminCategoryChips");
-  if (adminRow) {
-    const chips = [...adminRow.querySelectorAll(".chip[data-cat]")];
-    chips.forEach((b) =>
-      b.classList.toggle("isActive", b.dataset.cat === (evData.category || "music"))
-    );
-  }
-
-  if (addBtn) addBtn.textContent = "Guardar cambios";
-  if (cancelBtn) cancelBtn.hidden = false;
-
-  if (state.runtime.map) {
-    prepareEventCreation(evData.lat, evData.lng);
-    uiSetView(evData.lat, evData.lng, 15);
-  }
-          
-  const titleTarget = document.getElementById("eventTitle");
-  if (titleTarget) {
-    titleTarget.scrollIntoView({ behavior: "smooth", block: "center" });
-    titleTarget.focus();
-  }
-
-  return;
-}
+          await App.adminForm?.startEditingEventFromId?.(eventId);
+          return;
+        }
+        
       if (!util.canManageUI()) return;
       if (btn.classList.contains("deleteEventBtn")) {
   await App.ui?.deleteEventFromButton?.(btn);
