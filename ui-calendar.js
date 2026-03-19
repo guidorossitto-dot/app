@@ -1473,7 +1473,7 @@ App.map?.clearTemporaryFocusMarker?.();
           return;
         }
 
-        await App.map?.createEventFromAdminForm?.();
+        await App.adminForm?.createEventFromAdminForm?.();
       });
     }
 
@@ -1514,42 +1514,14 @@ App.map?.clearTemporaryFocusMarker?.();
     });
   });
 }
-    if (cancelBtn) {
+       if (cancelBtn) {
       cancelBtn.addEventListener("click", () => {
         if (!util.canManageUI()) {
           alert("No tenés permisos para editar eventos.");
           return;
         }
 
-        App.actions?.stopEditingEvent?.();
-        App.actions?.setEditingMode?.(null);
-        App.actions?.setEditingSeriesId?.(null);
-
-        const titleEl = document.getElementById("eventTitle");
-        const dateEl = document.getElementById("eventDate");
-        const latEl = document.getElementById("eventLat");
-        const lngEl = document.getElementById("eventLng");
-        const placeEl = document.getElementById("eventPlace");
-        const startEl = document.getElementById("eventStart");
-        const catEl = document.getElementById("eventCategory");
-        const addBtn2 = document.getElementById("addEventBtn");
-        const venueSuggestions = document.getElementById("venueSuggestions");
-
-        if (titleEl) titleEl.value = "";
-        if (dateEl) dateEl.value = "";
-        if (latEl) latEl.value = "";
-        if (lngEl) lngEl.value = "";
-        if (placeEl) placeEl.value = "";
-        if (startEl) startEl.value = "";
-        if (catEl) catEl.value = "music";
-        if (addBtn2) addBtn2.textContent = "Agregar evento";
-        if (venueSearchInput) venueSearchInput.value = "";
-        if (venueSuggestions) venueSuggestions.innerHTML = "";
-
-        App.venues?.clearSelectedVenueForAdmin?.();
-
-        cancelBtn.hidden = true;
-        App.map?.clearEventCreationMarker?.();
+        App.adminForm?.resetAdminEventForm?.();
       });
     }
 
