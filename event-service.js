@@ -351,6 +351,43 @@ function setEditingSeriesId(seriesId) {
   return { ok: true, error: null, event: inserted.event };
 }
 
+async function addEventsRemote(list = []) {
+  const safeList = Array.isArray(list) ? list : [];
+
+  if (!safeList.length) {
+    return {
+      ok: false,
+      error: "EMPTY_EVENTS_LIST",
+      createdCount: 0,
+      events: []
+    };
+  }
+
+  const createdEvents = [];
+
+  for (const rawEvent of safeList) {
+    const result = await addEventRemote(rawEvent);
+
+    if (!result?.ok) {
+      return {
+        ok: false,
+        error: result?.error || "BATCH_ADD_FAILED",
+        failedIndex: createdEvents.length,
+        createdCount: createdEvents.length,
+        events: createdEvents
+      };
+    }
+
+    createdEvents.push(result.event);
+  }
+
+  return {
+    ok: true,
+    createdCount: createdEvents.length,
+    events: createdEvents
+  };
+}
+
   async function replaceEvent(eventId, patch = {}) {
   const id = String(eventId || "").trim();
   if (!id) {
@@ -716,8 +753,10 @@ function setActiveCategory(category) {
 
     addEvent,
     replaceEvent,
-    removeEvent,
+    
     addEventRemote,
+    addEventsRemote,
+    removeEvent,
     clearAllEvents,
     clearPastEvents,
 

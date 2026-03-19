@@ -279,13 +279,11 @@
 
       const eventsToCreate = buildResult.events || [];
 
-      for (const ev of eventsToCreate) {
-        const result = await App.events?.addEventRemote?.(ev);
+      const saveResult = await App.events?.addEventsRemote?.(eventsToCreate);
 
-        if (!result?.ok) {
-          alert("No se pudo guardar uno de los eventos.");
-          return;
-        }
+      if (!saveResult?.ok) {
+        alert("No se pudo guardar uno de los eventos.");
+        return;
       }
 
       if (App.venues?.addVenueRemote && App.venues?.listVenues) {
@@ -309,8 +307,8 @@
         }
       }
 
-      if (eventsToCreate.length > 1) {
-        alert(`Se crearon ${eventsToCreate.length} eventos.`);
+            if ((saveResult?.createdCount || 0) > 1) {
+        alert(`Se crearon ${saveResult.createdCount} eventos.`);
       }
     }
 
