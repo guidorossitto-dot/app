@@ -1223,7 +1223,7 @@ if (state.runtime.map && Number.isFinite(ev.lat) && Number.isFinite(ev.lng)) {
 
       App.actions?.focusPlaceOnMapFlow?.({ button: btn });
     });
-    
+
     document.addEventListener("click", async (e) => {
       const btn = e.target.closest(".deleteEventBtn, .popupDeleteBtn");
       if (!btn) return;
@@ -1395,75 +1395,14 @@ if (state.runtime.map && Number.isFinite(ev.lat) && Number.isFinite(ev.lng)) {
   /* =========================
      DEEP LINK (#e=EVENT_ID)
   ========================= */
-  function queueDeepLinkFromHash() {
-    const h = (location.hash || "").replace(/^#/, "");
-    if (!h) return;
-
-    const params = new URLSearchParams(h);
-    const eventId = (params.get("e") || "").trim();
-    if (!eventId) return;
-
-    App.actions?.queueDeepLink?.(decodeURIComponent(eventId));
+    function queueDeepLinkFromHash() {
+    return App.actions?.queueDeepLinkFromHashFlow?.();
   }
 
-  function processQueuedDeepLink() {
-    const eventId = state.runtime.pendingDeepLinkEventId;
-    if (!eventId) return;
-
-    const ev = App.events?.findEventById?.(eventId) || null;
-    if (!ev) {
-      App.actions?.clearQueuedDeepLink?.();
-      clearListFocus();
-      renderAll({
-        rebuildMarkers: false,
-        recomputeNearby: false
-      });
-      return;
-    }
-
-    document.title = ev?.title ? `${ev.title} · Agenda de eventos` : "Agenda de eventos";
-
-    let categoryReset = false;
-
-    if (
-      state.logic.activeCategory &&
-      state.logic.activeCategory !== "all" &&
-      state.logic.activeCategory !== ev.category
-    ) {
-      App.actions?.selectCategory?.("all");
-      categoryReset = true;
-
-      const row = document.getElementById("categoryChips");
-      if (row) {
-        const chips = [...row.querySelectorAll(".chip")];
-        chips.forEach((btn) => btn.classList.toggle("isActive", btn.dataset.cat === "all"));
-      }
-    }
-
-    setListFocus({ type: "event", eventId });
-
-    if (categoryReset) {
-      commit({
-        persist: false,
-        purgePast: false,
-        rebuildMarkers: true,
-        recomputeNearby: true
-      });
-    } else {
-      renderAll({
-        rebuildMarkers: false,
-        recomputeNearby: false
-      });
-    }
-
-    if (state.runtime.bootReady && App.map?.focusEventById) {
-      const ok = App.map.focusEventById(eventId);
-      if (!ok) setTimeout(() => App.map?.focusEventById?.(eventId), 250);
-    }
-
-    App.actions?.clearQueuedDeepLink?.();
+    function processQueuedDeepLink() {
+    return App.actions?.processQueuedDeepLinkFlow?.();
   }
-
+  
   /* =========================
      LISTENERS DE HASH
   ========================= */
@@ -1529,6 +1468,8 @@ if (state.runtime.map && Number.isFinite(ev.lat) && Number.isFinite(ev.lng)) {
     shareEventFromButton,
     deleteEventFromButton,
 
+    setListFocus,
+    clearListFocus,
     processQueuedDeepLink
   };
 })();

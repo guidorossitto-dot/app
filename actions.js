@@ -414,6 +414,94 @@ function focusPlaceOnMapFlow(input = {}) {
   };
 }
 
+function queueDeepLinkFromHashFlow() {
+  const h = (location.hash || "").replace(/^#/, "");
+  if (!h) return { ok: false, error: "EMPTY_HASH" };
+
+  const params = new URLSearchParams(h);
+  const eventId = (params.get("e") || "").trim();
+  if (!eventId) return { ok: false, error: "MISSING_EVENT_ID" };
+
+  App.actions?.queueDeepLink?.(decodeURIComponent(eventId));
+  return { ok: true, eventId: decodeURIComponent(eventId) };
+}
+
+function processQueuedDeepLinkFlow() {
+  const eventId = App.state.runtime.pendingDeepLinkEventId;
+  if (!eventId) return { ok: false, error: "NO_PENDING_DEEP_LINK" };
+
+  const ev = App.events?.findEventById?.(eventId) || null;
+  if (!ev) {
+    App.actions?.clearQueuedDeepLink?.();
+    if (App.ui?.clearListFocus) App.ui.clearListFocus();
+    App.renderAll?.({
+      rebuildMarkers: false,
+      recomputeNearby: false
+    });
+    return { ok: false, error: "EVENT_NOT_FOUND" };
+  }
+
+  document.title = ev?.title ? `${ev.title} · Agenda de eventos` : "Agenda de eventos";
+
+  let categoryReset = false;
+
+  if (
+    App.state.logic.activeCategory &&
+    App.state.logic.activeCategory !== "all" &&
+    App.state.logic.activeCategory !== ev.category
+  ) {
+    App.actions?.selectCategory?.("all");
+    categoryReset = true;
+
+    const row = document.getElementById("categoryChips");
+    if (row) {
+      const chips = [...row.querySelectorAll(".chip")];
+      chips.forEach((btn) => btn.classList.toggle("isActive", btn.dataset.cat === "all"));
+    }
+  }
+
+    App.map?.clearTemporaryFocusMarker?.();
+
+  if (
+    App.state.runtime.deepLinkLayer &&
+    typeof App.state.runtime.deepLinkLayer.clearLayers === "function"
+  ) {
+    try {
+      App.state.runtime.deepLinkLayer.clearLayers();
+    } catch {}
+  }
+
+  if (App.ui?.setListFocus) {
+    App.ui.setListFocus({ type: "event", eventId });
+  }
+
+  if (categoryReset) {
+    App.commit?.({
+      persist: false,
+      purgePast: false,
+      rebuildMarkers: true,
+      recomputeNearby: true
+    });
+  } else {
+    App.renderAll?.({
+      rebuildMarkers: false,
+      recomputeNearby: false
+    });
+  }
+
+    if (App.state.runtime.bootReady && App.map?.focusEventById) {
+    setTimeout(() => {
+      const ok = App.map.focusEventById(eventId);
+      if (!ok) {
+        setTimeout(() => App.map?.focusEventById?.(eventId), 250);
+      }
+    }, 80);
+  }
+
+  App.actions?.clearQueuedDeepLink?.();
+  return { ok: true, eventId };
+}
+
   App.actions = {
     setLogin,
     login,
@@ -433,6 +521,8 @@ function focusPlaceOnMapFlow(input = {}) {
 
     queueDeepLink,
     clearQueuedDeepLink,
+    queueDeepLinkFromHashFlow,
+    processQueuedDeepLinkFlow,
 
     highlightPendingPopupEvent,
     clearPendingPopupEvent,
@@ -445,6 +535,6 @@ function focusPlaceOnMapFlow(input = {}) {
     shareEventFlow,
     routeToEventFlow,
     focusEventOnMapFlow,
-    focusPlaceOnMapFlow
+    focusPlaceOnMapFlow,
   };
 })();
