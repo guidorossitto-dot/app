@@ -713,273 +713,13 @@ if (logoutBtn) {
     return mapObj;
   }
 
-  function removeCalendarPopover() {
-    const old = document.getElementById("calendarEventPopover");
-    if (old) old.remove();
-  }
-
-  function showCalendarEventPopover(anchorEl, ev) {
-    if (!anchorEl || !ev) return;
-
-    removeCalendarPopover();
-
-    const pop = document.createElement("div");
-    pop.id = "calendarEventPopover";
-    pop.className = "calendarEventPopover";
-
-    const time = util.formatTimeStart(ev);
-    const place = util.shortPlaceName(ev.placeName) || "Lugar sin nombre";
-    const dateText = util.formatDateDisplay(ev.date);
-    
-    const icon = util.categoryEmoji(ev.category) || "📍";
-
-    pop.innerHTML = `
-      <div class="calendarEventPopover__title">
-        <span class="calendarEventIcon">${icon}</span>
-        <span class="calendarEventTitleText">${ev.title || "Evento"}</span>
-      </div>
-      <div class="calendarEventPopover__meta">
-        ${time ? `<div><strong>Hora:</strong> ${time}</div>` : ""}
-        <div><strong>Lugar:</strong> ${place}</div>
-        <div><strong>Fecha:</strong> ${dateText}</div>
-      </div>
-      <div class="calendarEventPopover__actions">
-        <button type="button" class="linkBtn calendarPopoverMapBtn">Ver en mapa</button>
-        <button type="button" class="linkBtn calendarPopoverCloseBtn">Cerrar</button>
-      </div>
-    `;
-
-    document.body.appendChild(pop);
-
-    const rect = anchorEl.getBoundingClientRect();
-    const popRect = pop.getBoundingClientRect();
-
-    let top = window.scrollY + rect.bottom + 8;
-    let left = window.scrollX + rect.left;
-
-    const maxLeft = window.scrollX + window.innerWidth - popRect.width - 12;
-    if (left > maxLeft) left = Math.max(window.scrollX + 12, maxLeft);
-
-    pop.style.position = "absolute";
-    pop.style.top = `${top}px`;
-    pop.style.left = `${left}px`;
-    pop.style.zIndex = "9999";
-
-    const closeBtn = pop.querySelector(".calendarPopoverCloseBtn");
-    if (closeBtn) {
-      closeBtn.addEventListener("click", (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        removeCalendarPopover();
-      });
-    }
-
-    const mapBtn = pop.querySelector(".calendarPopoverMapBtn");
-    if (mapBtn) {
-      mapBtn.addEventListener("click", (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-
-        removeCalendarPopover();
-
-        const mapEl = document.getElementById("map");
-        if (mapEl) mapEl.scrollIntoView({ behavior: "smooth", block: "start" });
-
-        const key = util.smartLocationKey(ev, state.logic.events || []);
-        const loc = state.runtime.locationMarkers?.[key];
-
-        const today = util.todayStrYYYYMMDD();
-const isToday = String(ev.date || "").slice(0, 10) === today;
-
-if (isToday && App.map?.focusEventById && ev.id) {
-  const ok = App.map.focusEventById(ev.id);
-  if (ok) return;
-}
-
-const placeTitle = util.shortPlaceName(ev.placeName) || "Lugar sin nombre";
-const eventTitle = ev.title || "Evento";
-
-if (App.map?.focusPlaceByCoords && Number.isFinite(ev.lat) && Number.isFinite(ev.lng)) {
-  App.map.focusPlaceByCoords(
-    Number(ev.lat),
-    Number(ev.lng),
-    placeTitle,
-    eventTitle,
-    16
-  );
-  return;
-}
-
-if (state.runtime.map && Number.isFinite(ev.lat) && Number.isFinite(ev.lng)) {
-  state.runtime.map.setView([ev.lat, ev.lng], 16);
-}
-      });
-    }
-
-    requestAnimationFrame(() => {
-      const onDocClick = (e) => {
-        if (!pop.contains(e.target) && e.target !== anchorEl) {
-          removeCalendarPopover();
-          document.removeEventListener("click", onDocClick, true);
-        }
-      };
-
-      document.addEventListener("click", onDocClick, true);
-    });
-  }
-
-  function showCalendarDayPopover(anchorEl, dateStr, events) {
-    if (!anchorEl) return;
-
-    removeCalendarPopover();
-
-    const pop = document.createElement("div");
-    pop.id = "calendarEventPopover";
-    pop.className = "calendarEventPopover calendarEventPopover--dayList";
-
-    const safeEvents = [...(events || [])].sort(util.sortEventsByStatusThenTime);
-    const dateText = util.formatDateDisplay(dateStr);
-
-    pop.innerHTML = `
-      <div class="calendarEventPopover__title">Eventos del ${dateText}</div>
-      <div class="calendarDayPopover__list">
-        ${
-          safeEvents.length
-            ? safeEvents.map((ev) => {
-                const time = util.formatTimeStart(ev);
-                const place = util.shortPlaceName(ev.placeName) || "Lugar sin nombre";
-                const status = util.getEventStatus(ev);
-                const icon = util.categoryEmoji(ev.category) || "📍";
-
-                return `
-                  <div class="calendarDayPopover__item" data-eid="${encodeURIComponent(ev.id || "")}" style="cursor:pointer;">
-                    <div class="calendarDayPopover__itemTitle">
-                      <span class="calendarEventIcon">${icon}</span>
-                      <span class="calendarEventTitleText">${ev.title || "Evento"}</span>
-                    </div>
-                    <div class="calendarDayPopover__itemMeta">
-                      ${time ? `<div><strong>Hora:</strong> ${time}</div>` : ""}
-                      <div><strong>Lugar:</strong> ${place}</div>
-                      ${status ? `<div><strong>Estado:</strong> ${status}</div>` : ""}
-                    </div>
-                  </div>
-                `;
-              }).join("")
-            : `<div class="calendarDayPopover__empty">No hay eventos para este día</div>`
-        }
-      </div>
-      <div class="calendarEventPopover__actions">
-        <button type="button" class="linkBtn calendarPopoverCloseBtn">Cerrar</button>
-      </div>
-    `;
-
-    document.body.appendChild(pop);
-
-    const rect = anchorEl.getBoundingClientRect();
-    const popRect = pop.getBoundingClientRect();
-
-    let top = window.scrollY + rect.bottom + 8;
-    let left = window.scrollX + rect.left;
-
-    const maxLeft = window.scrollX + window.innerWidth - popRect.width - 12;
-    if (left > maxLeft) left = Math.max(window.scrollX + 12, maxLeft);
-
-    const maxTop = window.scrollY + window.innerHeight - popRect.height - 12;
-    if (top > maxTop) {
-      top = Math.max(window.scrollY + 12, window.scrollY + rect.top - popRect.height - 8);
-    }
-
-    pop.style.position = "absolute";
-    pop.style.top = `${top}px`;
-    pop.style.left = `${left}px`;
-    pop.style.zIndex = "9999";
-
-    const closeBtn = pop.querySelector(".calendarPopoverCloseBtn");
-    if (closeBtn) {
-      closeBtn.addEventListener("click", (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        removeCalendarPopover();
-      });
-    }
-
-    pop.querySelectorAll(".calendarDayPopover__item[data-eid]").forEach((item) => {
-  item.addEventListener("click", (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-
-    const eventId = decodeURIComponent(item.dataset.eid || "");
-    if (!eventId) return;
-
-    const ev = App.events?.findEventById?.(eventId) || null;
-    if (!ev) return;
-
-    removeCalendarPopover();
-
-    const today = util.todayStrYYYYMMDD();
-    const isToday = String(ev.date || "").slice(0, 10) === today;
-
-    if (isToday && App.map?.focusEventById) {
-      const ok = App.map.focusEventById(eventId);
-      if (ok) return;
-    }
-
-    const placeTitle = util.shortPlaceName(ev.placeName) || "Lugar sin nombre";
-    const eventTitle = ev.title || "Evento";
-
-    if (App.map?.focusPlaceByCoords && Number.isFinite(ev.lat) && Number.isFinite(ev.lng)) {
-      App.map.focusPlaceByCoords(
-        Number(ev.lat),
-        Number(ev.lng),
-        placeTitle,
-        eventTitle,
-        16
-      );
-      return;
-    }
-
-    const mapEl = document.getElementById("map");
-    if (mapEl) mapEl.scrollIntoView({ behavior: "smooth", block: "start" });
-
-    if (state.runtime.map && Number.isFinite(ev.lat) && Number.isFinite(ev.lng)) {
-      state.runtime.map.setView([ev.lat, ev.lng], 16);
-    }
-  });
-});
-
-    requestAnimationFrame(() => {
-      const onDocClick = (e) => {
-        if (!pop.contains(e.target) && e.target !== anchorEl) {
-          removeCalendarPopover();
-          document.removeEventListener("click", onDocClick, true);
-        }
-      };
-
-      document.addEventListener("click", onDocClick, true);
-    });
-  }
-
-  function openCalendarDay(dateStr, anchorEl = null) {
-    if (anchorEl) {
-      const dayEvents = util.getEventsOnDate(dateStr, state.logic.events);
-      showCalendarDayPopover(anchorEl, dateStr, dayEvents);
-      return;
-    }
-
-    removeCalendarPopover();
-    setListFocus({ type: "day", dateStr });
-    renderAll({
-      rebuildMarkers: false,
-      recomputeNearby: false
-    });
-  }
-
+  
   function renderCalendar() {
     const cal = document.getElementById("calendar");
     const label = document.getElementById("monthLabel");
     if (!cal) return;
 
-    removeCalendarPopover();
+    App.ui?.removeCalendarPopover?.();
     cal.innerHTML = "";
 
     const year = state.logic.calendarCursor.getFullYear();
@@ -1043,7 +783,7 @@ if (state.runtime.map && Number.isFinite(ev.lat) && Number.isFinite(ev.lng)) {
         b.addEventListener("click", (e) => {
           e.preventDefault();
           e.stopPropagation();
-          showCalendarEventPopover(b, ev);
+          App.ui?.showCalendarEventPopover?.(b, ev);
         });
 
         cell.appendChild(b);
@@ -1060,14 +800,14 @@ if (state.runtime.map && Number.isFinite(ev.lat) && Number.isFinite(ev.lng)) {
         more.addEventListener("click", (e) => {
           e.preventDefault();
           e.stopPropagation();
-          showCalendarDayPopover(more, dateStr, evs);
-        });
+          App.ui?.showCalendarDayPopover?.(more, dateStr, evs);
+       });
 
         cell.appendChild(more);
       }
 
       cell.addEventListener("click", () => {
-        openCalendarDay(dateStr);
+        App.ui?.openCalendarDay?.(dateStr);
       });
 
       cal.appendChild(cell);
@@ -1235,23 +975,23 @@ if (state.runtime.map && Number.isFinite(ev.lat) && Number.isFinite(ev.lng)) {
     });
   }
 
-  function bindAdminUI() {
-  const addBtn = document.getElementById("addEventBtn");
-  const clearBtn = document.getElementById("clearEventsBtn");
-  const clearPastBtn = document.getElementById("clearPastEventsBtn");
-  const cancelBtn = document.getElementById("cancelEditBtn");
-  const venueSearchInput = document.getElementById("venueSearchInput");
+    function bindAdminSaveUI() {
+    const addBtn = document.getElementById("addEventBtn");
+    if (!addBtn) return;
 
-    if (addBtn) {
-      addBtn.addEventListener("click", async () => {
-        if (!util.canManageUI()) {
-          alert("No tenés permisos para cargar eventos.");
-          return;
-        }
+    addBtn.addEventListener("click", async () => {
+      if (!util.canManageUI()) {
+        alert("No tenés permisos para cargar eventos.");
+        return;
+      }
 
-        await App.adminForm?.createEventFromAdminForm?.();
-      });
-    }
+      await App.adminForm?.createEventFromAdminForm?.();
+    });
+  }
+
+  function bindAdminBulkActionsUI() {
+    const clearBtn = document.getElementById("clearEventsBtn");
+    const clearPastBtn = document.getElementById("clearPastEventsBtn");
 
     if (clearBtn) {
       clearBtn.addEventListener("click", () => {
@@ -1263,63 +1003,78 @@ if (state.runtime.map && Number.isFinite(ev.lat) && Number.isFinite(ev.lng)) {
         App.map?.clearAllEvents?.();
       });
     }
-      if (clearPastBtn) {
-  clearPastBtn.addEventListener("click", async () => {
-    if (!util.canManageUI()) {
-      alert("No tenés permisos para borrar eventos.");
-      return;
-    }
 
-    const confirmDelete = confirm("¿Seguro que querés borrar todos los eventos pasados?");
-    if (!confirmDelete) return;
-
-    const result = await App.events?.clearPastEvents?.();
-
-    if (!result?.ok) {
-      alert("No se pudieron borrar los eventos pasados.");
-      return;
-    }
-
-    alert(`Se borraron ${result.deletedCount || 0} eventos pasados.`);
-
-    App.commit?.({
-      persist: false,
-      purgePast: false,
-      rebuildMarkers: true,
-      recomputeNearby: true
-    });
-  });
-}
-       if (cancelBtn) {
-      cancelBtn.addEventListener("click", () => {
+    if (clearPastBtn) {
+      clearPastBtn.addEventListener("click", async () => {
         if (!util.canManageUI()) {
-          alert("No tenés permisos para editar eventos.");
+          alert("No tenés permisos para borrar eventos.");
           return;
         }
 
-        App.adminForm?.resetAdminEventForm?.();
-      });
-    }
+        const confirmDelete = confirm("¿Seguro que querés borrar todos los eventos pasados?");
+        if (!confirmDelete) return;
 
-    if (venueSearchInput) {
-      venueSearchInput.addEventListener("input", (e) => {
-        if (!util.canManageUI()) {
-          const box = document.getElementById("venueSuggestions");
-          if (box) box.innerHTML = "";
+        const result = await App.events?.clearPastEvents?.();
+
+        if (!result?.ok) {
+          alert("No se pudieron borrar los eventos pasados.");
           return;
         }
 
-        const query = e.target.value || "";
+        alert(`Se borraron ${result.deletedCount || 0} eventos pasados.`);
 
-        App.state.logic.adminVenueQuery = query;
-        App.state.logic.adminVenueSuggestions =
-          App.venues?.searchVenuesByName?.(query) || [];
-
-        renderVenueSuggestions();
+        App.commit?.({
+          persist: false,
+          purgePast: false,
+          rebuildMarkers: true,
+          recomputeNearby: true
+        });
       });
     }
   }
 
+  function bindAdminCancelUI() {
+    const cancelBtn = document.getElementById("cancelEditBtn");
+    if (!cancelBtn) return;
+
+    cancelBtn.addEventListener("click", () => {
+      if (!util.canManageUI()) {
+        alert("No tenés permisos para editar eventos.");
+        return;
+      }
+
+      App.adminForm?.resetAdminEventForm?.();
+    });
+  }
+
+  function bindAdminVenueSearchUI() {
+    const venueSearchInput = document.getElementById("venueSearchInput");
+    if (!venueSearchInput) return;
+
+    venueSearchInput.addEventListener("input", (e) => {
+      if (!util.canManageUI()) {
+        const box = document.getElementById("venueSuggestions");
+        if (box) box.innerHTML = "";
+        return;
+      }
+
+      const query = e.target.value || "";
+
+      App.state.logic.adminVenueQuery = query;
+      App.state.logic.adminVenueSuggestions =
+        App.venues?.searchVenuesByName?.(query) || [];
+
+      renderVenueSuggestions();
+    });
+  }
+
+    function bindAdminUI() {
+    bindAdminSaveUI();
+    bindAdminBulkActionsUI();
+    bindAdminCancelUI();
+    bindAdminVenueSearchUI();
+  }
+  
   function renderVenueSuggestions() {
     const box = document.getElementById("venueSuggestions");
     if (!box) return;
@@ -1402,7 +1157,7 @@ if (state.runtime.map && Number.isFinite(ev.lat) && Number.isFinite(ev.lng)) {
     function processQueuedDeepLink() {
     return App.actions?.processQueuedDeepLinkFlow?.();
   }
-  
+
   /* =========================
      LISTENERS DE HASH
   ========================= */
