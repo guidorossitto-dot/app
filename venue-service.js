@@ -186,6 +186,38 @@
     };
   }
 
+async function ensureVenueExistsFromEventData(eventLike = {}) {
+  const name = safeString(eventLike.placeName || eventLike.name);
+  const lat = toNumberOrNull(eventLike.lat);
+  const lng = toNumberOrNull(eventLike.lng);
+
+  if (!name || lat === null || lng === null) {
+    return { ok: false, error: "INVALID_EVENT_VENUE_DATA" };
+  }
+
+  const existingVenue = state.logic.venues.find((v) => {
+    const sameName = safeLower(v?.name) === safeLower(name);
+    const sameLat = Number(v?.lat) === lat;
+    const sameLng = Number(v?.lng) === lng;
+    return sameName && sameLat && sameLng;
+  });
+
+  if (existingVenue) {
+    return {
+      ok: true,
+      venue: cloneVenue(existingVenue),
+      duplicate: true
+    };
+  }
+
+  return await addVenueRemote({
+    name,
+    address: name,
+    lat,
+    lng
+  });
+}
+
   function updateVenue(venueId, patch = {}, options = {}) {
     ensureVenueState();
 
@@ -375,6 +407,7 @@ App.store?.dispatch?.({
   searchVenuesByName,
   addVenue,
   addVenueRemote,
+  ensureVenueExistsFromEventData,
   updateVenue,
   removeVenue,
   replaceAllVenues,

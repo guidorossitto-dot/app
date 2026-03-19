@@ -284,26 +284,11 @@
         return;
       }
 
-      if (App.venues?.addVenueRemote && App.venues?.listVenues) {
-        const existingVenue = App.venues
-          .listVenues()
-          .find((v) => {
-            const sameName =
-              String(v?.name || "").trim().toLowerCase() === placeName.toLowerCase();
-            const sameLat = Number(v?.lat) === lat;
-            const sameLng = Number(v?.lng) === lng;
-            return sameName && sameLat && sameLng;
-          });
-
-        if (!existingVenue) {
-          await App.venues.addVenueRemote({
-            name: placeName,
-            address: placeName,
-            lat,
-            lng
-          });
-        }
-      }
+    await App.venues?.ensureVenueExistsFromEventData?.({
+        placeName,
+        lat,
+        lng
+      });
 
             if ((saveResult?.createdCount || 0) > 1) {
         alert(`Se crearon ${saveResult.createdCount} eventos.`);
