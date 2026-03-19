@@ -233,6 +233,187 @@ async function shareEventFlow(input = {}) {
   }
 }
 
+function routeToEventFlow(input = {}) {
+  const btn = input?.button || null;
+  if (!btn) return { ok: false, error: "MISSING_BUTTON" };
+
+  const toLat = Number(btn.dataset.lat);
+  const toLng = Number(btn.dataset.lng);
+
+  const fromLat = App.state.logic.nearbyCenter?.lat;
+  const fromLng = App.state.logic.nearbyCenter?.lng;
+
+  if (!Number.isFinite(fromLat) || !Number.isFinite(fromLng)) {
+    alert("Primero marcá tu ubicación o usá “Eventos cerca mío”.");
+    return { ok: false, error: "MISSING_ORIGIN" };
+  }
+
+  if (!Number.isFinite(toLat) || !Number.isFinite(toLng)) {
+    alert("No se pudo resolver el destino.");
+    return { ok: false, error: "INVALID_DESTINATION" };
+  }
+
+  const url =
+    `https://www.google.com/maps/dir/?api=1` +
+    `&origin=${encodeURIComponent(`${fromLat},${fromLng}`)}` +
+    `&destination=${encodeURIComponent(`${toLat},${toLng}`)}` +
+    `&travelmode=walking`;
+
+  window.open(url, "_blank", "noopener");
+
+  return {
+    ok: true,
+    mode: "walking",
+    origin: { lat: fromLat, lng: fromLng },
+    destination: { lat: toLat, lng: toLng }
+  };
+}
+
+function focusEventOnMapFlow(input = {}) {
+  const btn = input?.button || null;
+  if (!btn) return { ok: false, error: "MISSING_BUTTON" };
+
+  const eventId = decodeURIComponent((btn.dataset.eid || "").trim());
+  const lat = Number(btn.dataset.lat);
+  const lng = Number(btn.dataset.lng);
+  const key = btn.dataset.key || "";
+
+  const mapEl = document.getElementById("map");
+  if (mapEl) {
+    mapEl.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  if (eventId && App.map?.focusEventById) {
+    const ok = App.map.focusEventById(eventId);
+    if (ok) return { ok: true, mode: "event", eventId };
+  }
+
+  const loc = key ? App.state.runtime.locationMarkers?.[key] : null;
+
+  if (App.state.runtime.map && Number.isFinite(lat) && Number.isFinite(lng)) {
+    App.state.runtime.map.setView([lat, lng], 16);
+    if (loc?.marker) loc.marker.openPopup();
+    return {
+      ok: true,
+      mode: "coords",
+      lat,
+      lng
+    };
+  }
+
+  return { ok: false, error: "FOCUS_FAILED" };
+}
+
+function focusPlaceOnMapFlow(input = {}) {
+  const btn = input?.button || null;
+  if (!btn) return { ok: false, error: "MISSING_BUTTON" };
+
+  const lat = Number(btn.dataset.lat);
+  const lng = Number(btn.dataset.lng);
+  const key = btn.dataset.key || "";
+
+  const mapEl = document.getElementById("map");
+  if (mapEl) {
+    mapEl.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  const loc = key ? App.state.runtime.locationMarkers?.[key] : null;
+
+  if (loc?.marker && App.state.runtime.map) {
+    const p = loc.marker.getLatLng();
+
+    if (App.map?.openMarkerPopupStable) {
+      App.map.openMarkerPopupStable(loc.marker, p.lat, p.lng, 16);
+    } else {
+      App.state.runtime.map.setView([p.lat, p.lng], 16);
+      setTimeout(() => {
+        try {
+          loc.marker.openPopup();
+        } catch {}
+      }, 140);
+    }
+
+    return {
+      ok: true,
+      mode: "marker",
+      lat: p.lat,
+      lng: p.lng
+    };
+  }
+
+  if (!App.state.runtime.map || !Number.isFinite(lat) || !Number.isFinite(lng)) {
+    return { ok: false, error: "INVALID_COORDS" };
+  }
+
+  if (
+    App.state.runtime.deepLinkLayer &&
+    typeof App.state.runtime.deepLinkLayer.clearLayers === "function"
+  ) {
+    App.state.runtime.deepLinkLayer.clearLayers();
+  }
+
+  const placeTitle =
+    btn.closest("li, .accordion, .panelCard, .featuredBox")
+      ?.querySelector("[data-place-title]")?.textContent?.trim()
+    || btn.closest("li, .accordion, .panelCard")
+      ?.querySelector("div")?.textContent?.trim()
+    || "Lugar";
+
+  App.map?.clearTemporaryFocusMarker?.();
+
+  const tempMarker = L.marker([lat, lng], {
+    bubblingMouseEvents: false
+  });
+
+  App.map?.setTemporaryFocusMarker?.(tempMarker);
+
+  tempMarker.bindPopup(`
+    <div class="popupCard">
+      <div class="popupHeader">
+        <div>
+          <div class="popupPlace">${placeTitle}</div>
+          <div class="popupSub">Ubicación del lugar</div>
+        </div>
+      </div>
+    </div>
+  `, {
+    closeButton: true,
+    autoPan: true,
+    keepInView: true,
+    autoPanPadding: [16, 16],
+    offset: [0, -10],
+    maxWidth: 260,
+    minWidth: 180
+  });
+
+  tempMarker.on("popupclose", () => {
+    if (App.state.runtime.temporaryFocusMarker === tempMarker) {
+      App.map?.clearTemporaryFocusMarker?.();
+    }
+  });
+
+  if (App.state.runtime.deepLinkLayer) {
+    tempMarker.addTo(App.state.runtime.deepLinkLayer);
+  } else {
+    tempMarker.addTo(App.state.runtime.map);
+  }
+
+  App.state.runtime.map.setView([lat, lng], 16);
+
+  setTimeout(() => {
+    try {
+      tempMarker.openPopup();
+    } catch {}
+  }, 120);
+
+  return {
+    ok: true,
+    mode: "temporary-marker",
+    lat,
+    lng
+  };
+}
+
   App.actions = {
     setLogin,
     login,
@@ -261,6 +442,9 @@ async function shareEventFlow(input = {}) {
     commitAndRender,
     saveAndRefresh,
     deleteEventFlow,
-    shareEventFlow
+    shareEventFlow,
+    routeToEventFlow,
+    focusEventOnMapFlow,
+    focusPlaceOnMapFlow
   };
 })();

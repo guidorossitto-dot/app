@@ -283,30 +283,8 @@ function rebuildLocationMarkers(list = state.logic.events) {
           return;
 }
 
-        if (btn.classList.contains("popupRouteBtn")) {
-          const toLat = Number(btn.dataset.lat);
-          const toLng = Number(btn.dataset.lng);
-
-          const fromLat = state.logic.nearbyCenter?.lat;
-          const fromLng = state.logic.nearbyCenter?.lng;
-
-          if (!Number.isFinite(fromLat) || !Number.isFinite(fromLng)) {
-            alert("Primero marcá tu ubicación o usá “Eventos cerca mío”.");
-            return;
-          }
-
-          if (!Number.isFinite(toLat) || !Number.isFinite(toLng)) {
-            alert("No se pudo resolver el destino.");
-            return;
-          }
-
-          const url =
-            `https://www.google.com/maps/dir/?api=1` +
-            `&origin=${encodeURIComponent(`${fromLat},${fromLng}`)}` +
-            `&destination=${encodeURIComponent(`${toLat},${toLng}`)}` +
-            `&travelmode=walking`;
-
-          window.open(url, "_blank", "noopener");
+                if (btn.classList.contains("popupRouteBtn")) {
+          App.actions?.routeToEventFlow?.({ button: btn });
           return;
         }
 
@@ -317,7 +295,7 @@ function rebuildLocationMarkers(list = state.logic.events) {
           await App.adminForm?.startEditingEventFromId?.(eventId);
           return;
         }
-        
+
       if (!util.canManageUI()) return;
       if (btn.classList.contains("deleteEventBtn")) {
   await App.ui?.deleteEventFromButton?.(btn);

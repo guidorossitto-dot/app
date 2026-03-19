@@ -1214,106 +1214,16 @@ if (state.runtime.map && Number.isFinite(ev.lat) && Number.isFinite(ev.lng)) {
     if (state.runtime.deleteUIBound) return;
     state.runtime.deleteUIBound = true;
 
-    document.addEventListener("click", (e) => {
+        document.addEventListener("click", (e) => {
       const btn = e.target.closest(".mapPlaceBtn");
       if (!btn) return;
 
       e.preventDefault();
       e.stopPropagation();
 
-      const lat = Number(btn.dataset.lat);
-      const lng = Number(btn.dataset.lng);
-      const key = btn.dataset.key || "";
-
-      const mapEl = document.getElementById("map");
-      if (mapEl) {
-        mapEl.scrollIntoView({ behavior: "smooth", block: "start" });
-      }
-
-      const loc = key ? state.runtime.locationMarkers?.[key] : null;
-
-      if (loc?.marker && state.runtime.map) {
-        const p = loc.marker.getLatLng();
-
-        if (App.map?.openMarkerPopupStable) {
-          App.map.openMarkerPopupStable(loc.marker, p.lat, p.lng, 16);
-        } else {
-          state.runtime.map.setView([p.lat, p.lng], 16);
-          setTimeout(() => {
-            try {
-              loc.marker.openPopup();
-            } catch {}
-          }, 140);
-        }
-
-        return;
-      }
-
-      if (!state.runtime.map || !Number.isFinite(lat) || !Number.isFinite(lng)) {
-        return;
-      }
-
-      if (
-        state.runtime.deepLinkLayer &&
-        typeof state.runtime.deepLinkLayer.clearLayers === "function"
-      ) {
-        state.runtime.deepLinkLayer.clearLayers();
-      }
-
-      const placeTitle =
-        btn.closest("li, .accordion, .panelCard, .featuredBox")
-          ?.querySelector("[data-place-title]")?.textContent?.trim()
-        || btn.closest("li, .accordion, .panelCard")
-          ?.querySelector("div")?.textContent?.trim()
-        || "Lugar";
-
-App.map?.clearTemporaryFocusMarker?.();
-
-      const tempMarker = L.marker([lat, lng], {
-        bubblingMouseEvents: false
-      });
-      App.map?.setTemporaryFocusMarker?.(tempMarker);
-
-      tempMarker.bindPopup(`
-        <div class="popupCard">
-          <div class="popupHeader">
-            <div>
-              <div class="popupPlace">${placeTitle}</div>
-              <div class="popupSub">Ubicación del lugar</div>
-            </div>
-          </div>
-        </div>
-      `, {
-        closeButton: true,
-        autoPan: true,
-        keepInView: true,
-        autoPanPadding: [16, 16],
-        offset: [0, -10],
-        maxWidth: 260,
-        minWidth: 180
-      });
-
-   tempMarker.on("popupclose", () => {
-  if (state.runtime.temporaryFocusMarker === tempMarker) {
-    App.map?.clearTemporaryFocusMarker?.();
-  }
-});
-
-      if (state.runtime.deepLinkLayer) {
-        tempMarker.addTo(state.runtime.deepLinkLayer);
-      } else {
-        tempMarker.addTo(state.runtime.map);
-      }
-
-      state.runtime.map.setView([lat, lng], 16);
-
-      setTimeout(() => {
-        try {
-          tempMarker.openPopup();
-        } catch {}
-      }, 120);
+      App.actions?.focusPlaceOnMapFlow?.({ button: btn });
     });
-
+    
     document.addEventListener("click", async (e) => {
       const btn = e.target.closest(".deleteEventBtn, .popupDeleteBtn");
       if (!btn) return;
@@ -1566,63 +1476,24 @@ App.map?.clearTemporaryFocusMarker?.();
     processQueuedDeepLink();
   });
 
-  document.addEventListener("click", (e) => {
+    document.addEventListener("click", (e) => {
     const btn = e.target.closest(".mapFocusBtn");
     if (!btn) return;
 
     e.preventDefault();
     e.stopPropagation();
 
-    const eventId = decodeURIComponent((btn.dataset.eid || "").trim());
-    const lat = Number(btn.dataset.lat);
-    const lng = Number(btn.dataset.lng);
-    const key = btn.dataset.key || "";
-
-    const mapEl = document.getElementById("map");
-    if (mapEl) {
-      mapEl.scrollIntoView({ behavior: "smooth", block: "start" });
-    }
-
-    if (eventId && App.map?.focusEventById) {
-      const ok = App.map.focusEventById(eventId);
-      if (ok) return;
-    }
-
-    const loc = key ? state.runtime.locationMarkers?.[key] : null;
-
-    if (state.runtime.map && Number.isFinite(lat) && Number.isFinite(lng)) {
-      state.runtime.map.setView([lat, lng], 16);
-      if (loc?.marker) loc.marker.openPopup();
-    }
+    App.actions?.focusEventOnMapFlow?.({ button: btn });
   });
 
-  document.addEventListener("click", (e) => {
+    document.addEventListener("click", (e) => {
     const btn = e.target.closest(".routeBtn");
     if (!btn) return;
 
-    const toLat = Number(btn.dataset.lat);
-    const toLng = Number(btn.dataset.lng);
+    e.preventDefault();
+    e.stopPropagation();
 
-    const fromLat = state.logic.nearbyCenter?.lat;
-    const fromLng = state.logic.nearbyCenter?.lng;
-
-    if (!Number.isFinite(fromLat) || !Number.isFinite(fromLng)) {
-      alert("Primero marcá tu ubicación o usá “Eventos cerca mío”.");
-      return;
-    }
-
-    if (!Number.isFinite(toLat) || !Number.isFinite(toLng)) {
-      alert("No se pudo resolver el destino.");
-      return;
-    }
-
-    const url =
-      `https://www.google.com/maps/dir/?api=1` +
-      `&origin=${encodeURIComponent(`${fromLat},${fromLng}`)}` +
-      `&destination=${encodeURIComponent(`${toLat},${toLng}`)}` +
-      `&travelmode=walking`;
-
-    window.open(url, "_blank", "noopener");
+    App.actions?.routeToEventFlow?.({ button: btn });
   });
 
   document.addEventListener("click", async (e) => {
