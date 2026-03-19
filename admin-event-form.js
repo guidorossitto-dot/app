@@ -264,56 +264,20 @@
       App.actions?.setEditingMode?.(null);
       App.actions?.setEditingSeriesId?.(null);
     } else {
-      const mode = createMode;
-      const baseEvent = { ...patch };
+            const baseEvent = { ...patch };
 
-      let eventsToCreate = [];
+      const buildResult = App.events?.buildEventsFromCreateMode?.(baseEvent, {
+        mode: createMode,
+        startDate: date,
+        endDate
+      });
 
-      if (mode === "dailyRange") {
-        if (!date || !endDate) {
-          alert("Completá fecha inicio y fecha fin.");
-          return;
-        }
-
-        eventsToCreate = App.events?.generateDailyOccurrences?.(baseEvent, date, endDate) || [];
-
-        if (!eventsToCreate.length) {
-          alert("No se pudieron generar ocurrencias. Revisá el rango de fechas.");
-          return;
-        }
-
-        if (eventsToCreate.length > 60) {
-          alert("Demasiadas ocurrencias. Reducí el rango.");
-          return;
-        }
-      } else if (mode === "weeklyRange") {
-        if (!date || !endDate) {
-          alert("Completá fecha inicio y fecha fin.");
-          return;
-        }
-
-        eventsToCreate = App.events?.generateWeeklyOccurrences?.(baseEvent, date, endDate) || [];
-        if (!eventsToCreate.length) {
-          alert("No se pudieron generar ocurrencias semanales. Revisá el rango.");
-          return;
-        }
-
-        if (eventsToCreate.length > 60) {
-          alert("Demasiadas ocurrencias. Reducí el rango.");
-          return;
-        }
-      } else {
-        eventsToCreate = [
-          {
-            id: util.newId(),
-            seriesId: "",
-            recurrenceType: "",
-            recurrenceInterval: null,
-            recurrenceUntil: "",
-            ...baseEvent
-          }
-        ];
+      if (!buildResult?.ok) {
+        alert(buildResult?.message || "No se pudieron preparar los eventos.");
+        return;
       }
+
+      const eventsToCreate = buildResult.events || [];
 
       for (const ev of eventsToCreate) {
         const result = await App.events?.addEventRemote?.(ev);

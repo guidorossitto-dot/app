@@ -62,6 +62,90 @@
     return out;
   }
 
+  function buildEventsFromCreateMode(baseEvent, options = {}) {
+    const mode = String(options.mode || "single").trim();
+    const startDate = String(options.startDate || "").trim();
+    const endDate = String(options.endDate || "").trim();
+
+    if (!baseEvent || typeof baseEvent !== "object") {
+      return { ok: false, error: "INVALID_BASE_EVENT" };
+    }
+
+    if (mode === "dailyRange") {
+      if (!startDate || !endDate) {
+        return {
+          ok: false,
+          error: "MISSING_RANGE",
+          message: "Completá fecha inicio y fecha fin."
+        };
+      }
+
+      const events = generateDailyOccurrences(baseEvent, startDate, endDate);
+
+      if (!events.length) {
+        return {
+          ok: false,
+          error: "EMPTY_OCCURRENCES",
+          message: "No se pudieron generar ocurrencias. Revisá el rango de fechas."
+        };
+      }
+
+      if (events.length > 60) {
+        return {
+          ok: false,
+          error: "TOO_MANY_OCCURRENCES",
+          message: "Demasiadas ocurrencias. Reducí el rango."
+        };
+      }
+
+      return { ok: true, events };
+    }
+
+    if (mode === "weeklyRange") {
+      if (!startDate || !endDate) {
+        return {
+          ok: false,
+          error: "MISSING_RANGE",
+          message: "Completá fecha inicio y fecha fin."
+        };
+      }
+
+      const events = generateWeeklyOccurrences(baseEvent, startDate, endDate);
+
+      if (!events.length) {
+        return {
+          ok: false,
+          error: "EMPTY_OCCURRENCES",
+          message: "No se pudieron generar ocurrencias semanales. Revisá el rango."
+        };
+      }
+
+      if (events.length > 60) {
+        return {
+          ok: false,
+          error: "TOO_MANY_OCCURRENCES",
+          message: "Demasiadas ocurrencias. Reducí el rango."
+        };
+      }
+
+      return { ok: true, events };
+    }
+
+    return {
+      ok: true,
+      events: [
+        {
+          id: util.newId(),
+          seriesId: "",
+          recurrenceType: "",
+          recurrenceInterval: null,
+          recurrenceUntil: "",
+          ...baseEvent
+        }
+      ]
+    };
+  }
+
   function generateWeeklyOccurrences(baseEvent, startDate, endDate) {
     const out = [];
 
@@ -624,6 +708,7 @@ function setActiveCategory(category) {
     isRecurringEvent,
     generateDailyOccurrences,
     generateWeeklyOccurrences,
+    buildEventsFromCreateMode,
     removeSeries,
     replaceSeries,
 
