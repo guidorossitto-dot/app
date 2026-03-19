@@ -1051,7 +1051,6 @@ if (logoutBtn) {
 
     bindPublicUI,
     bindAdminUI,
-    bindCalendarUI,
     bindCategoryUI,
     bindDeleteEventUI,
     bindSidebarUI,

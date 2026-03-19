@@ -1,4 +1,4 @@
-// ui-calendar-popovers.js
+// ui-calendar-popover.js
 (() => {
   "use strict";
 
@@ -36,6 +36,11 @@
       </div>
       <div class="calendarEventPopover__actions">
         <button type="button" class="linkBtn calendarPopoverMapBtn">Ver en mapa</button>
+        ${
+          util.canManageUI() && ev?.id
+            ? `<button type="button" class="linkBtn calendarPopoverEditBtn">Editar</button>`
+            : ""
+        }
         <button type="button" class="linkBtn calendarPopoverCloseBtn">Cerrar</button>
       </div>
     `;
@@ -104,6 +109,17 @@
       });
     }
 
+    const editBtn = pop.querySelector(".calendarPopoverEditBtn");
+    if (editBtn) {
+      editBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        removeCalendarPopover();
+        App.adminForm?.startEditingEventFromId?.(ev.id);
+      });
+    }
+
     requestAnimationFrame(() => {
       const onDocClick = (e) => {
         if (!pop.contains(e.target) && e.target !== anchorEl) {
@@ -150,6 +166,20 @@
                       <div><strong>Lugar:</strong> ${place}</div>
                       ${status ? `<div><strong>Estado:</strong> ${status}</div>` : ""}
                     </div>
+                    ${
+                      util.canManageUI() && ev?.id
+                        ? `
+                          <div class="calendarEventPopover__actions" style="margin-top:8px;">
+                            <button
+                              type="button"
+                              class="linkBtn calendarDayPopoverEditBtn"
+                              data-edit-eid="${encodeURIComponent(ev.id || "")}">
+                              Editar
+                            </button>
+                          </div>
+                        `
+                        : ""
+                    }
                   </div>
                 `;
               }).join("")
@@ -232,6 +262,19 @@
         if (state.runtime.map && Number.isFinite(ev.lat) && Number.isFinite(ev.lng)) {
           state.runtime.map.setView([ev.lat, ev.lng], 16);
         }
+      });
+    });
+
+    pop.querySelectorAll(".calendarDayPopoverEditBtn[data-edit-eid]").forEach((btn) => {
+      btn.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        const eventId = decodeURIComponent(btn.dataset.editEid || "");
+        if (!eventId) return;
+
+        removeCalendarPopover();
+        App.adminForm?.startEditingEventFromId?.(eventId);
       });
     });
 
