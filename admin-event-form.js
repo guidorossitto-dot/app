@@ -48,6 +48,91 @@
     return best;
   }
 
+  function readAdminEventFormValues() {
+    const titleEl = document.getElementById("eventTitle");
+    const dateEl = document.getElementById("eventDate");
+    const latEl = document.getElementById("eventLat");
+    const lngEl = document.getElementById("eventLng");
+    const placeEl = document.getElementById("eventPlace");
+    const startEl = document.getElementById("eventStart");
+    const catEl = document.getElementById("eventCategory");
+    const linkEl = document.getElementById("eventLink");
+    const createModeEl = document.getElementById("eventCreateMode");
+    const endDateEl = document.getElementById("eventEndDate");
+
+    return {
+      els: {
+        titleEl,
+        dateEl,
+        latEl,
+        lngEl,
+        placeEl,
+        startEl,
+        catEl,
+        linkEl,
+        createModeEl,
+        endDateEl
+      },
+
+      values: {
+        title: titleEl?.value.trim() || "",
+        date: dateEl?.value.trim() || "",
+        lat: Number(latEl?.value),
+        lng: Number(lngEl?.value),
+        placeName: placeEl?.value.trim() || "",
+        startTime: startEl?.value.trim() || "",
+        category: catEl?.value || "music",
+        link: linkEl?.value.trim() || "",
+        createMode: createModeEl?.value || "single",
+        endDate: endDateEl?.value?.trim() || ""
+      }
+    };
+  }
+
+  function validateAdminEventFormValues(form) {
+    const v = form?.values || {};
+
+    if (
+      !v.title ||
+      !v.date ||
+      !v.placeName ||
+      !Number.isFinite(v.lat) ||
+      !Number.isFinite(v.lng)
+    ) {
+      return {
+        ok: false,
+        error: "INVALID_FORM",
+        message: "Completá título, fecha, lugar y coordenadas válidas."
+      };
+    }
+
+    if (
+      (v.createMode === "dailyRange" || v.createMode === "weeklyRange") &&
+      (!v.date || !v.endDate)
+    ) {
+      return {
+        ok: false,
+        error: "MISSING_RANGE",
+        message: "Completá fecha inicio y fecha fin."
+      };
+    }
+
+    return { ok: true };
+  }
+
+  function buildBaseEventPatch(formValues) {
+    return {
+      title: formValues.title,
+      date: formValues.date,
+      lat: formValues.lat,
+      lng: formValues.lng,
+      placeName: formValues.placeName,
+      startTime: formValues.startTime,
+      category: formValues.category,
+      link: formValues.link
+    };
+  }
+
   function resetAdminEventForm() {
     const titleEl = document.getElementById("eventTitle");
     const dateEl = document.getElementById("eventDate");
@@ -104,41 +189,35 @@
     App.map?.clearEventCreationMarker?.();
   }
 
-  async function createEventFromAdminForm() {
-    const titleEl = document.getElementById("eventTitle");
-    const dateEl = document.getElementById("eventDate");
-    const latEl = document.getElementById("eventLat");
-    const lngEl = document.getElementById("eventLng");
-    const placeEl = document.getElementById("eventPlace");
-    const startEl = document.getElementById("eventStart");
-    const catEl = document.getElementById("eventCategory");
-    const linkEl = document.getElementById("eventLink");
+    async function createEventFromAdminForm() {
     const addBtn = document.getElementById("addEventBtn");
     const cancelBtn = document.getElementById("cancelEditBtn");
-    const createModeEl = document.getElementById("eventCreateMode");
-    const endDateEl = document.getElementById("eventEndDate");
 
-    if (!titleEl || !dateEl || !latEl || !lngEl) return;
+    const form = readAdminEventFormValues();
+    const { els, values } = form;
 
-    const title = titleEl.value.trim();
-    const date = dateEl.value.trim();
-    let lat = Number(latEl.value);
-    let lng = Number(lngEl.value);
-    let placeName = placeEl ? placeEl.value.trim() : "";
-    const startTime = startEl ? startEl.value.trim() : "";
-    const category = catEl ? catEl.value : "music";
-    const link = linkEl ? linkEl.value.trim() : "";
+    const { latEl, lngEl, placeEl } = els;
 
-    if (
-      !title ||
-      !date ||
-      !placeName ||
-      !Number.isFinite(lat) ||
-      !Number.isFinite(lng)
-    ) {
-      alert("Completá título, fecha, lugar y coordenadas válidas.");
+    if (!els.titleEl || !els.dateEl || !els.latEl || !els.lngEl) return;
+
+    const validation = validateAdminEventFormValues(form);
+    if (!validation.ok) {
+      alert(validation.message || "Revisá los datos del formulario.");
       return;
     }
+
+    let {
+      title,
+      date,
+      lat,
+      lng,
+      placeName,
+      startTime,
+      category,
+      link,
+      createMode,
+      endDate
+    } = values;
 
     const canonical = findCanonicalPlace(placeName, lat, lng);
     if (canonical) {
@@ -151,7 +230,7 @@
       if (placeEl) placeEl.value = util.shortPlaceName(placeName);
     }
 
-    const patch = {
+    const patch = buildBaseEventPatch({
       title,
       date,
       lat,
@@ -160,7 +239,7 @@
       startTime,
       category,
       link
-    };
+    });
 
     const editingId = String(state.logic.editingEventId || "").trim() || null;
 
@@ -185,8 +264,7 @@
       App.actions?.setEditingMode?.(null);
       App.actions?.setEditingSeriesId?.(null);
     } else {
-      const mode = createModeEl?.value || "single";
-      const endDate = endDateEl?.value?.trim() || "";
+      const mode = createMode;
       const baseEvent = { ...patch };
 
       let eventsToCreate = [];
@@ -416,10 +494,12 @@
     };
   }
 
-    App.adminForm = {
+  App.adminForm = {
     ...(App.adminForm || {}),
     findCanonicalPlace,
-    
+    readAdminEventFormValues,
+    validateAdminEventFormValues,
+    buildBaseEventPatch,
     applyEventToAdminForm,
     askEditModeForEvent,
     focusAdminTitleInput,
