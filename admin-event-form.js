@@ -243,17 +243,15 @@
 
     const editingId = String(state.logic.editingEventId || "").trim() || null;
 
-    if (editingId) {
-      const editMode = state.logic.editingMode || "single";
-      const editSeriesId = String(state.logic.editingSeriesId || "").trim();
-
-      let result = null;
-
-      if (editMode === "series" && editSeriesId) {
-        result = await App.events?.replaceSeries?.(editSeriesId, patch);
-      } else {
-        result = await App.events?.replaceEvent?.(editingId, patch);
-      }
+        if (editingId) {
+      const result = await App.events?.saveEditedEvent?.(
+        {
+          editingEventId: editingId,
+          editingMode: state.logic.editingMode,
+          editingSeriesId: state.logic.editingSeriesId
+        },
+        patch
+      );
 
       if (!result?.ok) {
         alert("No se pudo guardar la edición.");

@@ -544,6 +544,50 @@ async function replaceSeries(seriesId, patch = {}) {
   };
 }
 
+async function saveEditedEvent(editState = {}, patch = {}) {
+  const editingEventId = String(editState.editingEventId || "").trim();
+  const editingMode = String(editState.editingMode || "single").trim();
+  const editingSeriesId = String(editState.editingSeriesId || "").trim();
+
+  if (!editingEventId) {
+    return { ok: false, error: "MISSING_EDITING_EVENT_ID" };
+  }
+
+  if (editingMode === "series" && editingSeriesId) {
+    const result = await replaceSeries(editingSeriesId, patch);
+
+    if (!result?.ok) {
+      return {
+        ok: false,
+        error: result?.error || "SAVE_EDIT_SERIES_FAILED"
+      };
+    }
+
+    return {
+      ok: true,
+      mode: "series",
+      updatedCount: result.updatedCount || 0,
+      events: result.events || []
+    };
+  }
+
+  const result = await replaceEvent(editingEventId, patch);
+
+  if (!result?.ok) {
+    return {
+      ok: false,
+      error: result?.error || "SAVE_EDIT_SINGLE_FAILED"
+    };
+  }
+
+  return {
+    ok: true,
+    mode: "single",
+    updatedCount: 1,
+    event: result.event || null
+  };
+}
+
  async function clearAllEvents() {
   const deleted = await storage?.deleteAllEvents?.();
 
@@ -748,12 +792,13 @@ function setActiveCategory(category) {
     buildEventsFromCreateMode,
     removeSeries,
     replaceSeries,
+    saveEditedEvent,
 
     setLoginState,
 
     addEvent,
     replaceEvent,
-    
+
     addEventRemote,
     addEventsRemote,
     removeEvent,
