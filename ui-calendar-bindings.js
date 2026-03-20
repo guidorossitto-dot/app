@@ -3,7 +3,7 @@
   "use strict";
 
   const App = window.App;
-  const { util } = App;
+  const { state, util } = App;
 
  function bindCalendarUI() {
     const prevMonthBtn = document.getElementById("prevMonthBtn");
@@ -19,9 +19,9 @@
           )
         );
 
-        clearListFocus();
+App.ui?.clearListFocus?.();
 
-        commit({
+        App.commit({
           persist: false,
           purgePast: false,
           rebuildMarkers: false,
@@ -40,9 +40,9 @@
           )
         );
 
-        clearListFocus();
+App.ui?.clearListFocus?.();
 
-        commit({
+        App.commit({
           persist: false,
           purgePast: false,
           rebuildMarkers: false,

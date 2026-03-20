@@ -407,6 +407,70 @@ async function deleteVenueRemote(venueId) {
   return { ok: true, event: mapRowToEvent(data) };
 }
 
+async function approveEventCandidatesBulk(candidateIds = []) {
+  const db = App.supabase;
+  if (!db) {
+    const error = new Error("App.supabase no está inicializado");
+    console.error(error.message);
+    return { ok: false, error };
+  }
+
+  const ids = Array.isArray(candidateIds)
+    ? candidateIds
+        .map((id) => String(id || "").trim())
+        .filter(Boolean)
+    : [];
+
+  if (!ids.length) {
+    return { ok: false, error: "EMPTY_CANDIDATE_IDS" };
+  }
+
+  const { data, error } = await db.rpc("approve_event_candidates_bulk", {
+    p_ids: ids
+  });
+
+  if (error) {
+    console.error("Error aprobando candidatos en lote:", error);
+    return { ok: false, error };
+  }
+
+  return {
+    ok: true,
+    approvedCount: Number(data) || 0
+  };
+}
+
+async function loadPendingEventCandidatesBySource(sourceName = "") {
+  const db = App.supabase;
+  if (!db) {
+    const error = new Error("App.supabase no está inicializado");
+    console.error(error.message);
+    return { ok: false, error, candidates: [] };
+  }
+
+  const source = String(sourceName || "").trim();
+  if (!source) {
+    return { ok: false, error: "MISSING_SOURCE_NAME", candidates: [] };
+  }
+
+  const { data, error } = await db
+    .from("event_candidates")
+    .select("*")
+    .eq("source_name", source)
+    .eq("status", "pending")
+    .order("created_at", { ascending: true });
+
+  if (error) {
+    console.error("Error cargando candidatos pendientes:", error);
+    return { ok: false, error, candidates: [] };
+  }
+
+  return {
+    ok: true,
+    candidates: Array.isArray(data) ? data : []
+  };
+}
+
   function saveLoginState(value = state.logic.isLoggedIn) {
     localStorage.setItem(STORAGE_KEYS.LOGIN, JSON.stringify(!!value));
   }
@@ -428,6 +492,8 @@ async function deleteVenueRemote(venueId) {
   deleteAllEvents,
   deletePastEvents,
   updateEvent,
+  approveEventCandidatesBulk,
+  loadPendingEventCandidatesBySource,
   saveLoginState,
   readLoginState,
 

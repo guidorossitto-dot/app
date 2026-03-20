@@ -426,6 +426,75 @@ function queueDeepLinkFromHashFlow() {
   return { ok: true, eventId: decodeURIComponent(eventId) };
 }
 
+async function approveEventCandidatesBulkFlow(candidateIds = []) {
+  if (!App.util?.canManageUI?.()) {
+    alert("No tenés permisos para aprobar candidatos.");
+    return { ok: false, error: "FORBIDDEN" };
+  }
+
+  const ids = Array.isArray(candidateIds)
+    ? candidateIds.map((id) => String(id || "").trim()).filter(Boolean)
+    : [];
+
+  if (!ids.length) {
+    return { ok: false, error: "EMPTY_CANDIDATE_IDS" };
+  }
+
+  const result = await App.storage?.approveEventCandidatesBulk?.(ids);
+
+  if (!result?.ok) {
+    alert("No se pudieron aprobar los candidatos.");
+    return { ok: false, error: result?.error || "APPROVE_BULK_FAILED" };
+  }
+
+  const loadedEvents = await App.storage?.loadEvents?.();
+
+  if (loadedEvents?.ok) {
+    App.events?.setAllEvents?.(loadedEvents.events || []);
+  }
+
+  App.commit?.({
+    persist: false,
+    purgePast: false,
+    rebuildMarkers: true,
+    recomputeNearby: true
+  });
+
+  return {
+    ok: true,
+    approvedCount: result.approvedCount || 0
+  };
+}
+
+async function approvePendingCandidatesBySourceFlow(sourceName = "") {
+  if (!App.util?.canManageUI?.()) {
+    alert("No tenés permisos para aprobar candidatos.");
+    return { ok: false, error: "FORBIDDEN" };
+  }
+
+  const source = String(sourceName || "").trim();
+  if (!source) {
+    return { ok: false, error: "MISSING_SOURCE_NAME" };
+  }
+
+  const pending = await App.storage?.loadPendingEventCandidatesBySource?.(source);
+
+  if (!pending?.ok) {
+    alert("No se pudieron cargar los candidatos pendientes.");
+    return { ok: false, error: pending?.error || "LOAD_PENDING_FAILED" };
+  }
+
+  const candidateIds = (pending.candidates || [])
+    .map((row) => String(row?.id || "").trim())
+    .filter(Boolean);
+
+  if (!candidateIds.length) {
+    return { ok: true, approvedCount: 0, empty: true };
+  }
+
+  return await App.actions?.approveEventCandidatesBulkFlow?.(candidateIds);
+}
+
 function processQueuedDeepLinkFlow() {
   const eventId = App.state.runtime.pendingDeepLinkEventId;
   if (!eventId) return { ok: false, error: "NO_PENDING_DEEP_LINK" };
@@ -500,6 +569,7 @@ function processQueuedDeepLinkFlow() {
 
   App.actions?.clearQueuedDeepLink?.();
   return { ok: true, eventId };
+
 }
 
   App.actions = {
@@ -536,5 +606,7 @@ function processQueuedDeepLinkFlow() {
     routeToEventFlow,
     focusEventOnMapFlow,
     focusPlaceOnMapFlow,
+    approveEventCandidatesBulkFlow,
+    approvePendingCandidatesBySourceFlow,
   };
 })();

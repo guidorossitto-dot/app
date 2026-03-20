@@ -825,9 +825,36 @@ if (logoutBtn) {
     });
   }
 
-  function bindAdminBulkActionsUI() {
-    const clearBtn = document.getElementById("clearEventsBtn");
-    const clearPastBtn = document.getElementById("clearPastEventsBtn");
+function bindAdminBulkActionsUI() {
+  const approveZibiliaBtn = document.getElementById("approveZibiliaBtn");
+  const clearBtn = document.getElementById("clearEventsBtn");
+  const clearPastBtn = document.getElementById("clearPastEventsBtn");
+
+    if (approveZibiliaBtn) {
+  approveZibiliaBtn.addEventListener("click", async () => {
+    if (!util.canManageUI()) {
+      alert("No tenés permisos para aprobar candidatos.");
+      return;
+    }
+
+    approveZibiliaBtn.disabled = true;
+    approveZibiliaBtn.textContent = "Aprobando...";
+
+    const result = await App.actions?.approvePendingCandidatesBySourceFlow?.("zibilia");
+
+    approveZibiliaBtn.disabled = false;
+    approveZibiliaBtn.textContent = "Aprobar scrap Zibilia";
+
+    if (!result?.ok) return;
+
+    if (result.empty) {
+      alert("No hay candidatos pendientes.");
+      return;
+    }
+
+    alert(`Se aprobaron ${result.approvedCount || 0} candidatos.`);
+  });
+}
 
     if (clearBtn) {
       clearBtn.addEventListener("click", () => {
