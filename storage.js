@@ -186,6 +186,63 @@ function loadVenues() {
     return purged.length !== safeList.length;
   }
 
+  async function insertEventCandidates(list = []) {
+  const db = App.supabase;
+  if (!db) {
+    const error = new Error("App.supabase no está inicializado");
+    console.error(error.message);
+    return { ok: false, error };
+  }
+
+  const items = Array.isArray(list) ? list : [];
+  if (!items.length) {
+    return { ok: false, error: "EMPTY_CANDIDATES" };
+  }
+
+  const rows = items.map((c) => ({
+  id: c.id || crypto.randomUUID(),
+
+  source_name: c.source || "unknown",
+  source_url: c.sourceUrl || "",
+  external_id: c.sourceUrl
+    ? `${c.source || "unknown"}::${c.sourceUrl}`
+    : `${c.source || "unknown"}::${c.title || ""}::${c.date || ""}::${c.venueName || ""}`,
+
+  raw_title: c.raw?.title || c.title || "",
+  raw_date_text: c.raw?.dateText || c.date || "",
+  raw_time_text: c.raw?.timeText || c.startTime || "",
+  raw_place_text: c.raw?.placeText || c.venueName || "",
+  raw_link: c.raw?.link || c.sourceUrl || "",
+
+  parsed_title: c.title || "",
+  parsed_date: c.date || null,
+  parsed_start_time: c.startTime || null,
+  parsed_place_name: c.venueName || "",
+  parsed_category: c.category || "music",
+  parsed_lat: Number.isFinite(c.lat) ? c.lat : null,
+  parsed_lng: Number.isFinite(c.lng) ? c.lng : null,
+
+  status: c.status || "pending",
+  notes: ""
+}));
+
+  const { data, error } = await db
+    .from("event_candidates")
+    .insert(rows)
+    .select("*");
+
+  if (error) {
+    console.error("Error insertando event_candidates:", error);
+    return { ok: false, error };
+  }
+
+  return {
+    ok: true,
+    count: Array.isArray(data) ? data.length : 0,
+    candidates: Array.isArray(data) ? data : []
+  };
+}
+
 async function loadVenuesRemote() {
   const supabase = App.supabase;
   if (!supabase) return { ok: false, error: "SUPABASE_NOT_READY" };
@@ -494,6 +551,7 @@ async function loadPendingEventCandidatesBySource(sourceName = "") {
   updateEvent,
   approveEventCandidatesBulk,
   loadPendingEventCandidatesBySource,
+  insertEventCandidates,
   saveLoginState,
   readLoginState,
 

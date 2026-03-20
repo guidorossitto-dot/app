@@ -49,7 +49,16 @@
         result = { ok: true };
         break;
       }
+      case "UPSERT_CANDIDATES": {
+  const mergeIntoExistingCandidates = App.candidateDedupe?.mergeIntoExistingCandidates;
 
+  state.logic.candidates = mergeIntoExistingCandidates
+    ? mergeIntoExistingCandidates(state.logic.candidates || [], action.candidates || [])
+    : (action.candidates || []);
+
+  result = { ok: true };
+  break;
+}
       case "ADD_EVENT": {
         if (!action.event || typeof action.event !== "object") {
           return { ok: false, error: "INVALID_EVENT" };

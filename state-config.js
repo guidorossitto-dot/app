@@ -62,11 +62,14 @@ App.CFG.ALLOWED_CATEGORIES = Object.keys(App.CFG.CATEGORIES);
   editingEventId: null,
   editingMode: null,
   editingSeriesId: null,
+  
 
   adminVenueQuery: "",
   adminVenueSuggestions: [],
   selectedVenueId: null,
   nearbyCenter: null,
+  candidates: [],
+  candidateSelection: [],
   nearbyEvents: []
 },
 

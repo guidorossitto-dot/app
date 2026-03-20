@@ -495,6 +495,56 @@ async function approvePendingCandidatesBySourceFlow(sourceName = "") {
   return await App.actions?.approveEventCandidatesBulkFlow?.(candidateIds);
 }
 
+async function importZibiliaCandidatesFlow() {
+  if (!App.util?.canManageUI?.()) {
+    alert("No tenés permisos para importar candidatos.");
+    return { ok: false, error: "FORBIDDEN" };
+  }
+
+  const importer = App.zibiliaImport?.loadCandidates
+    || App.zibiliaImport?.fetchCandidates
+    || App.zibiliaImport?.run
+    || App.zibiliaImport?.importCandidates;
+
+  if (typeof importer !== "function") {
+    alert("No encontré la función de importación de Zibilia.");
+    return { ok: false, error: "ZIBILIA_IMPORTER_NOT_FOUND" };
+  }
+
+  const rawResult = await importer();
+
+  const rawList = Array.isArray(rawResult)
+    ? rawResult
+    : Array.isArray(rawResult?.candidates)
+      ? rawResult.candidates
+      : Array.isArray(rawResult?.items)
+        ? rawResult.items
+        : [];
+
+  if (!rawList.length) {
+    return { ok: true, importedCount: 0, empty: true };
+  }
+
+  const normalized = rawList.map((item) =>
+    App.candidateDedupe.ensureCandidateShape(item, "zibilia")
+  );
+
+  const merged = App.candidateDedupe.mergeRawCandidates(normalized);
+
+  const saveResult = await App.storage?.insertEventCandidates?.(merged);
+
+  if (!saveResult?.ok) {
+    alert("No se pudieron guardar los candidatos de Zibilia.");
+    return { ok: false, error: saveResult?.error || "INSERT_CANDIDATES_FAILED" };
+  }
+
+  return {
+    ok: true,
+    importedCount: saveResult.count || merged.length,
+    candidates: saveResult.candidates || []
+  };
+}
+
 function processQueuedDeepLinkFlow() {
   const eventId = App.state.runtime.pendingDeepLinkEventId;
   if (!eventId) return { ok: false, error: "NO_PENDING_DEEP_LINK" };
@@ -608,5 +658,6 @@ function processQueuedDeepLinkFlow() {
     focusPlaceOnMapFlow,
     approveEventCandidatesBulkFlow,
     approvePendingCandidatesBySourceFlow,
+    importZibiliaCandidatesFlow
   };
 })();
