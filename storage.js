@@ -200,8 +200,7 @@ function loadVenues() {
   }
 
   const rows = items.map((c) => ({
-  id: c.id || crypto.randomUUID(),
-
+  id: crypto.randomUUID(),
   source_name: c.source || "unknown",
   source_url: c.sourceUrl || "",
   external_id: c.sourceUrl
