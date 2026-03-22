@@ -496,6 +496,61 @@ async function approveEventCandidatesBulk(candidateIds = []) {
   };
 }
 
+async function updateEventCandidateParsedData(candidateId, patch = {}) {
+  const db = App.supabase;
+  if (!db) {
+    const error = new Error("App.supabase no está inicializado");
+    console.error(error.message);
+    return { ok: false, error };
+  }
+
+  const id = String(candidateId || "").trim();
+  if (!id) {
+    return { ok: false, error: "INVALID_CANDIDATE_ID" };
+  }
+
+  const updateRow = {};
+
+  if ("parsed_lat" in patch) {
+    updateRow.parsed_lat =
+      patch.parsed_lat === null || patch.parsed_lat === undefined || patch.parsed_lat === ""
+        ? null
+        : Number(patch.parsed_lat);
+  }
+
+  if ("parsed_lng" in patch) {
+    updateRow.parsed_lng =
+      patch.parsed_lng === null || patch.parsed_lng === undefined || patch.parsed_lng === ""
+        ? null
+        : Number(patch.parsed_lng);
+  }
+
+  if ("parsed_place_name" in patch) {
+    updateRow.parsed_place_name = String(patch.parsed_place_name || "").trim();
+  }
+
+  if (!Object.keys(updateRow).length) {
+    return { ok: false, error: "EMPTY_PATCH" };
+  }
+
+  const { data, error } = await db
+    .from("event_candidates")
+    .update(updateRow)
+    .eq("id", id)
+    .select("*")
+    .single();
+
+  if (error) {
+    console.error("Error actualizando event_candidate:", error);
+    return { ok: false, error };
+  }
+
+  return {
+    ok: true,
+    candidate: data
+  };
+}
+
 async function loadPendingEventCandidatesBySource(sourceName = "") {
   const db = App.supabase;
   if (!db) {
@@ -551,6 +606,7 @@ async function loadPendingEventCandidatesBySource(sourceName = "") {
   approveEventCandidatesBulk,
   loadPendingEventCandidatesBySource,
   insertEventCandidates,
+  updateEventCandidateParsedData,
   saveLoginState,
   readLoginState,
 

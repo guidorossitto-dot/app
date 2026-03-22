@@ -826,33 +826,40 @@ if (logoutBtn) {
   }
 
 function bindAdminBulkActionsUI() {
-  const approveZibiliaBtn = document.getElementById("approveZibiliaBtn");
+  const approveCandidatesBtn = document.getElementById("approveCandidatesBtn");
   const clearBtn = document.getElementById("clearEventsBtn");
   const clearPastBtn = document.getElementById("clearPastEventsBtn");
 
-    if (approveZibiliaBtn) {
-  approveZibiliaBtn.addEventListener("click", async () => {
+    if (approveCandidatesBtn) {
+  approveCandidatesBtn.addEventListener("click", async () => {
     if (!util.canManageUI()) {
       alert("No tenés permisos para aprobar candidatos.");
       return;
     }
 
-    approveZibiliaBtn.disabled = true;
-    approveZibiliaBtn.textContent = "Aprobando...";
+    approveCandidatesBtn.disabled = true;
+    approveCandidatesBtn.textContent = "Aprobando...";
 
-    const result = await App.actions?.approvePendingCandidatesBySourceFlow?.("zibilia");
+    const result = await App.actions?.approveAllPendingCandidatesFlow?.();
 
-    approveZibiliaBtn.disabled = false;
-    approveZibiliaBtn.textContent = "Aprobar scrap Zibilia";
+    approveCandidatesBtn.disabled = false;
+    approveCandidatesBtn.textContent = "Aprobar pendientes";
 
-    if (!result?.ok) return;
-
-    if (result.empty) {
-      alert("No hay candidatos pendientes.");
+    if (!result?.ok && !result?.summary?.length) {
+      alert("No se pudieron aprobar los candidatos.");
       return;
     }
 
-    alert(`Se aprobaron ${result.approvedCount || 0} candidatos.`);
+    const lines = (result.summary || []).map((item) => {
+      return `${item.source}: aprobados ${item.approvedCount || 0}, salteados ${item.skippedCount || 0}`;
+    });
+
+    alert(
+      `Aprobación terminada.\n\n` +
+      `${lines.join("\n")}\n\n` +
+      `Total aprobados: ${result.totalApproved || 0}\n` +
+      `Total salteados: ${result.totalSkipped || 0}`
+    );
   });
 }
 

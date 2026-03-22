@@ -440,17 +440,11 @@ async function approveEventCandidatesBulkFlow(candidateIds = []) {
     return { ok: false, error: "EMPTY_CANDIDATE_IDS" };
   }
 
-  const result = await App.storage?.approveEventCandidatesBulk?.(ids);
+  const result = await App.candidates?.approveCandidates?.(ids);
 
   if (!result?.ok) {
     alert("No se pudieron aprobar los candidatos.");
     return { ok: false, error: result?.error || "APPROVE_BULK_FAILED" };
-  }
-
-  const loadedEvents = await App.storage?.loadEvents?.();
-
-  if (loadedEvents?.ok) {
-    App.events?.setAllEvents?.(loadedEvents.events || []);
   }
 
   App.commit?.({
@@ -477,24 +471,41 @@ async function approvePendingCandidatesBySourceFlow(sourceName = "") {
     return { ok: false, error: "MISSING_SOURCE_NAME" };
   }
 
-  const pending = await App.storage?.loadPendingEventCandidatesBySource?.(source);
+  const loaded = await App.candidates?.loadPendingCandidatesBySource?.(source);
 
-  if (!pending?.ok) {
+  if (!loaded?.ok) {
     alert("No se pudieron cargar los candidatos pendientes.");
-    return { ok: false, error: pending?.error || "LOAD_PENDING_FAILED" };
+    return { ok: false, error: loaded?.error || "LOAD_PENDING_FAILED" };
   }
 
-  const candidateIds = (pending.candidates || [])
-    .map((row) => String(row?.id || "").trim())
+  const approvableCandidates = (loaded.candidates || []).filter((candidate) =>
+    Number.isFinite(candidate?.lat) && Number.isFinite(candidate?.lng)
+  );
+
+  const skippedCandidates = (loaded.candidates || []).filter(
+    (candidate) => !Number.isFinite(candidate?.lat) || !Number.isFinite(candidate?.lng)
+  );
+
+  const candidateIds = approvableCandidates
+    .map((candidate) => String(candidate?.id || "").trim())
     .filter(Boolean);
 
   if (!candidateIds.length) {
-    return { ok: true, approvedCount: 0, empty: true };
+    return {
+      ok: true,
+      approvedCount: 0,
+      empty: true,
+      skippedCount: skippedCandidates.length
+    };
   }
 
-  return await App.actions?.approveEventCandidatesBulkFlow?.(candidateIds);
-}
+  const result = await App.actions?.approveEventCandidatesBulkFlow?.(candidateIds);
 
+  return {
+    ...result,
+    skippedCount: skippedCandidates.length
+  };
+}
 async function importZibiliaCandidatesFlow() {
   if (!App.util?.canManageUI?.()) {
     alert("No tenés permisos para importar candidatos.");
@@ -622,6 +633,48 @@ function processQueuedDeepLinkFlow() {
 
 }
 
+async function approveAllPendingCandidatesFlow() {
+  if (!App.util?.canManageUI?.()) {
+    alert("No tenés permisos para aprobar candidatos.");
+    return { ok: false, error: "FORBIDDEN" };
+  }
+
+  const sources = ["zibilia", "alternativa"];
+  const summary = [];
+
+  let totalApproved = 0;
+  let totalSkipped = 0;
+  let hadError = false;
+
+  for (const source of sources) {
+    const result = await App.actions?.approvePendingCandidatesBySourceFlow?.(source);
+
+    summary.push({
+      source,
+      ok: !!result?.ok,
+      approvedCount: result?.approvedCount || 0,
+      skippedCount: result?.skippedCount || 0,
+      empty: !!result?.empty,
+      error: result?.error || null
+    });
+
+    if (!result?.ok) {
+      hadError = true;
+      continue;
+    }
+
+    totalApproved += result.approvedCount || 0;
+    totalSkipped += result.skippedCount || 0;
+  }
+
+  return {
+    ok: !hadError,
+    totalApproved,
+    totalSkipped,
+    summary
+  };
+}
+
   App.actions = {
     setLogin,
     login,
@@ -658,6 +711,7 @@ function processQueuedDeepLinkFlow() {
     focusPlaceOnMapFlow,
     approveEventCandidatesBulkFlow,
     approvePendingCandidatesBySourceFlow,
+    approveAllPendingCandidatesFlow,
     importZibiliaCandidatesFlow
   };
 })();

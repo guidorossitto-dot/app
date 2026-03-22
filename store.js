@@ -49,6 +49,11 @@
         result = { ok: true };
         break;
       }
+        case "SET_CANDIDATES": {
+        state.logic.candidates = Array.isArray(action.candidates) ? action.candidates : [];
+        result = { ok: true };
+        break;
+      }
       case "UPSERT_CANDIDATES": {
   const mergeIntoExistingCandidates = App.candidateDedupe?.mergeIntoExistingCandidates;
 
