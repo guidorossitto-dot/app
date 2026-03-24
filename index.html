@@ -162,9 +162,25 @@
               <button id="addEventBtn">Agregar evento</button>
               <button id="cancelEditBtn" hidden>Cancelar edición</button>
 
+              <button id="saveCandidateVenueBtn" style="background:#fff;color:#111;border:1px solid #ddd;">
+                Guardar venue para candidate
+              </button>
+
               <button id="approveCandidatesBtn" style="background:#fff;color:#111;border:1px solid #ddd;">
                 Aprobar pendientes
               </button>
+
+              <div class="panelCard" id="skippedCandidatesPanel">
+  <div class="panelHeader">
+               <h3>Candidates salteados</h3>
+              </div>
+
+              <p style="margin-top:0;">
+                   Lugares pendientes de resolución para poder aprobar candidates.
+              </p>
+
+            <ul id="skippedCandidatesList"></ul>
+            </div>
 
              <button id="clearPastEventsBtn" style="background:#fff;color:#111;border:1px solid #ddd;">
                 Borrar eventos pasados

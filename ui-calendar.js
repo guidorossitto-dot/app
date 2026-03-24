@@ -1,3 +1,4 @@
+//ui-calendar.js
 (() => {
   "use strict";
 
@@ -830,7 +831,7 @@ function bindAdminBulkActionsUI() {
   const clearBtn = document.getElementById("clearEventsBtn");
   const clearPastBtn = document.getElementById("clearPastEventsBtn");
 
-    if (approveCandidatesBtn) {
+   if (approveCandidatesBtn) {
   approveCandidatesBtn.addEventListener("click", async () => {
     if (!util.canManageUI()) {
       alert("No tenés permisos para aprobar candidatos.");
@@ -860,6 +861,11 @@ function bindAdminBulkActionsUI() {
       `Total aprobados: ${result.totalApproved || 0}\n` +
       `Total salteados: ${result.totalSkipped || 0}`
     );
+
+    // 🔥 refrescar lista de skipped (nuevo)
+    if (App.ui?.renderSkippedCandidatesList) {
+      await App.ui.renderSkippedCandidatesList("alternativa");
+    }
   });
 }
 
@@ -903,6 +909,29 @@ function bindAdminBulkActionsUI() {
     }
   }
 
+  function bindSkippedCandidatesUI() {
+  document.addEventListener("click", (e) => {
+    const btn = e.target.closest(".useCandidateVenueBtn");
+    if (!btn) return;
+
+    if (!util.canManageUI()) {
+      alert("No tenés permisos para gestionar venues.");
+      return;
+    }
+
+    try {
+      const raw = decodeURIComponent(btn.dataset.candidate || "");
+      const candidate = JSON.parse(raw);
+
+      const result = applyCandidateVenueToAdmin(candidate);
+      if (!result?.ok) return;
+    } catch (err) {
+      console.error("No se pudo aplicar candidate al admin form.", err);
+      alert("No se pudo cargar el candidate en el formulario.");
+    }
+  });
+}
+
   function bindAdminCancelUI() {
     const cancelBtn = document.getElementById("cancelEditBtn");
     if (!cancelBtn) return;
@@ -938,11 +967,165 @@ function bindAdminBulkActionsUI() {
     });
   }
 
+ async function renderSkippedCandidatesList(sourceName = "alternativa") {
+  const ul = document.getElementById("skippedCandidatesList");
+  if (!ul) return;
+
+  ul.innerHTML = "<li>Cargando...</li>";
+
+  const result = await App.candidates?.getApprovableCandidatesBySource?.(sourceName);
+
+  if (!result?.ok) {
+    ul.innerHTML = "<li>No se pudieron cargar los candidates salteados.</li>";
+    return;
+  }
+
+  const skipped = Array.isArray(result.skippedCandidates) ? result.skippedCandidates : [];
+
+  if (!skipped.length) {
+    ul.innerHTML = "<li>No hay candidates salteados.</li>";
+    return;
+  }
+
+  ul.innerHTML = skipped.map((candidate) => {
+    const encoded = encodeURIComponent(JSON.stringify({
+      id: candidate.id || "",
+      title: candidate.title || "",
+      venueName: candidate.venueName || "",
+      date: candidate.date || "",
+      startTime: candidate.startTime || ""
+    }));
+
+    return `
+      <li class="eventListItem">
+        <div class="eventCard">
+          <div class="eventCardMain">
+            <div class="eventCardTitleWrap">
+              <div class="eventCardTitle">${candidate.title || "Sin título"}</div>
+              <div class="eventCardMeta">
+                ${candidate.date ? `<span>${App.util.formatDateDisplay(candidate.date)}</span>` : ""}
+                ${candidate.startTime ? `<span>${candidate.startTime}</span>` : ""}
+              </div>
+              <div class="eventCardPlace">${candidate.venueName || "Venue sin nombre"}</div>
+            </div>
+
+            <div class="eventCardActions">
+              <button
+                type="button"
+                class="linkBtn useCandidateVenueBtn"
+                data-candidate='${encoded}'
+              >
+                Usar venue
+              </button>
+            </div>
+          </div>
+        </div>
+      </li>
+    `;
+  }).join("");
+}
+
+function applyCandidateVenueToAdmin(candidate) {
+  if (!candidate) return { ok: false, error: "MISSING_CANDIDATE" };
+
+  const safeVenue = String(candidate.venueName || "").trim();
+  const safeTitle = String(candidate.title || "").trim();
+  const safeDate = String(candidate.date || "").trim();
+  const safeStart = String(candidate.startTime || "").trim();
+
+  const eventPlace = document.getElementById("eventPlace");
+  const venueSearchInput = document.getElementById("venueSearchInput");
+  const placeQuery = document.getElementById("placeQuery");
+  const eventTitle = document.getElementById("eventTitle");
+  const eventDate = document.getElementById("eventDate");
+  const eventStart = document.getElementById("eventStart");
+
+  if (eventPlace) eventPlace.value = safeVenue;
+  if (venueSearchInput) venueSearchInput.value = safeVenue;
+  if (placeQuery) placeQuery.value = safeVenue;
+
+  if (eventTitle) eventTitle.value = safeTitle;
+  if (eventDate) eventDate.value = safeDate;
+  if (eventStart) eventStart.value = safeStart;
+
+  App.state.logic = App.state.logic || {};
+  App.state.logic.selectedCandidateId = String(candidate.id || "").trim();
+
+  const placeSection = document.getElementById("placeQuery");
+  if (placeSection) {
+    placeSection.scrollIntoView({ behavior: "smooth", block: "center" });
+    placeSection.focus();
+  }
+
+  return {
+    ok: true,
+    candidateId: String(candidate.id || "").trim(),
+    venueName: safeVenue
+  };
+}
+
+async function saveVenueForSelectedCandidate() {
+  const selectedCandidateId = String(App.state.logic?.selectedCandidateId || "").trim();
+  if (!selectedCandidateId) {
+    alert("Primero elegí un candidate con “Usar venue”.");
+    return { ok: false, error: "MISSING_SELECTED_CANDIDATE" };
+  }
+
+  const placeInput = document.getElementById("eventPlace");
+  const latInput = document.getElementById("eventLat");
+  const lngInput = document.getElementById("eventLng");
+
+  const name = String(placeInput?.value || "").trim();
+  const lat = Number(latInput?.value);
+  const lng = Number(lngInput?.value);
+
+  if (!name) {
+    alert("Falta el nombre del venue.");
+    return { ok: false, error: "MISSING_VENUE_NAME" };
+  }
+
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+    alert("Primero buscá y elegí el lugar real para obtener coordenadas.");
+    return { ok: false, error: "MISSING_COORDS" };
+  }
+
+  const result = await App.venues?.addVenueRemote?.({
+    name,
+    address: name,
+    lat,
+    lng
+  });
+
+  if (!result?.ok) {
+    alert("No se pudo guardar el venue.");
+    return { ok: false, error: result?.error || "SAVE_VENUE_FAILED" };
+  }
+
+  if (App.venues?.loadVenuesRemote) {
+    await App.venues.loadVenuesRemote();
+  }
+
+  if (App.ui?.renderSkippedCandidatesList) {
+    await App.ui.renderSkippedCandidatesList("alternativa");
+  }
+
+  alert(`Venue guardado: ${name}`);
+
+  return {
+    ok: true,
+    candidateId: selectedCandidateId,
+    venueName: name
+  };
+}
+
     function bindAdminUI() {
     bindAdminSaveUI();
     bindAdminBulkActionsUI();
     bindAdminCancelUI();
     bindAdminVenueSearchUI();
+    bindSkippedCandidatesUI();
+    bindSaveCandidateVenueUI();
+    renderSkippedCandidatesList("alternativa");
   }
   
   function renderVenueSuggestions() {
@@ -967,6 +1150,29 @@ function bindAdminBulkActionsUI() {
       </button>
     `).join("");
   }
+
+  function bindSaveCandidateVenueUI() {
+  const btn = document.getElementById("saveCandidateVenueBtn");
+  if (!btn) return;
+
+  btn.addEventListener("click", async () => {
+    if (!util.canManageUI()) {
+      alert("No tenés permisos para guardar venues.");
+      return;
+    }
+
+    btn.disabled = true;
+    const prev = btn.textContent;
+    btn.textContent = "Guardando...";
+
+    try {
+      await saveVenueForSelectedCandidate();
+    } finally {
+      btn.disabled = false;
+      btn.textContent = prev || "Guardar venue para candidate";
+    }
+  });
+}
 
   function applyVenueToAdminForm(venue) {
     if (!venue) return;
@@ -1093,6 +1299,11 @@ function bindAdminBulkActionsUI() {
 
     setListFocus,
     clearListFocus,
+    saveVenueForSelectedCandidate,
+renderSkippedCandidatesList,
+applyCandidateVenueToAdmin, 
+    renderSkippedCandidatesList,
+    applyCandidateVenueToAdmin,
     processQueuedDeepLink
   };
 })();

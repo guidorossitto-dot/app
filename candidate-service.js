@@ -272,6 +272,210 @@ function tokenOverlapScore(a = "", b = "") {
     return state.logic.candidates || [];
   }
 
+  function normalizeGeocodeQuery(raw = "") {
+  return String(raw || "")
+    .replace(/\s+/g, " ")
+    .replace(/[()]/g, " ")
+    .trim();
+}
+
+async function geocodeVenueNameWithNominatim(venueName = "") {
+  const cleanName = normalizeGeocodeQuery(venueName);
+  if (!cleanName) return null;
+
+  const query = `${cleanName}, Buenos Aires, Argentina`;
+  const url =
+    `https://nominatim.openstreetmap.org/search` +
+    `?format=jsonv2&limit=1&q=${encodeURIComponent(query)}`;
+
+  try {
+    const res = await fetch(url, {
+      headers: {
+        Accept: "application/json"
+      }
+    });
+
+    if (!res.ok) return null;
+
+    const data = await res.json();
+    const first = Array.isArray(data) ? data[0] : null;
+    if (!first) return null;
+
+    const lat = Number(first.lat);
+    const lng = Number(first.lon);
+
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+
+    return {
+      lat,
+      lng,
+      address: String(first.display_name || "").trim()
+    };
+  } catch (err) {
+    console.warn("No se pudo geocodificar venue con Nominatim:", venueName, err);
+    return null;
+  }
+}
+
+async function ensureCandidateHasCoords(candidate) {
+  if (!candidate) return candidate;
+
+  if (Number.isFinite(candidate.lat) && Number.isFinite(candidate.lng)) {
+    return candidate;
+  }
+
+  let next = candidate;
+
+  // ✔️ dejamos SOLO esto
+  if (typeof enrichCandidateWithVenue === "function") {
+    try {
+      const enriched = await enrichCandidateWithVenue(candidate);
+      if (enriched) next = enriched;
+    } catch (err) {
+      console.warn("Falló enrichCandidateWithVenue:", candidate?.title, err);
+    }
+  }
+
+  // ❌ IMPORTANTE: NO más fetch a Nominatim en frontend
+  return next;
+}
+
+  async function getApprovableCandidatesBySource(sourceName = "") {
+  const loaded = await loadPendingCandidatesBySource(sourceName);
+
+  if (!loaded?.ok) {
+    return {
+      ok: false,
+      error: loaded?.error || "LOAD_PENDING_FAILED",
+      source: String(sourceName || "").trim(),
+      candidates: [],
+      approvableCandidates: [],
+      skippedCandidates: []
+    };
+  }
+
+  const rawCandidates = Array.isArray(loaded.candidates) ? loaded.candidates : [];
+  const enrichedCandidates = [];
+
+  for (const candidate of rawCandidates) {
+    const enriched = await ensureCandidateHasCoords(candidate);
+    enrichedCandidates.push(enriched || candidate);
+  }
+
+  if (typeof hydrateCandidatesToState === "function") {
+    hydrateCandidatesToState(enrichedCandidates);
+  }
+
+  const approvableCandidates = enrichedCandidates.filter((candidate) =>
+    Number.isFinite(candidate?.lat) && Number.isFinite(candidate?.lng)
+  );
+
+  const skippedCandidates = enrichedCandidates.filter(
+    (candidate) => !Number.isFinite(candidate?.lat) || !Number.isFinite(candidate?.lng)
+  );
+
+  return {
+    ok: true,
+    source: loaded.source || String(sourceName || "").trim(),
+    candidates: enrichedCandidates,
+    approvableCandidates,
+    skippedCandidates
+  };
+}
+
+async function approvePendingCandidatesBySource(sourceName = "") {
+  const reviewed = await getApprovableCandidatesBySource(sourceName);
+
+  if (!reviewed?.ok) {
+    return {
+      ok: false,
+      error: reviewed?.error || "REVIEW_PENDING_FAILED",
+      source: String(sourceName || "").trim(),
+      approvedCount: 0,
+      skippedCount: 0,
+      empty: false
+    };
+  }
+
+  const candidateIds = (reviewed.approvableCandidates || [])
+    .map((candidate) => String(candidate?.id || "").trim())
+    .filter(Boolean);
+
+  if (!candidateIds.length) {
+    return {
+      ok: true,
+      source: reviewed.source,
+      approvedCount: 0,
+      skippedCount: reviewed.skippedCandidates.length,
+      empty: true
+    };
+  }
+
+  const approved = await approveCandidates(candidateIds);
+
+  if (!approved?.ok) {
+    return {
+      ok: false,
+      error: approved?.error || "APPROVE_PENDING_FAILED",
+      source: reviewed.source,
+      approvedCount: 0,
+      skippedCount: reviewed.skippedCandidates.length,
+      empty: false
+    };
+  }
+
+  return {
+    ok: true,
+    source: reviewed.source,
+    approvedCount: approved.approvedCount || 0,
+    skippedCount: reviewed.skippedCandidates.length,
+    empty: false
+  };
+}
+
+async function approvePendingCandidatesForSources(sourceNames = []) {
+  const sources = Array.isArray(sourceNames)
+    ? sourceNames.map((x) => String(x || "").trim()).filter(Boolean)
+    : [];
+
+  if (!sources.length) {
+    return { ok: false, error: "EMPTY_SOURCES", totalApproved: 0, totalSkipped: 0, summary: [] };
+  }
+
+  const summary = [];
+  let totalApproved = 0;
+  let totalSkipped = 0;
+  let hadError = false;
+
+  for (const source of sources) {
+    const result = await approvePendingCandidatesBySource(source);
+
+    summary.push({
+      source,
+      ok: !!result?.ok,
+      approvedCount: result?.approvedCount || 0,
+      skippedCount: result?.skippedCount || 0,
+      empty: !!result?.empty,
+      error: result?.error || null
+    });
+
+    if (!result?.ok) {
+      hadError = true;
+      continue;
+    }
+
+    totalApproved += result.approvedCount || 0;
+    totalSkipped += result.skippedCount || 0;
+  }
+
+  return {
+    ok: !hadError,
+    totalApproved,
+    totalSkipped,
+    summary
+  };
+}
+
   async function loadPendingCandidatesBySource(sourceName = "") {
     const source = String(sourceName || "").trim();
     if (!source) {
@@ -365,16 +569,19 @@ function tokenOverlapScore(a = "", b = "") {
 }
 
   App.candidates = {
-    ...(App.candidates || {}),
-    mapDbRowToCandidate,
-    mapDbRowsToCandidates,
-    classifyCandidatesAgainstEvents,
-    sortCandidatesForReview,
-    hydrateCandidatesToState,
-    loadPendingCandidatesBySource,
-    approveCandidates,
-        persistEnrichedCandidates,
-    findBestVenueMatch,
-    enrichCandidateWithVenue
-  };
+  ...(App.candidates || {}),
+  mapDbRowToCandidate,
+  mapDbRowsToCandidates,
+  classifyCandidatesAgainstEvents,
+  sortCandidatesForReview,
+  hydrateCandidatesToState,
+  loadPendingCandidatesBySource,
+  getApprovableCandidatesBySource,
+  approvePendingCandidatesBySource,
+  approvePendingCandidatesForSources,
+  approveCandidates,
+  persistEnrichedCandidates,
+  findBestVenueMatch,
+  enrichCandidateWithVenue
+};
 })();

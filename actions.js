@@ -471,41 +471,23 @@ async function approvePendingCandidatesBySourceFlow(sourceName = "") {
     return { ok: false, error: "MISSING_SOURCE_NAME" };
   }
 
-  const loaded = await App.candidates?.loadPendingCandidatesBySource?.(source);
+  const result = await App.candidates?.approvePendingCandidatesBySource?.(source);
 
-  if (!loaded?.ok) {
-    alert("No se pudieron cargar los candidatos pendientes.");
-    return { ok: false, error: loaded?.error || "LOAD_PENDING_FAILED" };
+  if (!result?.ok) {
+    alert("No se pudieron aprobar los candidatos pendientes.");
+    return { ok: false, error: result?.error || "APPROVE_PENDING_FAILED" };
   }
 
-  const approvableCandidates = (loaded.candidates || []).filter((candidate) =>
-    Number.isFinite(candidate?.lat) && Number.isFinite(candidate?.lng)
-  );
+  App.commit?.({
+    persist: false,
+    purgePast: false,
+    rebuildMarkers: true,
+    recomputeNearby: true
+  });
 
-  const skippedCandidates = (loaded.candidates || []).filter(
-    (candidate) => !Number.isFinite(candidate?.lat) || !Number.isFinite(candidate?.lng)
-  );
-
-  const candidateIds = approvableCandidates
-    .map((candidate) => String(candidate?.id || "").trim())
-    .filter(Boolean);
-
-  if (!candidateIds.length) {
-    return {
-      ok: true,
-      approvedCount: 0,
-      empty: true,
-      skippedCount: skippedCandidates.length
-    };
-  }
-
-  const result = await App.actions?.approveEventCandidatesBulkFlow?.(candidateIds);
-
-  return {
-    ...result,
-    skippedCount: skippedCandidates.length
-  };
+  return result;
 }
+
 async function importZibiliaCandidatesFlow() {
   if (!App.util?.canManageUI?.()) {
     alert("No tenés permisos para importar candidatos.");
@@ -639,40 +621,24 @@ async function approveAllPendingCandidatesFlow() {
     return { ok: false, error: "FORBIDDEN" };
   }
 
-  const sources = ["zibilia", "alternativa"];
-  const summary = [];
+  const result = await App.candidates?.approvePendingCandidatesForSources?.([
+    "zibilia",
+    "alternativa"
+  ]);
 
-  let totalApproved = 0;
-  let totalSkipped = 0;
-  let hadError = false;
-
-  for (const source of sources) {
-    const result = await App.actions?.approvePendingCandidatesBySourceFlow?.(source);
-
-    summary.push({
-      source,
-      ok: !!result?.ok,
-      approvedCount: result?.approvedCount || 0,
-      skippedCount: result?.skippedCount || 0,
-      empty: !!result?.empty,
-      error: result?.error || null
-    });
-
-    if (!result?.ok) {
-      hadError = true;
-      continue;
-    }
-
-    totalApproved += result.approvedCount || 0;
-    totalSkipped += result.skippedCount || 0;
+  if (!result?.ok && !result?.summary?.length) {
+    alert("No se pudieron aprobar los candidatos.");
+    return { ok: false, error: result?.error || "APPROVE_ALL_PENDING_FAILED" };
   }
 
-  return {
-    ok: !hadError,
-    totalApproved,
-    totalSkipped,
-    summary
-  };
+  App.commit?.({
+    persist: false,
+    purgePast: false,
+    rebuildMarkers: true,
+    recomputeNearby: true
+  });
+
+  return result;
 }
 
   App.actions = {
