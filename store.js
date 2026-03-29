@@ -6,6 +6,31 @@
   const { state } = App;
   const listeners = new Set();
 
+  const ALLOWED_CALLERS = new Set([
+  "SET_ALL_EVENTS",
+  "SET_CANDIDATES",
+  "UPSERT_CANDIDATES",
+  "SET_LOGIN_STATE",
+  "SET_ACTIVE_CATEGORY",
+  "SET_CALENDAR_CURSOR",
+  "SET_EDITING_EVENT_ID",
+  "SET_EDITING_MODE",
+  "SET_EDITING_SERIES_ID",
+  "SET_NEARBY_CENTER",
+  "SET_NEARBY_EVENTS",
+  "SET_ALL_VENUES",
+  "ADD_VENUE",
+  "REPLACE_VENUE",
+  "REMOVE_VENUE",
+  "SET_SELECTED_VENUE_ID",
+  "SET_PENDING_OPEN_EVENT_ID",
+  "CLEAR_PENDING_OPEN_EVENT_ID",
+  "SET_PENDING_DEEP_LINK_EVENT_ID",
+  "CLEAR_PENDING_DEEP_LINK_EVENT_ID",
+  "SET_BOOT_READY",
+  "SET_UI_PAN_ZOOM_IN_PROGRESS"
+]);
+
   function ensureLogicEventsArray() {
     if (!Array.isArray(state.logic.events)) state.logic.events = [];
     return state.logic.events;
@@ -37,6 +62,11 @@
   function dispatch(action = {}) {
     const type = String(action.type || "").trim();
     if (!type) return { ok: false, error: "MISSING_ACTION_TYPE" };
+
+    if (!ALLOWED_CALLERS.has(type) &&
+    ["ADD_EVENT","REPLACE_EVENT","REMOVE_EVENT","CLEAR_ALL_EVENTS"].includes(type)) {
+  console.warn("⚠️ Acción directa bloqueada:", type);
+}
 
     let result = null;
 

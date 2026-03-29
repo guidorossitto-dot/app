@@ -418,17 +418,17 @@ async function addEventsRemote(list = []) {
     return { ok: false, error: updated?.error || "REMOTE_UPDATE_ERROR", event: null };
   }
 
-  const out = App.store?.dispatch?.({
-    type: "REPLACE_EVENT",
-    eventId: id,
-    event: merged
-  });
+const out = App.store?.dispatch?.({
+  type: "REPLACE_EVENT",
+  eventId: id,
+  event: updated.event
+});
 
   if (!out?.ok) {
     return { ok: false, error: out?.error || "STORE_ERROR", event: null };
   }
 
-  return { ok: true, error: null, event: merged };
+  return { ok: true, error: null, event: updated.event };
 }
 
  async function removeEvent(eventId) {
