@@ -436,7 +436,7 @@ if (logoutBtn) {
       if (topEl) {
         topEl.innerHTML = `
           <div class="mapActionBar mapActionBar--insideNearby">
-            <button id="autoLocationBtnInline" class="primaryMapActionBtn">📍 Eventos cerca mío</button>
+            <button id="autoLocationBtnInline" class="primaryMapActionBtn">📍 Usar mi ubicación</button>
           </div>
           <div class="nearbyInlineEmpty">
             No hay eventos cerca tuyo hoy
@@ -465,7 +465,7 @@ if (logoutBtn) {
       if (topEl) {
         topEl.innerHTML = `
           <div class="mapActionBar mapActionBar--insideNearby">
-            <button id="autoLocationBtnInline" class="primaryMapActionBtn">📍 Eventos cerca mío</button>
+            <button id="autoLocationBtnInline" class="primaryMapActionBtn">📍 Usar mi ubicación</button>
           </div>
           <div class="nearbyInlineEmpty">
             No hay eventos cerca tuyo hoy
@@ -558,7 +558,7 @@ if (logoutBtn) {
       topEl.innerHTML = `
         ${featuredHTML}
         <div class="mapActionBar mapActionBar--insideNearby">
-          <button id="autoLocationBtnInline" class="primaryMapActionBtn">📍 Eventos cerca mío</button>
+          <button id="autoLocationBtnInline" class="primaryMapActionBtn">📍 Usar mi ubicación</button>
         </div>
       `;
     }
