@@ -204,14 +204,30 @@ async function shareEventFlow(input = {}) {
   const eventId = decodeURIComponent((btn.dataset.eid || "").trim());
   if (!eventId) return { ok: false, error: "MISSING_ID" };
 
-  const title = decodeURIComponent((btn.dataset.title || "").trim());
+  const ev = App.events?.findEventById?.(eventId) || null;
+
+  const title = (ev?.title || decodeURIComponent((btn.dataset.title || "").trim()) || "Evento").trim();
+  const place = (App.util?.shortPlaceName?.(ev?.placeName) || "").trim();
+  const date = (App.util?.formatDateDisplay?.(ev?.date) || "").trim();
+  const time = (App.util?.formatTimeStart?.(ev) || "").trim();
+
   const url = `${location.origin}${location.pathname}#e=${encodeURIComponent(eventId)}`;
-  const shareText = title ? `Evento: ${title}\n${url}` : url;
+
+  const lines = [
+    title ? `Evento: ${title}` : "Evento",
+    place ? `📍 ${place}` : "",
+    date ? `🗓️ ${date}` : "",
+    time ? `🕐 ${time}` : "",
+    "",
+    url
+  ].filter(Boolean);
+
+  const shareText = lines.join("\n");
 
   if (navigator.share) {
     try {
       await navigator.share({
-        title: title || "Evento",
+        title,
         text: shareText,
         url
       });
