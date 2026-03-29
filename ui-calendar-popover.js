@@ -37,6 +37,14 @@
      <div class="calendarEventPopover__actions">
   <button type="button" class="linkBtn calendarPopoverMapBtn">Ver en mapa</button>
 
+  <button
+    type="button"
+    class="linkBtn calendarPopoverShareBtn shareBtn"
+    data-eid="${encodeURIComponent(ev.id || "")}"
+    data-title="${encodeURIComponent(ev.title || "")}">
+    Compartir
+  </button>
+
   ${
     ev.link
       ? `<a
@@ -132,6 +140,15 @@
         }
       });
     }
+    const shareBtn = pop.querySelector(".calendarPopoverShareBtn");
+if (shareBtn) {
+  shareBtn.addEventListener("click", async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    await App.actions?.shareEventFlow?.({ button: shareBtn });
+  });
+}
 
     const editBtn = pop.querySelector(".calendarPopoverEditBtn");
     if (editBtn) {
@@ -193,45 +210,60 @@
                 </div>
 
                 ${
-                  (ev.link || (util.canManageUI() && ev?.id))
-                    ? `
-                      <div class="calendarEventPopover__actions" style="margin-top:8px;">
-                        ${
-                          ev.link
-                            ? `<a
-                                class="linkBtn"
-                                href="${ev.link}"
-                                target="_blank"
-                                rel="noopener noreferrer">
-                                Ver info
-                              </a>`
-                            : ""
-                        }
+  (ev?.id || ev.link || (util.canManageUI() && ev?.id))
+    ? `
+      <div class="calendarEventPopover__actions" style="margin-top:8px;">
 
-                        ${
-                          util.canManageUI() && ev?.id
-                            ? `
-                              <button
-                                type="button"
-                                class="linkBtn calendarDayPopoverEditBtn"
-                                data-edit-eid="${encodeURIComponent(ev.id || "")}">
-                                Editar
-                              </button>
+        ${
+          ev?.id
+            ? `
+              <button
+                type="button"
+                class="linkBtn calendarDayPopoverShareBtn"
+                data-share-eid="${encodeURIComponent(ev.id || "")}"
+                data-share-title="${encodeURIComponent(ev.title || "")}">
+                Compartir
+              </button>
+            `
+            : ""
+        }
 
-                              <button
-                                type="button"
-                                class="linkBtn calendarDayPopoverDeleteBtn deleteEventBtn"
-                                data-delete-eid="${encodeURIComponent(ev.id || "")}"
-                                data-delete-title="${encodeURIComponent(ev.title || "")}">
-                                Borrar
-                              </button>
-                            `
-                            : ""
-                        }
-                      </div>
-                    `
-                    : ""
-                }
+        ${
+          ev.link
+            ? `<a
+                class="linkBtn"
+                href="${ev.link}"
+                target="_blank"
+                rel="noopener noreferrer">
+                Ver info
+              </a>`
+            : ""
+        }
+
+        ${
+          util.canManageUI() && ev?.id
+            ? `
+              <button
+                type="button"
+                class="linkBtn calendarDayPopoverEditBtn"
+                data-edit-eid="${encodeURIComponent(ev.id || "")}">
+                Editar
+              </button>
+
+              <button
+                type="button"
+                class="linkBtn calendarDayPopoverDeleteBtn deleteEventBtn"
+                data-delete-eid="${encodeURIComponent(ev.id || "")}"
+                data-delete-title="${encodeURIComponent(ev.title || "")}">
+                Borrar
+              </button>
+            `
+            : ""
+        }
+      </div>
+    `
+    : ""
+}
               </div>
             `;
           }).join("")
@@ -333,6 +365,19 @@ document.body.appendChild(pop);
         App.adminForm?.startEditingEventFromId?.(eventId);
       });
     });
+
+    pop.querySelectorAll(".calendarDayPopoverShareBtn").forEach((btn) => {
+  btn.addEventListener("click", async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    btn.dataset.eid = btn.dataset.shareEid || "";
+    btn.dataset.title = btn.dataset.shareTitle || "";
+
+    await App.actions?.shareEventFlow?.({ button: btn });
+  });
+});
+
     pop.querySelectorAll(".calendarDayPopoverDeleteBtn[data-delete-eid]").forEach((btn) => {
   btn.addEventListener("click", () => {
     removeCalendarPopover();

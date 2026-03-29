@@ -300,12 +300,12 @@
     if (addBtn) addBtn.textContent = "Agregar evento";
     if (cancelBtn) cancelBtn.hidden = true;
 
-    App.commit?.({
-      persist: true,
-      purgePast: false,
-      rebuildMarkers: true,
-      recomputeNearby: true
-    });
+App.commit?.({
+  persist: false,
+  purgePast: false,
+  rebuildMarkers: true,
+  recomputeNearby: true
+});
   }
 
     function applyEventToAdminForm(evData) {
