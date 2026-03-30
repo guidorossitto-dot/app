@@ -7,7 +7,9 @@
 
   const STORAGE_KEYS = {
   LOGIN: "recomentos.isLoggedIn",
-  VENUES: "recomentos.venues"
+  VENUES: "recomentos.venues",
+  EVENTS_CACHE: "recomentos.events.cache",
+  VENUES_CACHE: "recomentos.venues.cache"
 };
 
   function safeParseJSON(raw, fallback = null) {
@@ -17,6 +19,54 @@
       return fallback;
     }
   }
+
+  function saveEventsCache(events = []) {
+  try {
+    localStorage.setItem(
+      STORAGE_KEYS.EVENTS_CACHE,
+      JSON.stringify(Array.isArray(events) ? events : [])
+    );
+    return { ok: true };
+  } catch (err) {
+    console.error("No se pudo guardar cache offline de eventos.", err);
+    return { ok: false, error: err };
+  }
+}
+
+function loadEventsCache() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEYS.EVENTS_CACHE);
+    const parsed = safeParseJSON(raw, []);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (err) {
+    console.error("No se pudo leer cache offline de eventos.", err);
+    return [];
+  }
+}
+
+function saveVenuesCache(venues = []) {
+  try {
+    localStorage.setItem(
+      STORAGE_KEYS.VENUES_CACHE,
+      JSON.stringify(Array.isArray(venues) ? venues : [])
+    );
+    return { ok: true };
+  } catch (err) {
+    console.error("No se pudo guardar cache offline de venues.", err);
+    return { ok: false, error: err };
+  }
+}
+
+function loadVenuesCache() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEYS.VENUES_CACHE);
+    const parsed = safeParseJSON(raw, []);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (err) {
+    console.error("No se pudo leer cache offline de venues.", err);
+    return [];
+  }
+}
 
   function mapRowToEvent(row) {
   return util.normalizeEvent({
@@ -125,25 +175,42 @@ function loadVenues() {
   const db = App.supabase;
   if (!db) {
     console.error("App.supabase no está inicializado");
-    return { ok: false, error: "SUPABASE_NOT_READY", events: [] };
+    const cachedEvents = loadEventsCache();
+    return {
+      ok: cachedEvents.length > 0,
+      error: "SUPABASE_NOT_READY",
+      events: cachedEvents
+    };
   }
 
-  const { data, error } = await db
-    .from("events")
-    .select("*")
-    .order("date", { ascending: true })
-    .order("start_time", { ascending: true });
+  try {
+    const { data, error } = await db
+      .from("events")
+      .select("*")
+      .order("date", { ascending: true })
+      .order("start_time", { ascending: true });
 
-  if (error) {
-    console.error("Error cargando eventos:", error);
-    return { ok: false, error, events: [] };
+    if (error) throw error;
+
+    const events = Array.isArray(data)
+      ? data.map(mapRowToEvent).filter((ev) => util.isValidEvent(ev))
+      : [];
+
+    saveEventsCache(events);
+
+    return { ok: true, events };
+  } catch (error) {
+    console.warn("Error cargando eventos remotos. Uso cache offline.", error);
+
+    const cachedEvents = loadEventsCache().map((ev) => util.normalizeEvent(ev))
+      .filter((ev) => util.isValidEvent(ev));
+
+    return {
+      ok: cachedEvents.length > 0,
+      error,
+      events: cachedEvents
+    };
   }
-
-  const events = Array.isArray(data)
-    ? data.map(mapRowToEvent).filter((ev) => util.isValidEvent(ev))
-    : [];
-
-  return { ok: true, events };
 }
 
   async function insertEvent(ev) {
@@ -252,22 +319,44 @@ function loadVenues() {
 
 async function loadVenuesRemote() {
   const supabase = App.supabase;
-  if (!supabase) return { ok: false, error: "SUPABASE_NOT_READY" };
-
-  const { data, error } = await supabase
-    .from("venues")
-    .select("*")
-    .order("name", { ascending: true });
-
-  if (error) {
-    console.error("No se pudieron cargar los venues desde Supabase.", error);
-    return { ok: false, error };
+  if (!supabase) {
+    const cachedVenues = loadVenuesCache();
+    App.venues?.replaceAllVenues?.(cachedVenues);
+    return {
+      ok: cachedVenues.length > 0,
+      error: "SUPABASE_NOT_READY",
+      count: cachedVenues.length,
+      venues: cachedVenues
+    };
   }
 
-  const venues = Array.isArray(data) ? data.map(mapRowToVenue) : [];
-  App.venues?.replaceAllVenues?.(venues);
+  try {
+    const { data, error } = await supabase
+      .from("venues")
+      .select("*")
+      .order("name", { ascending: true });
 
-  return { ok: true, count: venues.length, venues };
+    if (error) throw error;
+
+    const venues = Array.isArray(data) ? data.map(mapRowToVenue) : [];
+
+    saveVenuesCache(venues);
+    App.venues?.replaceAllVenues?.(venues);
+
+    return { ok: true, count: venues.length, venues };
+  } catch (error) {
+    console.warn("No se pudieron cargar los venues desde Supabase. Uso cache offline.", error);
+
+    const cachedVenues = loadVenuesCache();
+    App.venues?.replaceAllVenues?.(cachedVenues);
+
+    return {
+      ok: cachedVenues.length > 0,
+      error,
+      count: cachedVenues.length,
+      venues: cachedVenues
+    };
+  }
 }
 
 async function insertVenue(venue) {
@@ -620,6 +709,10 @@ async function loadPendingEventCandidatesBySource(sourceName = "") {
 
   saveVenues,
   loadVenues,
+    saveEventsCache,
+  loadEventsCache,
+  saveVenuesCache,
+  loadVenuesCache,
 
   loadVenuesRemote,
   insertVenue,
