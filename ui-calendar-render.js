@@ -71,6 +71,7 @@
       }
 
       const dateStr = formatDateYYYYMMDD(cellDate);
+      cell.dataset.date = dateStr;
 
       const dn = document.createElement("div");
       dn.className = "day-number";

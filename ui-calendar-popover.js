@@ -411,6 +411,41 @@ document.body.appendChild(pop);
     });
   }
 
+  function openCalendarDayByDate(dateStr) {
+  const safeDate = String(dateStr || "").trim();
+  if (!safeDate) return { ok: false, error: "MISSING_DATE" };
+
+  const cal = document.getElementById("calendar");
+  if (!cal) return { ok: false, error: "CALENDAR_NOT_FOUND" };
+
+  const cell = cal.querySelector(`.day[data-date="${safeDate}"]`);
+  if (!cell) return { ok: false, error: "DAY_CELL_NOT_FOUND", dateStr: safeDate };
+
+  const dayEvents = util.getEventsOnDate(safeDate, state.logic.events || []);
+
+  const monthLabel = document.getElementById("monthLabel");
+  if (monthLabel) {
+    monthLabel.scrollIntoView({ behavior: "smooth", block: "center" });
+  } else {
+    cal.scrollIntoView({ behavior: "smooth", block: "center" });
+  }
+
+  cell.classList.add("calendarListFlash");
+  setTimeout(() => {
+    cell.classList.remove("calendarListFlash");
+  }, 900);
+
+  setTimeout(() => {
+    showCalendarDayPopover(cell, safeDate, dayEvents);
+  }, 120);
+
+  return {
+    ok: true,
+    dateStr: safeDate,
+    eventsCount: dayEvents.length
+  };
+}
+
   App.ui = {
     ...(App.ui || {}),
     removeCalendarPopover,

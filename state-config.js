@@ -84,6 +84,7 @@ App.CFG.ALLOWED_CATEGORIES = Object.keys(App.CFG.CATEGORIES);
   locationMarkers: {},
   eventMarkers: [],
   temporaryFocusMarker: null,
+  pendingCalendarDate: null,
 
   pendingOpenEventId: null,
   pendingDeepLinkEventId: null,

@@ -662,6 +662,21 @@ function setActiveCategory(category) {
     return state.logic.activeCategory;
   }
 
+  function setPendingCalendarDate(dateStr) {
+  App.store?.dispatch?.({
+    type: "SET_PENDING_CALENDAR_DATE",
+    value: dateStr
+  });
+  return state.runtime.pendingCalendarDate;
+}
+
+function clearPendingCalendarDate() {
+  App.store?.dispatch?.({
+    type: "CLEAR_PENDING_CALENDAR_DATE"
+  });
+  return state.runtime.pendingCalendarDate;
+}
+
   function setCalendarCursor(date) {
     App.store?.dispatch?.({
       type: "SET_CALENDAR_CURSOR",
@@ -814,6 +829,8 @@ function setActiveCategory(category) {
     setNearbyCenter,
     setNearbyEvents,
 
+    setPendingCalendarDate,
+    clearPendingCalendarDate,
     setPendingOpenEventId,
     clearPendingOpenEventId,
     setPendingDeepLinkEventId,

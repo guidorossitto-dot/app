@@ -53,6 +53,14 @@ function setEditingSeriesId(seriesId) {
     return App.events?.setNearbyEvents?.(list);
   }
 
+  function queueCalendarDate(dateStr) {
+  return App.events?.setPendingCalendarDate?.(dateStr);
+}
+
+function clearQueuedCalendarDate() {
+  return App.events?.clearPendingCalendarDate?.();
+}
+
   /* =========================
      RUNTIME
   ========================= */
@@ -631,6 +639,47 @@ function processQueuedDeepLinkFlow() {
 
 }
 
+function queueCalendarDateFromHashFlow() {
+  const h = (location.hash || "").replace(/^#/, "");
+  if (!h) return { ok: false, error: "EMPTY_HASH" };
+
+  const params = new URLSearchParams(h);
+  const dateStr = (params.get("d") || "").trim();
+  if (!dateStr) return { ok: false, error: "MISSING_DATE" };
+
+  const isValid = /^\d{4}-\d{2}-\d{2}$/.test(dateStr);
+  if (!isValid) return { ok: false, error: "INVALID_DATE" };
+
+  App.actions?.queueCalendarDate?.(dateStr);
+  return { ok: true, dateStr };
+}
+
+function processQueuedCalendarDateFlow() {
+  const dateStr = App.state.runtime.pendingCalendarDate;
+  if (!dateStr) return { ok: false, error: "NO_PENDING_CALENDAR_DATE" };
+
+  const [y, m, d] = dateStr.split("-").map(Number);
+  if (!y || !m || !d) {
+    App.actions?.clearQueuedCalendarDate?.();
+    return { ok: false, error: "INVALID_DATE" };
+  }
+
+  App.actions?.setCalendarMonth?.(new Date(y, m - 1, 1));
+
+  App.renderAll?.({
+    rebuildMarkers: false,
+    recomputeNearby: false
+  });
+
+  setTimeout(() => {
+    App.ui?.openCalendarDayByDate?.(dateStr);
+  }, 80);
+
+  App.actions?.clearQueuedCalendarDate?.();
+  return { ok: true, dateStr };
+}
+
+
 async function approveAllPendingCandidatesFlow() {
   if (!App.util?.canManageUI?.()) {
     alert("No tenés permisos para aprobar candidatos.");
@@ -678,6 +727,8 @@ async function approveAllPendingCandidatesFlow() {
     clearQueuedDeepLink,
     queueDeepLinkFromHashFlow,
     processQueuedDeepLinkFlow,
+    queueCalendarDate,
+    clearQueuedCalendarDate,
 
     highlightPendingPopupEvent,
     clearPendingPopupEvent,
@@ -694,6 +745,8 @@ async function approveAllPendingCandidatesFlow() {
     approveEventCandidatesBulkFlow,
     approvePendingCandidatesBySourceFlow,
     approveAllPendingCandidatesFlow,
+        queueCalendarDateFromHashFlow,
+    processQueuedCalendarDateFlow,
     importZibiliaCandidatesFlow
   };
 })();

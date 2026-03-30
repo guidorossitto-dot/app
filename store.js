@@ -27,6 +27,8 @@
   "CLEAR_PENDING_OPEN_EVENT_ID",
   "SET_PENDING_DEEP_LINK_EVENT_ID",
   "CLEAR_PENDING_DEEP_LINK_EVENT_ID",
+  "SET_PENDING_CALENDAR_DATE",
+"CLEAR_PENDING_CALENDAR_DATE",
   "SET_BOOT_READY",
   "SET_UI_PAN_ZOOM_IN_PROGRESS"
 ]);
@@ -151,6 +153,20 @@
 
       case "SET_ACTIVE_CATEGORY": {
         state.logic.activeCategory = action.value;
+        result = { ok: true };
+        break;
+      }
+
+      case "SET_PENDING_CALENDAR_DATE": {
+        state.runtime.pendingCalendarDate = action.value
+        ? String(action.value).trim()
+        : null;
+        result = { ok: true };
+        break;
+      }
+
+      case "CLEAR_PENDING_CALENDAR_DATE": {
+        state.runtime.pendingCalendarDate = null;
         result = { ok: true };
         break;
       }
