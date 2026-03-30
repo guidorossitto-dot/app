@@ -118,6 +118,42 @@ bindInstallPrompt();
     }, App.CFG.REFRESH_MS);
   }
 
+function bindIOSInstallBanner() {
+  const banner = document.getElementById("iosInstallBanner");
+  const closeBtn = document.getElementById("iosInstallBannerClose");
+  if (!banner || !closeBtn) return;
+
+  const ua = navigator.userAgent || "";
+  const isIOS = /iPhone|iPad|iPod/i.test(ua);
+  const isSafari =
+    /Safari/i.test(ua) &&
+    !/CriOS/i.test(ua) &&
+    !/FxiOS/i.test(ua) &&
+    !/EdgiOS/i.test(ua);
+
+  const isStandalone =
+    window.matchMedia("(display-mode: standalone)").matches ||
+    window.navigator.standalone === true;
+
+  const DISMISS_KEY = "agendapp.iosInstallBanner.dismissedUntil";
+  const dismissedUntil = Number(localStorage.getItem(DISMISS_KEY) || "0");
+  const now = Date.now();
+
+  if (!isIOS || !isSafari || isStandalone || dismissedUntil > now) {
+    return;
+  }
+
+  banner.hidden = false;
+
+  closeBtn.addEventListener("click", () => {
+    const sevenDays = 7 * 24 * 60 * 60 * 1000;
+    localStorage.setItem(DISMISS_KEY, String(Date.now() + sevenDays));
+    banner.hidden = true;
+  });
+}
+
+bindIOSInstallBanner();
+
   async function bootAfterMapReady() {
     if (state.runtime.bootReady) return;
 
