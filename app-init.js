@@ -79,9 +79,18 @@ App.renderAll({ rebuildMarkers: true });
 
 App.events?.setBootReady?.(true);
 
-App.actions?.queueCalendarDateFromHashFlow?.();
-App.ui.processQueuedDeepLink();
-App.actions?.processQueuedCalendarDateFlow?.();
+const h = (location.hash || "").replace(/^#/, "");
+const params = new URLSearchParams(h);
+const hasDate = !!(params.get("d") || "").trim();
+
+if (hasDate) {
+  App.actions?.queueCalendarDateFromHashFlow?.();
+  App.actions?.processQueuedCalendarDateFlow?.();
+} else {
+  setTimeout(() => {
+    App.ui.processQueuedDeepLink();
+  }, 260);
+}
 
 startAutoRefresh();
   }

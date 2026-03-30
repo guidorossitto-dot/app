@@ -565,6 +565,14 @@ async function importZibiliaCandidatesFlow() {
 }
 
 function processQueuedDeepLinkFlow() {
+
+ const h = (location.hash || "").replace(/^#/, "");
+const params = new URLSearchParams(h);
+const hasDate = !!(params.get("d") || "").trim();
+
+if (hasDate) {
+  return { ok: false, error: "CALENDAR_DEEP_LINK_TAKES_PRIORITY" };
+}
   const eventId = App.state.runtime.pendingDeepLinkEventId;
   if (!eventId) return { ok: false, error: "NO_PENDING_DEEP_LINK" };
 
@@ -622,22 +630,46 @@ function processQueuedDeepLinkFlow() {
     });
   } else {
     App.renderAll?.({
-      rebuildMarkers: false,
-      recomputeNearby: false
-    });
-  }
+  rebuildMarkers: true,
+  recomputeNearby: false
+});
 
-    if (App.state.runtime.bootReady && App.map?.focusEventById) {
-    setTimeout(() => {
-      const ok = App.map.focusEventById(eventId);
-      if (!ok) {
-        setTimeout(() => App.map?.focusEventById?.(eventId), 250);
-      }
-    }, 80);
-  }
+if (App.state.runtime.bootReady && App.map?.focusEventById) {
+  setTimeout(() => {
+    const tryFocus = () => App.map?.focusEventById?.(eventId);
 
-  App.actions?.clearQueuedDeepLink?.();
-  return { ok: true, eventId };
+    let ok = tryFocus();
+
+    if (!ok) {
+      setTimeout(() => {
+        ok = tryFocus();
+      }, 260);
+    }
+
+    if (!ok) {
+      setTimeout(() => {
+        App.renderAll?.({
+          rebuildMarkers: true,
+          recomputeNearby: false
+        });
+        ok = tryFocus();
+      }, 560);
+    }
+
+    if (!ok) {
+      setTimeout(() => {
+        App.renderAll?.({
+          rebuildMarkers: true,
+          recomputeNearby: false
+        });
+        tryFocus();
+      }, 950);
+    }
+  }, 220);
+}
+
+App.actions?.clearQueuedDeepLink?.();
+return { ok: true, eventId };};
 
 }
 
@@ -671,6 +703,8 @@ function processQueuedCalendarDateFlow() {
   const eventId = (params.get("e") || "").trim();
 
   App.actions?.setCalendarMonth?.(new Date(y, m - 1, 1));
+
+  App.ui?.clearListFocus?.();
 
   App.renderAll?.({
     rebuildMarkers: false,

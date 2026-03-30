@@ -150,10 +150,18 @@ const icon = util.categoryEmoji(ev.category) || "📍";
   </button>
 
   <button class="linkBtn shareBtn"
-    data-eid="${encodeURIComponent(ev.id)}"
-    data-title="${encodeURIComponent(ev.title || "")}">
-    Compartir
-  </button>
+  data-eid="${encodeURIComponent(ev.id)}"
+  data-title="${encodeURIComponent(ev.title || "")}"
+  data-place="${encodeURIComponent(util.shortPlaceName(ev.placeName) || "")}"
+  data-date="${encodeURIComponent(ev.date || "")}"
+  data-time="${encodeURIComponent(util.formatTimeStart(ev) || "")}"
+  data-url="${
+    (ev?.date || "").slice(0, 10) === util.todayStrYYYYMMDD()
+      ? `${location.origin}${location.pathname}#e=${encodeURIComponent(ev.id || "")}`
+      : `${location.origin}${location.pathname}#d=${encodeURIComponent(ev.date || "")}&e=${encodeURIComponent(ev.id || "")}`
+  }">
+  Compartir
+</button>
 
   ${
     util.canManageUI()
@@ -380,11 +388,19 @@ if (logoutBtn) {
     Cómo llegar
   </button>
 
-  <button class="linkBtn shareBtn"
-    data-eid="${encodeURIComponent(ev.id || "")}"
-    data-title="${encodeURIComponent(ev.title || "")}">
-    Compartir
-  </button>
+<button class="linkBtn shareBtn"
+  data-eid="${encodeURIComponent(ev.id || "")}"
+  data-title="${encodeURIComponent(ev.title || "")}"
+  data-place="${encodeURIComponent(util.shortPlaceName(ev.placeName) || "")}"
+  data-date="${encodeURIComponent(ev.date || "")}"
+  data-time="${encodeURIComponent(util.formatTimeStart(ev) || "")}"
+  data-url="${
+    (ev?.date || "").slice(0, 10) === util.todayStrYYYYMMDD()
+      ? `${location.origin}${location.pathname}#e=${encodeURIComponent(ev.id || "")}`
+      : `${location.origin}${location.pathname}#d=${encodeURIComponent(ev.date || "")}&e=${encodeURIComponent(ev.id || "")}`
+  }">
+  Compartir
+</button>
 
   ${
     util.canManageUI()
@@ -1226,8 +1242,16 @@ async function saveVenueForSelectedCandidate() {
      DEEP LINK (#e=EVENT_ID)
   ========================= */
     function queueDeepLinkFromHash() {
-    return App.actions?.queueDeepLinkFromHashFlow?.();
+  const h = (location.hash || "").replace(/^#/, "");
+  const params = new URLSearchParams(h);
+  const hasDate = !!(params.get("d") || "").trim();
+
+  if (hasDate) {
+    return { ok: false, error: "CALENDAR_DEEP_LINK_TAKES_PRIORITY" };
   }
+
+  return App.actions?.queueDeepLinkFromHashFlow?.();
+}
 
     function processQueuedDeepLink() {
     return App.actions?.processQueuedDeepLinkFlow?.();
@@ -1237,16 +1261,31 @@ async function saveVenueForSelectedCandidate() {
      LISTENERS DE HASH
   ========================= */
 document.addEventListener("DOMContentLoaded", () => {
+  const h = (location.hash || "").replace(/^#/, "");
+  const params = new URLSearchParams(h);
+  const hasDate = !!(params.get("d") || "").trim();
+
+  if (hasDate) {
+    App.actions?.queueCalendarDateFromHashFlow?.();
+    return;
+  }
+
   queueDeepLinkFromHash();
-  App.actions?.queueCalendarDateFromHashFlow?.();
 });
 
 window.addEventListener("hashchange", () => {
-  queueDeepLinkFromHash();
-  App.actions?.queueCalendarDateFromHashFlow?.();
+  const h = (location.hash || "").replace(/^#/, "");
+  const params = new URLSearchParams(h);
+  const hasDate = !!(params.get("d") || "").trim();
 
+  if (hasDate) {
+    App.actions?.queueCalendarDateFromHashFlow?.();
+    App.actions?.processQueuedCalendarDateFlow?.();
+    return;
+  }
+
+  queueDeepLinkFromHash();
   processQueuedDeepLink();
-  App.actions?.processQueuedCalendarDateFlow?.();
 });
 
     document.addEventListener("click", (e) => {

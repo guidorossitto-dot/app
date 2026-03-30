@@ -38,16 +38,16 @@
   <button type="button" class="linkBtn calendarPopoverMapBtn">Ver en mapa</button>
 
   <button
-  type="button"
-  class="linkBtn calendarPopoverShareBtn shareBtn"
-  data-eid="${encodeURIComponent(ev.id || "")}"
-  data-title="${encodeURIComponent(ev.title || "")}"
-  data-place="${encodeURIComponent(util.shortPlaceName(ev.placeName) || "")}"
-  data-date="${encodeURIComponent(ev.date || "")}"
-  data-time="${encodeURIComponent(util.formatTimeStart(ev) || "")}"
-  data-url="${location.origin}${location.pathname}#d=${encodeURIComponent(ev.date || "")}&e=${encodeURIComponent(ev.id || "")}">
-  Compartir
-</button>
+    type="button"
+    class="linkBtn calendarPopoverShareBtn shareBtn"
+    data-eid="${encodeURIComponent(ev.id || "")}"
+    data-title="${encodeURIComponent(ev.title || "")}"
+    data-place="${encodeURIComponent(util.shortPlaceName(ev.placeName) || "")}"
+    data-date="${encodeURIComponent(ev.date || "")}"
+    data-time="${encodeURIComponent(util.formatTimeStart(ev) || "")}"
+    data-url="${location.origin}${location.pathname}#d=${encodeURIComponent(ev.date || "")}&e=${encodeURIComponent(ev.id || "")}">
+    Compartir
+  </button>
 
   ${
     ev.link
@@ -76,6 +76,7 @@
       `
       : ""
   }
+
 
   <button type="button" class="linkBtn calendarPopoverCloseBtn">Cerrar</button>
 </div>
@@ -177,7 +178,7 @@ if (shareBtn) {
     });
   }
 
-  function showCalendarDayPopover(anchorEl, dateStr, events) {
+  function showCalendarDayPopover(anchorEl, dateStr, events, opts = {}) {
     if (!anchorEl) return;
 
     removeCalendarPopover();
@@ -218,23 +219,23 @@ if (shareBtn) {
     ? `
       <div class="calendarEventPopover__actions" style="margin-top:8px;">
 
-        ${
-          ev?.id
-            ? `
-              <button
-  type="button"
-  class="linkBtn calendarDayPopoverShareBtn"
-  data-share-eid="${encodeURIComponent(ev.id || "")}"
-  data-share-title="${encodeURIComponent(ev.title || "")}"
-  data-share-place="${encodeURIComponent(util.shortPlaceName(ev.placeName) || "")}"
-  data-share-date="${encodeURIComponent(ev.date || "")}"
-  data-share-time="${encodeURIComponent(util.formatTimeStart(ev) || "")}"
-  data-share-url="${location.origin}${location.pathname}#d=${encodeURIComponent(ev.date || "")}&e=${encodeURIComponent(ev.id || "")}">
-  Compartir
-</button>
-            `
-            : ""
-        }
+       ${
+  ev?.id
+    ? `
+      <button
+        type="button"
+        class="linkBtn calendarDayPopoverShareBtn"
+        data-share-eid="${encodeURIComponent(ev.id || "")}"
+        data-share-title="${encodeURIComponent(ev.title || "")}"
+        data-share-place="${encodeURIComponent(util.shortPlaceName(ev.placeName) || "")}"
+        data-share-date="${encodeURIComponent(ev.date || "")}"
+        data-share-time="${encodeURIComponent(util.formatTimeStart(ev) || "")}"
+        data-share-url="${location.origin}${location.pathname}#d=${encodeURIComponent(ev.date || "")}&e=${encodeURIComponent(ev.id || "")}">
+        Compartir
+      </button>
+    `
+    : ""
+}
 
         ${
           ev.link
@@ -286,33 +287,47 @@ if (shareBtn) {
 
 document.body.appendChild(pop);
 
-    const rect = anchorEl.getBoundingClientRect();
+    const centered = !!opts.centered;
+
+if (centered) {
+  const cal = document.getElementById("calendar");
+  const calRect = cal?.getBoundingClientRect?.();
+
+  pop.style.position = "absolute";
+  pop.style.zIndex = "9999";
+
+  if (calRect) {
     const popRect = pop.getBoundingClientRect();
 
-    let top = window.scrollY + rect.bottom + 8;
-    let left = window.scrollX + rect.left;
+    const top = window.scrollY + calRect.top + 40;
+    const left = window.scrollX + calRect.left + Math.max(0, (calRect.width - popRect.width) / 2);
 
-    const maxLeft = window.scrollX + window.innerWidth - popRect.width - 12;
-    if (left > maxLeft) left = Math.max(window.scrollX + 12, maxLeft);
-
-    const maxTop = window.scrollY + window.innerHeight - popRect.height - 12;
-    if (top > maxTop) {
-      top = Math.max(window.scrollY + 12, window.scrollY + rect.top - popRect.height - 8);
-    }
-
-    pop.style.position = "absolute";
     pop.style.top = `${top}px`;
     pop.style.left = `${left}px`;
-    pop.style.zIndex = "9999";
+  } else {
+    pop.style.top = `${window.scrollY + 120}px`;
+    pop.style.left = `${window.scrollX + 40}px`;
+  }
+} else {
+  const rect = anchorEl.getBoundingClientRect();
+  const popRect = pop.getBoundingClientRect();
 
-    const closeBtn = pop.querySelector(".calendarPopoverCloseBtn");
-    if (closeBtn) {
-      closeBtn.addEventListener("click", (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        removeCalendarPopover();
-      });
-    }
+  let top = window.scrollY + rect.bottom + 8;
+  let left = window.scrollX + rect.left;
+
+  const maxLeft = window.scrollX + window.innerWidth - popRect.width - 12;
+  if (left > maxLeft) left = Math.max(window.scrollX + 12, maxLeft);
+
+  const maxTop = window.scrollY + window.innerHeight - popRect.height - 12;
+  if (top > maxTop) {
+    top = Math.max(window.scrollY + 12, window.scrollY + rect.top - popRect.height - 8);
+  }
+
+  pop.style.position = "absolute";
+  pop.style.top = `${top}px`;
+  pop.style.left = `${left}px`;
+  pop.style.zIndex = "9999";
+}
 
    pop.querySelectorAll(".calendarDayPopover__item[data-eid]").forEach((item) => {
   item.addEventListener("click", (e) => {
@@ -374,17 +389,17 @@ document.body.appendChild(pop);
       });
     });
 
-    pop.querySelectorAll(".calendarDayPopoverShareBtn").forEach((btn) => {
+pop.querySelectorAll(".calendarDayPopoverShareBtn").forEach((btn) => {
   btn.addEventListener("click", async (e) => {
     e.preventDefault();
     e.stopPropagation();
 
-btn.dataset.eid = btn.dataset.shareEid || "";
-btn.dataset.title = btn.dataset.shareTitle || "";
-btn.dataset.place = btn.dataset.sharePlace || "";
-btn.dataset.date = btn.dataset.shareDate || "";
-btn.dataset.time = btn.dataset.shareTime || "";
-btn.dataset.url = btn.dataset.shareUrl || "";
+    btn.dataset.eid = btn.dataset.shareEid || "";
+    btn.dataset.title = btn.dataset.shareTitle || "";
+    btn.dataset.place = btn.dataset.sharePlace || "";
+    btn.dataset.date = btn.dataset.shareDate || "";
+    btn.dataset.time = btn.dataset.shareTime || "";
+    btn.dataset.url = btn.dataset.shareUrl || "";
 
     await App.actions?.shareEventFlow?.({ button: btn });
   });
@@ -409,19 +424,34 @@ btn.dataset.url = btn.dataset.shareUrl || "";
   }
 
   function openCalendarDay(dateStr, anchorEl = null) {
-    if (anchorEl) {
-      const dayEvents = util.getEventsOnDate(dateStr, state.logic.events);
-      showCalendarDayPopover(anchorEl, dateStr, dayEvents);
-      return;
-    }
+  const safeDate = String(dateStr || "").trim();
+  if (!safeDate) return { ok: false, error: "MISSING_DATE" };
 
-    removeCalendarPopover();
-    App.ui?.setListFocus?.({ type: "day", dateStr });
-    App.renderAll?.({
-      rebuildMarkers: false,
-      recomputeNearby: false
-    });
+  const dayEvents = util.getEventsOnDate(safeDate, state.logic.events || []);
+
+  if (anchorEl) {
+    showCalendarDayPopover(anchorEl, safeDate, dayEvents);
+    return {
+      ok: true,
+      dateStr: safeDate,
+      eventsCount: dayEvents.length
+    };
   }
+
+  const cal = document.getElementById("calendar");
+  if (!cal) return { ok: false, error: "CALENDAR_NOT_FOUND" };
+
+  const cell = cal.querySelector(`.day[data-date="${safeDate}"]`);
+  if (!cell) return { ok: false, error: "DAY_CELL_NOT_FOUND", dateStr: safeDate };
+
+  showCalendarDayPopover(cell, safeDate, dayEvents);
+
+  return {
+    ok: true,
+    dateStr: safeDate,
+    eventsCount: dayEvents.length
+  };
+}
 
   function openCalendarDayByDate(dateStr, highlightEventId = null) {
   const safeDate = String(dateStr || "").trim();
@@ -435,46 +465,64 @@ btn.dataset.url = btn.dataset.shareUrl || "";
 
   const dayEvents = util.getEventsOnDate(safeDate, state.logic.events || []);
 
-  const monthLabel = document.getElementById("monthLabel");
-  if (monthLabel) {
-    monthLabel.scrollIntoView({ behavior: "smooth", block: "center" });
-  } else {
-    cal.scrollIntoView({ behavior: "smooth", block: "center" });
-  }
+  removeCalendarPopover();
+  App.ui?.clearListFocus?.();
 
-  setTimeout(() => {
-  cell.classList.remove("calendarListFlash");
-}, 900);
-
+// esperar a que el layout esté estable antes de scrollear
 setTimeout(() => {
-  showCalendarDayPopover(cell, safeDate, dayEvents);
+  cell.scrollIntoView({
+    behavior: "smooth",
+    block: "nearest"
+  });
 
-  if (highlightEventId) {
-    setTimeout(() => {
-      const pop = document.getElementById("calendarEventPopover");
-      if (!pop) return;
-
-      const row = pop.querySelector(
-        `.calendarDayPopover__item[data-eid="${encodeURIComponent(highlightEventId)}"]`
-      );
-      if (!row) return;
-
-      row.classList.add("calendarListFlash");
-      row.scrollIntoView({ behavior: "smooth", block: "center" });
-
-      setTimeout(() => {
-        row.classList.remove("calendarListFlash");
-      }, 1200);
-    }, 80);
-  }
+  // compensación de header (opcional)
+  setTimeout(() => {
+    window.scrollBy(0, -40);
+  }, 250);
 }, 120);
 
-return {
-  ok: true,
-  dateStr: safeDate,
-  eventsCount: dayEvents.length,
-  highlightEventId: highlightEventId || null
-};
+  cell.classList.add("calendarListFlash");
+  setTimeout(() => {
+    cell.classList.remove("calendarListFlash");
+  }, 900);
+
+  setTimeout(() => {
+    showCalendarDayPopover(cell, safeDate, dayEvents, { centered: true });
+
+    if (highlightEventId) {
+      setTimeout(() => {
+        const pop = document.getElementById("calendarEventPopover");
+        if (!pop) return;
+
+        const encodedId = encodeURIComponent(String(highlightEventId || "").trim());
+
+        const row = [...pop.querySelectorAll(".calendarDayPopover__item[data-eid]")]
+          .find((el) => String(el.dataset.eid || "").trim() === encodedId);
+
+        if (!row) return;
+
+        row.classList.add("calendarListFlash");
+        row.style.outline = "2px solid rgba(0,0,0,0.25)";
+        row.style.borderRadius = "10px";
+        row.style.background = "rgba(255, 230, 120, 0.35)";
+        row.scrollIntoView({ behavior: "smooth", block: "center" });
+
+        setTimeout(() => {
+          row.classList.remove("calendarListFlash");
+          row.style.outline = "";
+          row.style.borderRadius = "";
+          row.style.background = "";
+        }, 1600);
+      }, 120);
+    }
+  }, 520);
+
+  return {
+    ok: true,
+    dateStr: safeDate,
+    eventsCount: dayEvents.length,
+    highlightEventId: highlightEventId || null
+  };
 }
 
 App.ui = {
