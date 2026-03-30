@@ -319,6 +319,66 @@ if (logoutBtn) {
     renderGroupedList(ul, safeList);
   }
 
+function renderAgendaEvents() {
+  const ul = document.getElementById("todayEvents");
+  if (!ul) return;
+
+  ul.innerHTML = "";
+
+  const all = selectors.getVisibleFutureEvents(state.logic.events || []);
+  const today = util.todayStrYYYYMMDD();
+
+  const tomorrow = util.addDaysYYYYMMDD(today, 1);
+  const maxDate = util.addDaysYYYYMMDD(today, 3);
+
+  const todayEvents = selectors.getVisibleTodayEvents(state.logic.events || []);
+
+  const tomorrowEvents = all.filter(ev => {
+    const d = (ev.date || "").slice(0, 10);
+    return d === tomorrow;
+  });
+
+  const upcomingEvents = all.filter(ev => {
+    const d = (ev.date || "").slice(0, 10);
+    return d > tomorrow && d <= maxDate;
+  });
+
+  function renderSection(title, list) {
+    if (!list || list.length === 0) return "";
+
+    const container = document.createElement("div");
+
+    const header = document.createElement("div");
+    header.style.fontWeight = "600";
+    header.style.margin = "10px 0 6px";
+    header.textContent = title;
+
+    const innerUl = document.createElement("ul");
+
+    renderGroupedList(innerUl, list);
+
+    container.appendChild(header);
+    container.appendChild(innerUl);
+
+    return container;
+  }
+
+  const sections = [
+    renderSection("Hoy", todayEvents),
+    renderSection("Mañana", tomorrowEvents),
+    renderSection("Próximamente", upcomingEvents)
+  ].filter(Boolean);
+
+  if (!sections.length) {
+    ul.innerHTML = "<li>No hay eventos próximos</li>";
+    return;
+  }
+
+  sections.forEach(section => {
+    ul.appendChild(section);
+  });
+}
+
   function renderNearbyEvents(list) {
     const ul = document.getElementById("nearbyList");
     if (!ul) return;
@@ -714,8 +774,7 @@ const todayList = util.getTodayEvents(list || []);
   function renderList() {
     const view = getListRenderState();
 
-    renderTodayEvents(view.todayList, view.todayEmpty);
-    renderEvents(view.futureList, view.futureEmpty);
+    renderAgendaEvents();
     renderNearbyEvents(state.logic.nearbyEvents);
     updateNearbyCount(state.logic.nearbyEvents);
   }
