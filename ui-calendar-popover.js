@@ -180,8 +180,7 @@ if (favoriteBtn) {
     favoriteBtn.setAttribute("aria-pressed", isFav ? "true" : "false");
     favoriteBtn.textContent = isFav ? "❤️ Guardado" : "🤍 Guardar";
 
-App.ui?.renderCalendar?.();
-App.ui?.paintCategoryUI?.();
+
   });
 }
 
@@ -465,8 +464,7 @@ pop.querySelectorAll(".calendarDayPopoverFavoriteBtn[data-fav-eid]").forEach((bt
     btn.setAttribute("aria-pressed", isFav ? "true" : "false");
     btn.textContent = isFav ? "❤️ Guardado" : "🤍 Guardar";
 
-App.ui?.renderCalendar?.();
-App.ui?.paintCategoryUI?.();
+
   });
 });
 
