@@ -222,15 +222,13 @@ async function shareEventFlow(input = {}) {
   const url = `${location.origin}${location.pathname}#e=${encodeURIComponent(eventId)}`;
 
   const lines = [
-    title ? `Evento: ${title}` : "Evento",
-    place ? `📍 ${place}` : "",
-    date ? `🗓️ ${date}` : "",
-    time ? `🕐 ${time}` : "",
-    "",
-    url
-  ].filter(Boolean);
+  title ? `Evento: ${title}` : "Evento",
+  place ? `📍 ${place}` : "",
+  date ? `🗓️ ${date}` : "",
+  time ? `🕐 ${time}` : ""
+].filter(Boolean);
 
-  const shareText = lines.join("\n");
+const shareText = lines.join("\n");
 
   if (navigator.share) {
     try {
@@ -244,7 +242,7 @@ async function shareEventFlow(input = {}) {
   }
 
   try {
-    await navigator.clipboard.writeText(shareText);
+await navigator.clipboard.writeText(`${shareText}\n\n${url}`);
     const prev = btn.textContent;
     btn.textContent = "Link copiado ✅";
     setTimeout(() => {
@@ -252,7 +250,7 @@ async function shareEventFlow(input = {}) {
     }, 1200);
     return { ok: true, mode: "clipboard" };
   } catch {
-    window.prompt("Copiá este link:", shareText);
+window.prompt("Copiá este link:", `${shareText}\n\n${url}`);
     return { ok: true, mode: "prompt" };
   }
 }
