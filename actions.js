@@ -363,10 +363,95 @@ function focusPlaceOnMapFlow(input = {}) {
     mapEl.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
+  if (!App.state.runtime.map || !Number.isFinite(lat) || !Number.isFinite(lng)) {
+    return { ok: false, error: "INVALID_COORDS" };
+  }
+
+  let eventIds = [];
+  try {
+    eventIds = JSON.parse(decodeURIComponent(btn.dataset.eventIds || "[]"));
+  } catch {
+    eventIds = [];
+  }
+
+  const allEvents = Array.isArray(App.state.logic.events) ? App.state.logic.events : [];
+
+  let selectedEvents = [];
+  if (eventIds.length) {
+    const wanted = new Set(eventIds.map(String));
+    selectedEvents = allEvents.filter((ev) => wanted.has(String(ev.id)));
+  }
+
+  if (!selectedEvents.length && key) {
+    selectedEvents = allEvents.filter((ev) => {
+      try {
+        return App.util.smartLocationKey(ev) === key;
+      } catch {
+        return false;
+      }
+    });
+  }
+
+  const placeTitle =
+    btn.closest("li, .accordion, .panelCard, .featuredBox")
+      ?.querySelector("[data-place-title]")?.textContent?.trim()
+    || "Lugar";
+
+  const popupLoc = {
+    lat,
+    lng,
+    events: selectedEvents
+  };
+
+  const popupHTML =
+    selectedEvents.length && typeof App.map?.buildPlacePopupHTML === "function"
+      ? App.map.buildPlacePopupHTML(popupLoc)
+      : `
+        <div class="popupCard">
+          <div class="popupHeader">
+            <div>
+              <div class="popupPlace">${placeTitle}</div>
+              <div class="popupSub">Ubicación del lugar</div>
+            </div>
+          </div>
+        </div>
+      `;
+
   const loc = key ? App.state.runtime.locationMarkers?.[key] : null;
 
-  if (loc?.marker && App.state.runtime.map) {
+  if (
+    loc?.marker &&
+    App.state.runtime.map
+  ) {
     const p = loc.marker.getLatLng();
+
+    try {
+      if (typeof loc.marker.setPopupContent === "function") {
+        loc.marker.setPopupContent(popupHTML);
+      } else {
+        loc.marker.bindPopup(popupHTML, {
+          closeButton: true,
+          autoPan: true,
+          keepInView: true,
+          autoPanPadding: [16, 16],
+          offset: [0, -10],
+          maxWidth: 260,
+          minWidth: 180
+        });
+      }
+    } catch {
+      try {
+        loc.marker.bindPopup(popupHTML, {
+          closeButton: true,
+          autoPan: true,
+          keepInView: true,
+          autoPanPadding: [16, 16],
+          offset: [0, -10],
+          maxWidth: 260,
+          minWidth: 180
+        });
+      } catch {}
+    }
 
     if (App.map?.openMarkerPopupStable) {
       App.map.openMarkerPopupStable(loc.marker, p.lat, p.lng, 16);
@@ -387,23 +472,12 @@ function focusPlaceOnMapFlow(input = {}) {
     };
   }
 
-  if (!App.state.runtime.map || !Number.isFinite(lat) || !Number.isFinite(lng)) {
-    return { ok: false, error: "INVALID_COORDS" };
-  }
-
   if (
     App.state.runtime.deepLinkLayer &&
     typeof App.state.runtime.deepLinkLayer.clearLayers === "function"
   ) {
     App.state.runtime.deepLinkLayer.clearLayers();
   }
-
-  const placeTitle =
-    btn.closest("li, .accordion, .panelCard, .featuredBox")
-      ?.querySelector("[data-place-title]")?.textContent?.trim()
-    || btn.closest("li, .accordion, .panelCard")
-      ?.querySelector("div")?.textContent?.trim()
-    || "Lugar";
 
   App.map?.clearTemporaryFocusMarker?.();
 
@@ -413,16 +487,7 @@ function focusPlaceOnMapFlow(input = {}) {
 
   App.map?.setTemporaryFocusMarker?.(tempMarker);
 
-  tempMarker.bindPopup(`
-    <div class="popupCard">
-      <div class="popupHeader">
-        <div>
-          <div class="popupPlace">${placeTitle}</div>
-          <div class="popupSub">Ubicación del lugar</div>
-        </div>
-      </div>
-    </div>
-  `, {
+  tempMarker.bindPopup(popupHTML, {
     closeButton: true,
     autoPan: true,
     keepInView: true,

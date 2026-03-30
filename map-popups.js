@@ -10,6 +10,22 @@
     return t ? ` <span class="catTag">${t}</span>` : "";
   }
 
+  function getPopupEventsForLocation(events = []) {
+  const list = Array.isArray(events) ? [...events] : [];
+  if (!list.length) return [];
+
+  const today = typeof util.todayStrYYYYMMDD === "function"
+    ? util.todayStrYYYYMMDD()
+    : new Date().toISOString().slice(0, 10);
+
+  const todayEvents = list.filter((e) => e?.date === today);
+
+  if (todayEvents.length) {
+    return todayEvents.sort(util.sortEventsByStatusThenTime);
+  }
+
+  return list.sort(util.sortEventsByStatusThenTime);
+}
 
     function buildPlacePopupHTML(loc) {
     if (!loc) return "";
@@ -19,8 +35,16 @@
     const placeName = util.shortPlaceName(placeNameFull);
     const placeTitle = placeName ? placeName : "Eventos en este punto";
 
-    const sorted = [...(loc.events || [])].sort(util.sortEventsByStatusThenTime);
+    const sorted = getPopupEventsForLocation(loc.events || []);
     const total = sorted.length;
+
+    const uniqueDates = [...new Set(sorted.map(e => e.date).filter(Boolean))];
+
+let subText = `${total} ${total === 1 ? "evento" : "eventos"}`;
+
+if (uniqueDates.length === 1) {
+  subText += ` · ${util.formatDateDisplay(uniqueDates[0])}`;
+}
 
     const actionBtn = util.canManageUI()
   ? `<button class="popupBtn popupBtnPrimary popupAddBtn"
@@ -53,7 +77,7 @@
         <div class="popupHeader">
           <div>
             <div class="popupPlace">${placeTitle}</div>
-            <div class="popupSub">${total} ${total === 1 ? "evento" : "eventos"} hoy</div>
+            <div class="popupSub">${subText}</div>
           </div>
         </div>
 

@@ -229,13 +229,14 @@ const icon = util.categoryEmoji(ev.category) || "📍";
             ${badge ? `<span style="opacity:.7;font-size:.9em;margin-left:8px">${badge}</span>` : ""}
             </span>
 
-            <button class="linkBtn mapPlaceBtn"
-              data-lat="${g.lat}"
-              data-lng="${g.lng}"
-              data-key="${g.key}"
-              type="button">
-              Ver en mapa
-            </button>
+<button class="linkBtn mapPlaceBtn"
+  data-lat="${g.lat}"
+  data-lng="${g.lng}"
+  data-key="${g.key}"
+  data-event-ids="${encodeURIComponent(JSON.stringify(evs.map(ev => ev.id).filter(Boolean)))}"
+  type="button">
+  Ver en mapa
+</button>
           </summary>
 
           <div style="padding:6px 8px">
@@ -377,13 +378,14 @@ if (logoutBtn) {
   aria-pressed="${App.events?.isFavorite?.(ev.id) ? "true" : "false"}">
   ${App.events?.isFavorite?.(ev.id) ? "❤️ Guardado" : "🤍 Guardar"}
 </button>
-  <button class="linkBtn mapFocusBtn"
-    data-eid="${encodeURIComponent(ev.id || "")}"
-    data-lat="${ev.lat}"
-    data-lng="${ev.lng}"
-    data-key="${locationKey}">
-    Ver en mapa
-  </button>
+  <button class="linkBtn mapPlaceBtn"
+  data-lat="${g.lat}"
+  data-lng="${g.lng}"
+  data-key="${g.key}"
+  data-event-ids="${encodeURIComponent(JSON.stringify(evs.map(ev => ev.id).filter(Boolean)))}"
+  type="button">
+  Ver en mapa
+</button>
 
   ${
     ev.link
