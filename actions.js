@@ -210,16 +210,20 @@ async function shareEventFlow(input = {}) {
   if (!btn) return { ok: false, error: "MISSING_BUTTON" };
 
   const eventId = decodeURIComponent((btn.dataset.eid || "").trim());
-  if (!eventId) return { ok: false, error: "MISSING_ID" };
+const customUrl = String(btn.dataset.url || "").trim();
 
-  const ev = App.events?.findEventById?.(eventId) || null;
+if (!eventId && !customUrl) {
+  return { ok: false, error: "MISSING_ID_AND_URL" };
+}
 
-  const title = (ev?.title || decodeURIComponent((btn.dataset.title || "").trim()) || "Evento").trim();
-  const place = (App.util?.shortPlaceName?.(ev?.placeName) || "").trim();
-  const date = (App.util?.formatDateDisplay?.(ev?.date) || "").trim();
-  const time = (App.util?.formatTimeStart?.(ev) || "").trim();
+const ev = eventId ? (App.events?.findEventById?.(eventId) || null) : null;
 
-  const url = `${location.origin}${location.pathname}#e=${encodeURIComponent(eventId)}`;
+const title = (ev?.title || decodeURIComponent((btn.dataset.title || "").trim()) || "Evento").trim();
+const place = (App.util?.shortPlaceName?.(ev?.placeName) || decodeURIComponent((btn.dataset.place || "").trim()) || "").trim();
+const date = (App.util?.formatDateDisplay?.(ev?.date) || decodeURIComponent((btn.dataset.date || "").trim()) || "").trim();
+const time = (App.util?.formatTimeStart?.(ev) || decodeURIComponent((btn.dataset.time || "").trim()) || "").trim();
+
+const url = customUrl || `${location.origin}${location.pathname}#e=${encodeURIComponent(eventId)}`;
 
   const lines = [
   title ? `Evento: ${title}` : "Evento",
@@ -662,6 +666,10 @@ function processQueuedCalendarDateFlow() {
     return { ok: false, error: "INVALID_DATE" };
   }
 
+  const h = (location.hash || "").replace(/^#/, "");
+  const params = new URLSearchParams(h);
+  const eventId = (params.get("e") || "").trim();
+
   App.actions?.setCalendarMonth?.(new Date(y, m - 1, 1));
 
   App.renderAll?.({
@@ -670,11 +678,11 @@ function processQueuedCalendarDateFlow() {
   });
 
   setTimeout(() => {
-    App.ui?.openCalendarDayByDate?.(dateStr);
+    App.ui?.openCalendarDayByDate?.(dateStr, eventId || null);
   }, 80);
 
   App.actions?.clearQueuedCalendarDate?.();
-  return { ok: true, dateStr };
+  return { ok: true, dateStr, eventId: eventId || null };
 }
 
 

@@ -38,12 +38,16 @@
   <button type="button" class="linkBtn calendarPopoverMapBtn">Ver en mapa</button>
 
   <button
-    type="button"
-    class="linkBtn calendarPopoverShareBtn shareBtn"
-    data-eid="${encodeURIComponent(ev.id || "")}"
-    data-title="${encodeURIComponent(ev.title || "")}">
-    Compartir
-  </button>
+  type="button"
+  class="linkBtn calendarPopoverShareBtn shareBtn"
+  data-eid="${encodeURIComponent(ev.id || "")}"
+  data-title="${encodeURIComponent(ev.title || "")}"
+  data-place="${encodeURIComponent(util.shortPlaceName(ev.placeName) || "")}"
+  data-date="${encodeURIComponent(ev.date || "")}"
+  data-time="${encodeURIComponent(util.formatTimeStart(ev) || "")}"
+  data-url="${location.origin}${location.pathname}#d=${encodeURIComponent(ev.date || "")}&e=${encodeURIComponent(ev.id || "")}">
+  Compartir
+</button>
 
   ${
     ev.link
@@ -218,12 +222,16 @@ if (shareBtn) {
           ev?.id
             ? `
               <button
-                type="button"
-                class="linkBtn calendarDayPopoverShareBtn"
-                data-share-eid="${encodeURIComponent(ev.id || "")}"
-                data-share-title="${encodeURIComponent(ev.title || "")}">
-                Compartir
-              </button>
+  type="button"
+  class="linkBtn calendarDayPopoverShareBtn"
+  data-share-eid="${encodeURIComponent(ev.id || "")}"
+  data-share-title="${encodeURIComponent(ev.title || "")}"
+  data-share-place="${encodeURIComponent(util.shortPlaceName(ev.placeName) || "")}"
+  data-share-date="${encodeURIComponent(ev.date || "")}"
+  data-share-time="${encodeURIComponent(util.formatTimeStart(ev) || "")}"
+  data-share-url="${location.origin}${location.pathname}#d=${encodeURIComponent(ev.date || "")}&e=${encodeURIComponent(ev.id || "")}">
+  Compartir
+</button>
             `
             : ""
         }
@@ -371,8 +379,12 @@ document.body.appendChild(pop);
     e.preventDefault();
     e.stopPropagation();
 
-    btn.dataset.eid = btn.dataset.shareEid || "";
-    btn.dataset.title = btn.dataset.shareTitle || "";
+btn.dataset.eid = btn.dataset.shareEid || "";
+btn.dataset.title = btn.dataset.shareTitle || "";
+btn.dataset.place = btn.dataset.sharePlace || "";
+btn.dataset.date = btn.dataset.shareDate || "";
+btn.dataset.time = btn.dataset.shareTime || "";
+btn.dataset.url = btn.dataset.shareUrl || "";
 
     await App.actions?.shareEventFlow?.({ button: btn });
   });
@@ -411,7 +423,7 @@ document.body.appendChild(pop);
     });
   }
 
-  function openCalendarDayByDate(dateStr) {
+  function openCalendarDayByDate(dateStr, highlightEventId = null) {
   const safeDate = String(dateStr || "").trim();
   if (!safeDate) return { ok: false, error: "MISSING_DATE" };
 
@@ -430,20 +442,39 @@ document.body.appendChild(pop);
     cal.scrollIntoView({ behavior: "smooth", block: "center" });
   }
 
-  cell.classList.add("calendarListFlash");
   setTimeout(() => {
-    cell.classList.remove("calendarListFlash");
-  }, 900);
+  cell.classList.remove("calendarListFlash");
+}, 900);
 
-  setTimeout(() => {
-    showCalendarDayPopover(cell, safeDate, dayEvents);
-  }, 120);
+setTimeout(() => {
+  showCalendarDayPopover(cell, safeDate, dayEvents);
 
-  return {
-    ok: true,
-    dateStr: safeDate,
-    eventsCount: dayEvents.length
-  };
+  if (highlightEventId) {
+    setTimeout(() => {
+      const pop = document.getElementById("calendarEventPopover");
+      if (!pop) return;
+
+      const row = pop.querySelector(
+        `.calendarDayPopover__item[data-eid="${encodeURIComponent(highlightEventId)}"]`
+      );
+      if (!row) return;
+
+      row.classList.add("calendarListFlash");
+      row.scrollIntoView({ behavior: "smooth", block: "center" });
+
+      setTimeout(() => {
+        row.classList.remove("calendarListFlash");
+      }, 1200);
+    }, 80);
+  }
+}, 120);
+
+return {
+  ok: true,
+  dateStr: safeDate,
+  eventsCount: dayEvents.length,
+  highlightEventId: highlightEventId || null
+};
 }
 
 App.ui = {
