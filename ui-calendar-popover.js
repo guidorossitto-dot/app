@@ -179,6 +179,9 @@ if (favoriteBtn) {
 
     favoriteBtn.setAttribute("aria-pressed", isFav ? "true" : "false");
     favoriteBtn.textContent = isFav ? "❤️ Guardado" : "🤍 Guardar";
+
+App.ui?.renderCalendar?.();
+App.ui?.paintCategoryUI?.();
   });
 }
 
@@ -459,15 +462,11 @@ pop.querySelectorAll(".calendarDayPopoverFavoriteBtn[data-fav-eid]").forEach((bt
     if (!result?.ok) return;
 
     const isFav = !!result.isFavorite;
-
     btn.setAttribute("aria-pressed", isFav ? "true" : "false");
     btn.textContent = isFav ? "❤️ Guardado" : "🤍 Guardar";
-  });
-});
 
-    pop.querySelectorAll(".calendarDayPopoverDeleteBtn[data-delete-eid]").forEach((btn) => {
-  btn.addEventListener("click", () => {
-    removeCalendarPopover();
+App.ui?.renderCalendar?.();
+App.ui?.paintCategoryUI?.();
   });
 });
 

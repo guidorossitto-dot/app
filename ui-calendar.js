@@ -758,34 +758,44 @@ const todayList = util.getTodayEvents(list || []);
   }
 
 
-function bindCategoryUI() {
+function paintCategoryUI() {
   const row = document.getElementById("categoryChips");
   if (!row) return;
 
   const chips = [...row.querySelectorAll(".chip[data-cat]")];
   const favChip = document.getElementById("favoritesOnlyChip");
 
-  function paintFavoritesChip() {
-    if (!favChip) return;
+  chips.forEach((btn) => {
+    const on = btn.dataset.cat === (state.logic.activeCategory || "all");
+    btn.classList.toggle("isActive", on);
+  });
+
+  if (favChip) {
+    const favs = Array.isArray(state.logic.favorites) ? state.logic.favorites : [];
+    const count = favs.length;
+
     favChip.classList.toggle("isActive", !!state.logic.favoritesOnly);
+    favChip.textContent = count > 0 ? `❤️ Favoritos (${count})` : "❤️ Favoritos";
+  }
+}
+
+function bindCategoryUI() {
+  const row = document.getElementById("categoryChips");
+  if (!row || row.dataset.bound === "1") {
+    paintCategoryUI();
+    return;
   }
 
-  function paintActive() {
-    chips.forEach((btn) => {
-      const on = btn.dataset.cat === (state.logic.activeCategory || "all");
-      btn.classList.toggle("isActive", on);
-    });
+  row.dataset.bound = "1";
 
-    paintFavoritesChip();
-  }
-
-  paintActive();
+  const chips = [...row.querySelectorAll(".chip[data-cat]")];
+  const favChip = document.getElementById("favoritesOnlyChip");
 
   chips.forEach((btn) => {
     btn.addEventListener("click", () => {
       App.actions?.selectCategory?.(btn.dataset.cat || "all");
       clearListFocus?.();
-      paintActive();
+      paintCategoryUI();
 
       commit?.({
         persist: false,
@@ -800,7 +810,7 @@ function bindCategoryUI() {
     favChip.addEventListener("click", () => {
       App.actions?.toggleFavoritesOnly?.();
       clearListFocus?.();
-      paintActive();
+      paintCategoryUI();
 
       commit?.({
         persist: false,
@@ -810,6 +820,8 @@ function bindCategoryUI() {
       });
     });
   }
+
+  paintCategoryUI();
 }
 
   /* =========================
@@ -1395,6 +1407,7 @@ window.addEventListener("hashchange", () => {
     bindPublicUI,
     bindAdminUI,
     bindCategoryUI,
+    paintCategoryUI,
     bindDeleteEventUI,
     bindSidebarUI,
     shareEventFromButton,

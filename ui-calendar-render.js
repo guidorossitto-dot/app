@@ -79,18 +79,26 @@
       cell.appendChild(dn);
 
       const evs = byDate[dateStr] || [];
+      
+      const hasFavorite = evs.some((ev) => App.events?.isFavorite?.(ev.id));
+      if (hasFavorite) {
+      cell.classList.add("day--hasFavorite");
+    }
 
       const isMobile = window.innerWidth <= 768;
       const maxVisible = isMobile ? 2 : 3;
 
       evs.slice(0, maxVisible).forEach((ev) => {
-        const b = document.createElement("div");
-        b.className = "event";
+  const b = document.createElement("div");
+  const isFav = !!App.events?.isFavorite?.(ev.id);
 
-        const icon = util.categoryEmoji(ev.category) || "📍";
+  b.className = `event${isFav ? " event--favorite" : ""}`;
 
-        b.textContent = `${icon}${ev.title}`;
-        b.dataset.eid = ev.id || "";
+  const icon = util.categoryEmoji(ev.category) || "📍";
+  const favMark = isFav ? "❤️ " : "";
+
+  b.textContent = `${favMark}${icon}${ev.title}`;
+  b.dataset.eid = ev.id || "";
 
         b.addEventListener("click", (e) => {
           e.preventDefault();

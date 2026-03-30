@@ -311,6 +311,9 @@ function rebuildLocationMarkers(list = state.logic.events) {
   btn.setAttribute("aria-pressed", isFav ? "true" : "false");
   btn.textContent = isFav ? "❤️ Guardado" : "🤍 Guardar";
 
+App.ui?.renderCalendar?.();
+App.ui?.paintCategoryUI?.();
+
   return;
 }
 
