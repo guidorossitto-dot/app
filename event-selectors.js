@@ -155,9 +155,8 @@
      FEATURED / NEARBY
   ========================= */
   function getTodayNearbyEvents(list = state.logic.nearbyEvents) {
-    const today = util.todayStrYYYYMMDD();
-    return (list || []).filter((ev) => (ev?.date || "").slice(0, 10) === today);
-  }
+  return util.getTodayEvents(list || []);
+}
 
   function getFeaturedNearbyEvents(list = state.logic.nearbyEvents) {
     const todayList = getTodayNearbyEvents(list);

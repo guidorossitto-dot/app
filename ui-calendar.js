@@ -458,8 +458,7 @@ if (logoutBtn) {
       return;
     }
 
-    const today = util.todayStrYYYYMMDD();
-    const todayList = (list || []).filter((ev) => (ev?.date || "").slice(0, 10) === today);
+const todayList = util.getTodayEvents(list || []);
 
     if (todayList.length === 0) {
       if (topEl) {

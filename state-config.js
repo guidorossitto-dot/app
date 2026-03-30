@@ -9,10 +9,12 @@
   ========================= */
   App.CFG = {
   SEARCH_RADIUS_KM: 2,
-  PIN_PRECISION: 4,
+  PIN_PRECISION: 4, 
   DEFAULT_LAT: -34.6037,
   DEFAULT_LNG: -58.3816,
   REFRESH_MS: 60000,
+  NIGHT_ROLLOVER_START_HOUR: 23,
+  NIGHT_ROLLOVER_END_HOUR: 4,
 
   CATEGORY_ALL: "all",
   DEFAULT_CATEGORY: "music",
@@ -185,6 +187,24 @@ function formatTimeStart(ev) {
     return Math.round(diff / 60000);
   }
 
+  function isLateNightCarryoverEvent(ev) {
+  if (!ev?.date || !ev?.startTime) return false;
+
+  const now = new Date();
+  const currentHour = now.getHours();
+
+  // solo aplica durante la madrugada
+  if (currentHour >= App.CFG.NIGHT_ROLLOVER_END_HOUR) return false;
+
+  const yesterday = addDaysYYYYMMDD(todayStrYYYYMMDD(), -1);
+  if (ev.date !== yesterday) return false;
+
+  const [hh] = String(ev.startTime || "00:00").split(":").map(Number);
+  if (!Number.isFinite(hh)) return false;
+
+  return hh >= App.CFG.NIGHT_ROLLOVER_START_HOUR;
+}
+
   /* =========================
      EVENT STATUS / SORT
   ========================= */
@@ -353,10 +373,13 @@ function categoryLabel(cat) {
     return getAllEvents(list).filter((ev) => ev?.category === cat);
   }
 
-  function getTodayEvents(list = getAllEvents()) {
-    const today = todayStrYYYYMMDD();
-    return getAllEvents(list).filter((ev) => ev?.date === today);
-  }
+function getTodayEvents(list = getAllEvents()) {
+  const today = todayStrYYYYMMDD();
+
+  return getAllEvents(list).filter((ev) => {
+    return ev?.date === today || isLateNightCarryoverEvent(ev);
+  });
+}
 
   function getFutureEvents(list = getAllEvents()) {
     const today = todayStrYYYYMMDD();
@@ -468,6 +491,7 @@ function categoryLabel(cat) {
     getFutureEvents,
     getEventsOnDate,
     getNearbyTodayEvents,
+    isLateNightCarryoverEvent,
 
     findPlaceAnchor,
     smartLocationKey,

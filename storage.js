@@ -175,11 +175,18 @@ function loadVenues() {
   }
 
   function purgePastEvents(list = state.logic.events) {
-    const today = util.todayStrYYYYMMDD();
-    const safeList = Array.isArray(list) ? list : [];
+  const today = util.todayStrYYYYMMDD();
+  const safeList = Array.isArray(list) ? list : [];
 
-    return safeList.filter((ev) => ev?.date && ev.date >= today);
-  }
+  return safeList.filter((ev) => {
+    if (!ev?.date) return false;
+    if (ev.date >= today) return true;
+    if (typeof util.isLateNightCarryoverEvent === "function" && util.isLateNightCarryoverEvent(ev)) {
+      return true;
+    }
+    return false;
+  });
+}
 
   function hasPastEvents(list = state.logic.events) {
     const safeList = Array.isArray(list) ? list : [];

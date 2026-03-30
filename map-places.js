@@ -165,10 +165,12 @@ function rebuildLocationMarkers(list = state.logic.events) {
   clearEventMarkers();
   state.runtime.locationMarkers = {};
 
-  const today = util.todayStrYYYYMMDD();
+ for (const ev of list || []) {
+  const isVisibleToday =
+    (ev.date || "").slice(0, 10) === util.todayStrYYYYMMDD() ||
+    (typeof util.isLateNightCarryoverEvent === "function" && util.isLateNightCarryoverEvent(ev));
 
-  for (const ev of list || []) {
-    if ((ev.date || "").slice(0, 10) !== today) continue;
+  if (!isVisibleToday) continue;
 
     const active = state.logic.activeCategory;
     if (active && active !== "all" && ev.category !== active) continue;
