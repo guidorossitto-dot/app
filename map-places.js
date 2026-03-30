@@ -306,24 +306,10 @@ function rebuildLocationMarkers(list = state.logic.events) {
   const result = App.actions?.toggleFavorite?.(eventId);
   if (!result?.ok) return;
 
-  const html = App.map?.buildPlacePopupHTML?.(loc) || "";
-  try {
-    loc.marker.bindPopup(html, {
-      closeButton: true,
-      autoPan: true,
-      keepInView: true,
-      autoPanPadding: [16, 16],
-      offset: [0, -10],
-      maxWidth: 260,
-      minWidth: 180
-    });
+  const isFav = !!result.isFavorite;
 
-    setTimeout(() => {
-      try {
-        loc.marker.openPopup();
-      } catch {}
-    }, 30);
-  } catch {}
+  btn.setAttribute("aria-pressed", isFav ? "true" : "false");
+  btn.textContent = isFav ? "❤️ Guardado" : "🤍 Guardar";
 
   return;
 }

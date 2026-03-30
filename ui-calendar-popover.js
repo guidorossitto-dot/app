@@ -35,47 +35,55 @@
         <div><strong>Fecha:</strong> ${dateText}</div>
       </div>
      <div class="calendarEventPopover__actions">
-  <button type="button" class="linkBtn calendarPopoverMapBtn">Ver en mapa</button>
+<button
+  type="button"
+  class="linkBtn favoriteBtn"
+  data-eid="${encodeURIComponent(ev.id || "")}"
+  aria-pressed="${App.events?.isFavorite?.(ev.id) ? "true" : "false"}">
+  ${App.events?.isFavorite?.(ev.id) ? "❤️ Guardado" : "🤍 Guardar"}
+</button>
 
-  <button
-    type="button"
-    class="linkBtn calendarPopoverShareBtn shareBtn"
-    data-eid="${encodeURIComponent(ev.id || "")}"
-    data-title="${encodeURIComponent(ev.title || "")}"
-    data-place="${encodeURIComponent(util.shortPlaceName(ev.placeName) || "")}"
-    data-date="${encodeURIComponent(ev.date || "")}"
-    data-time="${encodeURIComponent(util.formatTimeStart(ev) || "")}"
-    data-url="${location.origin}${location.pathname}#d=${encodeURIComponent(ev.date || "")}&e=${encodeURIComponent(ev.id || "")}">
-    Compartir
-  </button>
+<button type="button" class="linkBtn calendarPopoverMapBtn">Ver en mapa</button>
 
-  ${
-    ev.link
-      ? `<a
-          class="linkBtn"
-          href="${ev.link}"
-          target="_blank"
-          rel="noopener noreferrer">
-          Ver info
-        </a>`
-      : ""
-  }
+<button
+  type="button"
+  class="linkBtn calendarPopoverShareBtn shareBtn"
+  data-eid="${encodeURIComponent(ev.id || "")}"
+  data-title="${encodeURIComponent(ev.title || "")}"
+  data-place="${encodeURIComponent(util.shortPlaceName(ev.placeName) || "")}"
+  data-date="${encodeURIComponent(ev.date || "")}"
+  data-time="${encodeURIComponent(util.formatTimeStart(ev) || "")}"
+  data-url="${location.origin}${location.pathname}#d=${encodeURIComponent(ev.date || "")}&e=${encodeURIComponent(ev.id || "")}">
+  Compartir
+</button>
 
-  ${
-    util.canManageUI() && ev?.id
-      ? `
-        <button type="button" class="linkBtn calendarPopoverEditBtn">Editar</button>
+${
+  ev.link
+    ? `<a
+        class="linkBtn"
+        href="${ev.link}"
+        target="_blank"
+        rel="noopener noreferrer">
+        Ver info
+      </a>`
+    : ""
+}
 
-        <button
-          type="button"
-          class="linkBtn calendarPopoverDeleteBtn deleteEventBtn"
-          data-delete-eid="${encodeURIComponent(ev.id || "")}"
-          data-delete-title="${encodeURIComponent(ev.title || "")}">
-          Borrar
-        </button>
-      `
-      : ""
-  }
+${
+  util.canManageUI() && ev?.id
+    ? `
+      <button type="button" class="linkBtn calendarPopoverEditBtn">Editar</button>
+
+      <button
+        type="button"
+        class="linkBtn calendarPopoverDeleteBtn deleteEventBtn"
+        data-delete-eid="${encodeURIComponent(ev.id || "")}"
+        data-delete-title="${encodeURIComponent(ev.title || "")}">
+        Borrar
+      </button>
+    `
+    : ""
+}
 
 
   <button type="button" class="linkBtn calendarPopoverCloseBtn">Cerrar</button>
@@ -155,6 +163,25 @@ if (shareBtn) {
   });
 }
 
+const favoriteBtn = pop.querySelector(".favoriteBtn");
+if (favoriteBtn) {
+  favoriteBtn.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const eventId = decodeURIComponent((favoriteBtn.dataset.eid || "").trim());
+    if (!eventId) return;
+
+    const result = App.actions?.toggleFavorite?.(eventId);
+    if (!result?.ok) return;
+
+    const isFav = !!result.isFavorite;
+
+    favoriteBtn.setAttribute("aria-pressed", isFav ? "true" : "false");
+    favoriteBtn.textContent = isFav ? "❤️ Guardado" : "🤍 Guardar";
+  });
+}
+
     const editBtn = pop.querySelector(".calendarPopoverEditBtn");
     if (editBtn) {
       editBtn.addEventListener("click", (e) => {
@@ -219,9 +246,24 @@ if (shareBtn) {
     ? `
       <div class="calendarEventPopover__actions" style="margin-top:8px;">
 
+      ${
+  ev?.id
+    ? `
+      <button
+        type="button"
+        class="linkBtn calendarDayPopoverFavoriteBtn"
+        data-fav-eid="${encodeURIComponent(ev.id || "")}"
+        aria-pressed="${App.events?.isFavorite?.(ev.id) ? "true" : "false"}">
+        ${App.events?.isFavorite?.(ev.id) ? "❤️ Guardado" : "🤍 Guardar"}
+      </button>
+    `
+    : ""
+}
+
        ${
   ev?.id
     ? `
+    
       <button
         type="button"
         class="linkBtn calendarDayPopoverShareBtn"
@@ -402,6 +444,24 @@ pop.querySelectorAll(".calendarDayPopoverShareBtn").forEach((btn) => {
     btn.dataset.url = btn.dataset.shareUrl || "";
 
     await App.actions?.shareEventFlow?.({ button: btn });
+  });
+});
+
+pop.querySelectorAll(".calendarDayPopoverFavoriteBtn[data-fav-eid]").forEach((btn) => {
+  btn.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const eventId = decodeURIComponent(btn.dataset.favEid || "");
+    if (!eventId) return;
+
+    const result = App.actions?.toggleFavorite?.(eventId);
+    if (!result?.ok) return;
+
+    const isFav = !!result.isFavorite;
+
+    btn.setAttribute("aria-pressed", isFav ? "true" : "false");
+    btn.textContent = isFav ? "❤️ Guardado" : "🤍 Guardar";
   });
 });
 

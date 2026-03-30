@@ -832,6 +832,14 @@ document.addEventListener("click", (e) => {
   const btn = e.target.closest(".favoriteBtn");
   if (!btn) return;
 
+  // si el botón está dentro de un popup o popover, esos ya se manejan localmente
+  if (
+    btn.closest("#calendarEventPopover") ||
+    btn.closest(".leaflet-popup-content")
+  ) {
+    return;
+  }
+
   e.preventDefault();
   e.stopPropagation();
 
@@ -841,11 +849,11 @@ document.addEventListener("click", (e) => {
   const result = App.actions?.toggleFavorite?.(eventId);
   if (!result?.ok) return;
 
-  App.renderAll?.({
-    rebuildMarkers: false,
-    recomputeNearby: false
-  });
+  const isFav = !!result.isFavorite;
+  btn.setAttribute("aria-pressed", isFav ? "true" : "false");
+  btn.textContent = isFav ? "❤️ Guardado" : "🤍 Guardar";
 });
+
 
     document.addEventListener("click", async (e) => {
       const btn = e.target.closest(".deleteEventBtn, .popupDeleteBtn");
