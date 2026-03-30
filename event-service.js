@@ -847,6 +847,18 @@ function toggleFavorite(eventId) {
     favorites: next
   };
 }
+function setFavoritesOnly(value) {
+  App.store?.dispatch?.({
+    type: "SET_FAVORITES_ONLY",
+    value: !!value
+  });
+
+  return state.logic.favoritesOnly;
+}
+
+function getFavoritesOnly() {
+  return !!state.logic.favoritesOnly;
+}
 
     App.events = {
     getAllEvents,
@@ -898,6 +910,8 @@ function toggleFavorite(eventId) {
     setFavorites,
     isFavorite,
     toggleFavorite,
+    setFavoritesOnly,
+    getFavoritesOnly,
 
     commit,
     saveAndRefresh

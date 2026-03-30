@@ -264,6 +264,14 @@ window.prompt("Copiá este link:", `${shareText}\n\n${url}`);
   }
 }
 
+function setFavoritesOnly(value) {
+  return App.events?.setFavoritesOnly?.(value);
+}
+
+function toggleFavoritesOnly() {
+  return App.events?.setFavoritesOnly?.(!App.events?.getFavoritesOnly?.());
+}
+
 function routeToEventFlow(input = {}) {
   const btn = input?.button || null;
   if (!btn) return { ok: false, error: "MISSING_BUTTON" };
@@ -793,6 +801,8 @@ async function approveAllPendingCandidatesFlow() {
     approveAllPendingCandidatesFlow,
         queueCalendarDateFromHashFlow,
     processQueuedCalendarDateFlow,
+    setFavoritesOnly,
+    toggleFavoritesOnly,
     importZibiliaCandidatesFlow
   };
 })();

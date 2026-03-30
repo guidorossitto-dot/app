@@ -28,7 +28,8 @@
   "SET_PENDING_DEEP_LINK_EVENT_ID",
   "CLEAR_PENDING_DEEP_LINK_EVENT_ID",
   "SET_PENDING_CALENDAR_DATE",
-"CLEAR_PENDING_CALENDAR_DATE",
+  "CLEAR_PENDING_CALENDAR_DATE",
+  "SET_FAVORITES_ONLY",
   "SET_BOOT_READY",
   "SET_UI_PAN_ZOOM_IN_PROGRESS"
 ]);
@@ -87,6 +88,13 @@
          result = true;
          break;
      }
+     
+      case "SET_FAVORITES_ONLY": {
+         state.logic.favoritesOnly = !!action.value;
+         result = { ok: true };
+         break;
+    }
+     
         case "SET_CANDIDATES": {
         state.logic.candidates = Array.isArray(action.candidates) ? action.candidates : [];
         result = { ok: true };

@@ -758,37 +758,59 @@ const todayList = util.getTodayEvents(list || []);
   }
 
 
+function bindCategoryUI() {
+  const row = document.getElementById("categoryChips");
+  if (!row) return;
 
-  function bindCategoryUI() {
-    const row = document.getElementById("categoryChips");
-    if (!row) return;
+  const chips = [...row.querySelectorAll(".chip[data-cat]")];
+  const favChip = document.getElementById("favoritesOnlyChip");
 
-    const chips = [...row.querySelectorAll(".chip")];
+  function paintFavoritesChip() {
+    if (!favChip) return;
+    favChip.classList.toggle("isActive", !!state.logic.favoritesOnly);
+  }
 
-    function paintActive() {
-      chips.forEach((btn) => {
-        const on = btn.dataset.cat === (state.logic.activeCategory || "all");
-        btn.classList.toggle("isActive", on);
-      });
-    }
-
-    paintActive();
-
+  function paintActive() {
     chips.forEach((btn) => {
-      btn.addEventListener("click", () => {
-        App.actions?.selectCategory?.(btn.dataset.cat || "all");
-        clearListFocus?.();
-        paintActive();
+      const on = btn.dataset.cat === (state.logic.activeCategory || "all");
+      btn.classList.toggle("isActive", on);
+    });
 
-        commit?.({
-          persist: false,
-          purgePast: false,
-          rebuildMarkers: true,
-          recomputeNearby: true
-        });
+    paintFavoritesChip();
+  }
+
+  paintActive();
+
+  chips.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      App.actions?.selectCategory?.(btn.dataset.cat || "all");
+      clearListFocus?.();
+      paintActive();
+
+      commit?.({
+        persist: false,
+        purgePast: false,
+        rebuildMarkers: true,
+        recomputeNearby: true
+      });
+    });
+  });
+
+  if (favChip) {
+    favChip.addEventListener("click", () => {
+      App.actions?.toggleFavoritesOnly?.();
+      clearListFocus?.();
+      paintActive();
+
+      commit?.({
+        persist: false,
+        purgePast: false,
+        rebuildMarkers: true,
+        recomputeNearby: true
       });
     });
   }
+}
 
   /* =========================
      CORE WRAPPERS (compat SSOT)

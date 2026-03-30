@@ -61,6 +61,7 @@ App.CFG.ALLOWED_CATEGORIES = Object.keys(App.CFG.CATEGORIES);
   venues: [],
   calendarCursor: new Date(),
   favorites: [],
+  favoritesOnly: false,
   activeCategory: App.CFG.CATEGORY_ALL,
   editingEventId: null,
   editingMode: null,
@@ -369,11 +370,24 @@ function categoryLabel(cat) {
     return Array.isArray(list) ? list : [];
   }
 
-  function filterByActiveCategory(list = getAllEvents()) {
-    const cat = App.state.logic.activeCategory;
-    if (!cat || cat === App.CFG.CATEGORY_ALL) return list;
-    return getAllEvents(list).filter((ev) => ev?.category === cat);
+ function filterByActiveCategory(list = []) {
+  const safe = Array.isArray(list) ? list : [];
+  const activeCategory = App.state?.logic?.activeCategory || "all";
+  const favoritesOnly = !!App.state?.logic?.favoritesOnly;
+  const favorites = Array.isArray(App.state?.logic?.favorites)
+    ? App.state.logic.favorites.map((id) => String(id || "").trim())
+    : [];
+
+  let result = activeCategory === "all"
+    ? safe
+    : safe.filter((ev) => ev?.category === activeCategory);
+
+  if (favoritesOnly) {
+    result = result.filter((ev) => favorites.includes(String(ev?.id || "").trim()));
   }
+
+  return result;
+}
 
 function getTodayEvents(list = getAllEvents()) {
   const today = todayStrYYYYMMDD();
