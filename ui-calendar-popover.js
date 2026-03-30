@@ -468,18 +468,19 @@ pop.querySelectorAll(".calendarDayPopoverShareBtn").forEach((btn) => {
   removeCalendarPopover();
   App.ui?.clearListFocus?.();
 
-// esperar a que el layout esté estable antes de scrollear
-setTimeout(() => {
-  cell.scrollIntoView({
-    behavior: "smooth",
-    block: "nearest"
-  });
+requestAnimationFrame(() => {
+  requestAnimationFrame(() => {
+    cell.scrollIntoView({
+      behavior: "smooth",
+      block: "center"
+    });
 
-  // compensación de header (opcional)
-  setTimeout(() => {
-    window.scrollBy(0, -40);
-  }, 250);
-}, 120);
+    // ajuste fino por header (opcional)
+    setTimeout(() => {
+      window.scrollBy(0, -40);
+    }, 200);
+  });
+});
 
   cell.classList.add("calendarListFlash");
   setTimeout(() => {
