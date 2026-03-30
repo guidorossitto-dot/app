@@ -841,12 +841,21 @@ function toggleFavorite(eventId) {
     console.error("No se pudieron guardar favoritos en localStorage.", err);
   }
 
+  // ✅ GA4 (DESPUÉS de hacer el cambio)
+  if (typeof gtag === "function") {
+    gtag('event', 'toggle_favorite', {
+      event_id: id,
+      is_favorite: next.includes(id)
+    });
+  }
+
   return {
     ok: true,
     isFavorite: next.includes(id),
     favorites: next
   };
 }
+
 function setFavoritesOnly(value) {
   App.store?.dispatch?.({
     type: "SET_FAVORITES_ONLY",

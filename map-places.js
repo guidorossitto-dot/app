@@ -705,6 +705,12 @@ App.ui?.paintCategoryUI?.();
   const id = String(eventId || "").trim();
   if (!id) return false;
 
+   if (typeof gtag === "function") {
+    gtag('event', 'open_event', {
+      event_id: id
+    });
+  }
+
   const ev = App.events?.findEventById?.(id) || null;
   if (!ev || !state.runtime.map) return false;
 
