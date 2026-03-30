@@ -325,56 +325,72 @@ function renderAgendaEvents() {
 
   ul.innerHTML = "";
 
-  const all = selectors.getVisibleFutureEvents(state.logic.events || []);
+  const allEvents = state.logic.events || [];
   const today = util.todayStrYYYYMMDD();
-
   const tomorrow = util.addDaysYYYYMMDD(today, 1);
   const maxDate = util.addDaysYYYYMMDD(today, 3);
 
-  const todayEvents = selectors.getVisibleTodayEvents(state.logic.events || []);
+  const todayAll = selectors.getVisibleTodayEvents(allEvents);
+  const futureAll = selectors.getVisibleFutureEvents(allEvents);
 
-  const tomorrowEvents = all.filter(ev => {
+  function isUrgentToday(ev) {
+    if (!ev || (ev.date || "").slice(0, 10) !== today) return false;
+    if (typeof util.minutesToStart !== "function") return false;
+
+    const mins = util.minutesToStart(ev);
+    if (typeof mins !== "number") return false;
+
+    return mins >= -15 && mins <= 90;
+  }
+
+  function renderSection(title, list, opts = {}) {
+  if (!list || list.length === 0) return null;
+
+  const container = document.createElement("div");
+  container.className = opts.urgent ? "agendaSection agendaSection--urgent" : "agendaSection";
+
+  const header = document.createElement("div");
+  header.className = opts.urgent
+    ? "agendaSectionTitle agendaSectionTitle--urgent"
+    : "agendaSectionTitle";
+  header.textContent = title;
+
+  const innerUl = document.createElement("ul");
+  innerUl.className = "agendaSectionList";
+  renderGroupedList(innerUl, list);
+
+  container.appendChild(header);
+  container.appendChild(innerUl);
+
+  return container;
+}
+
+  const urgentToday = todayAll.filter(isUrgentToday);
+  const laterToday = todayAll.filter((ev) => !isUrgentToday(ev));
+
+  const tomorrowEvents = futureAll.filter((ev) => {
     const d = (ev.date || "").slice(0, 10);
     return d === tomorrow;
   });
 
-  const upcomingEvents = all.filter(ev => {
+  const upcomingEvents = futureAll.filter((ev) => {
     const d = (ev.date || "").slice(0, 10);
     return d > tomorrow && d <= maxDate;
   });
 
-  function renderSection(title, list) {
-    if (!list || list.length === 0) return "";
-
-    const container = document.createElement("div");
-
-    const header = document.createElement("div");
-    header.style.fontWeight = "600";
-    header.style.margin = "10px 0 6px";
-    header.textContent = title;
-
-    const innerUl = document.createElement("ul");
-
-    renderGroupedList(innerUl, list);
-
-    container.appendChild(header);
-    container.appendChild(innerUl);
-
-    return container;
-  }
-
   const sections = [
-    renderSection("Hoy", todayEvents),
-    renderSection("Mañana", tomorrowEvents),
-    renderSection("Próximamente", upcomingEvents)
+  renderSection("🔥 Ahora o pronto", urgentToday, { urgent: true }),
+  renderSection("🕒 Más tarde", laterToday),
+  renderSection("Mañana", tomorrowEvents),
+  renderSection("Próximamente", upcomingEvents)
   ].filter(Boolean);
 
   if (!sections.length) {
-    ul.innerHTML = "<li>No hay eventos próximos</li>";
+    ul.innerHTML = "<li>No hay eventos hoy ni próximos</li>";
     return;
   }
 
-  sections.forEach(section => {
+  sections.forEach((section) => {
     ul.appendChild(section);
   });
 }
@@ -439,10 +455,10 @@ function renderAgendaEvents() {
   ${App.events?.isFavorite?.(ev.id) ? "❤️ Guardado" : "🤍 Guardar"}
 </button>
   <button class="linkBtn mapPlaceBtn"
-  data-lat="${g.lat}"
-  data-lng="${g.lng}"
-  data-key="${g.key}"
-  data-event-ids="${encodeURIComponent(JSON.stringify(evs.map(ev => ev.id).filter(Boolean)))}"
+  data-lat="${ev.lat}"
+  data-lng="${ev.lng}"
+  data-key="${locationKey}"
+  data-event-ids="${encodeURIComponent(JSON.stringify([ev.id].filter(Boolean)))}"
   type="button">
   Ver en mapa
 </button>

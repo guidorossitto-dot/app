@@ -1646,6 +1646,34 @@ a.popupBtn:active {
   }
 }
 
+.agendaSection {
+  margin: 0 0 14px;
+}
+
+.agendaSectionTitle {
+  margin: 10px 0 6px;
+  font-weight: 600;
+  font-size: 0.96rem;
+  line-height: 1.2;
+}
+
+.agendaSectionList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.agendaSection--urgent {
+  border: 1px solid #f2d7a6;
+  background: #fff8ea;
+  border-radius: 12px;
+  padding: 8px 10px;
+}
+
+.agendaSectionTitle--urgent {
+  font-weight: 700;
+}
+
 @media (max-width: 760px) {
   .pageShell {
     padding: 12px;
