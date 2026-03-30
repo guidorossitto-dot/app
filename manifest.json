@@ -1,9 +1,10 @@
 {
+  "id": "/app/",
   "name": "AgendApp",
   "short_name": "AgendApp",
   "description": "Agenda cultural con mapa interactivo y eventos cerca tuyo.",
-  "start_url": "./",
-  "scope": "./",
+  "start_url": "/app/",
+  "scope": "/app/",
   "display": "standalone",
   "orientation": "portrait-primary",
   "background_color": "#f6f7f9",

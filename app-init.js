@@ -45,6 +45,42 @@ App.store.dispatch({
   App.events.setCalendarCursor(new Date());
 }
 
+let deferredInstallPrompt = null;
+
+function bindInstallPrompt() {
+  const installBtn = document.getElementById("installAppBtn");
+  if (!installBtn) return;
+
+  window.addEventListener("beforeinstallprompt", (event) => {
+    event.preventDefault();
+    deferredInstallPrompt = event;
+    installBtn.hidden = false;
+  });
+
+  installBtn.addEventListener("click", async () => {
+    if (!deferredInstallPrompt) return;
+
+    installBtn.hidden = true;
+    deferredInstallPrompt.prompt();
+
+    try {
+      await deferredInstallPrompt.userChoice;
+    } catch (err) {
+      console.warn("No se pudo completar el prompt de instalación:", err);
+    }
+
+    deferredInstallPrompt = null;
+  });
+
+  window.addEventListener("appinstalled", () => {
+    deferredInstallPrompt = null;
+    installBtn.hidden = true;
+    console.log("App instalada correctamente");
+  });
+}
+
+bindInstallPrompt();
+
   function bindUI() {
   App.ui.bindLoginUI();
   App.ui.bindPublicUI();
