@@ -194,6 +194,7 @@ async function deleteEventFlow(input = {}) {
   if (App.state.runtime.map) {
     App.state.runtime.map.closePopup();
   }
+  
 
   App.commit?.({
     persist: false,
@@ -203,6 +204,10 @@ async function deleteEventFlow(input = {}) {
   });
 
   return { ok: true, eventId, recurring: isRecurring };
+}
+
+function toggleFavorite(eventId) {
+  return App.events?.toggleFavorite?.(eventId);
 }
 
 async function shareEventFlow(input = {}) {
@@ -776,6 +781,7 @@ async function approveAllPendingCandidatesFlow() {
     setBootReady,
 
     commitAndRender,
+    toggleFavorite,
     saveAndRefresh,
     deleteEventFlow,
     shareEventFlow,

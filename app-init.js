@@ -13,6 +13,14 @@
     await App.storage?.loadVenues?.();
   }
 
+const favs = JSON.parse(localStorage.getItem("recomentos.favorites") || "[]");
+App.events?.setFavorites?.(favs);
+
+App.store.dispatch({
+  type: "SET_FAVORITES",
+  favorites: favs
+});
+
   const loadedEvents = await App.storage.loadEvents();
 
   if (loadedEvents?.ok) {

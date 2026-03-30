@@ -60,6 +60,7 @@ App.CFG.ALLOWED_CATEGORIES = Object.keys(App.CFG.CATEGORIES);
   events: [],
   venues: [],
   calendarCursor: new Date(),
+  favorites: [],
   activeCategory: App.CFG.CATEGORY_ALL,
   editingEventId: null,
   editingMode: null,

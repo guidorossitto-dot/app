@@ -142,6 +142,12 @@ const icon = util.categoryEmoji(ev.category) || "📍";
       : ""
   }
 
+  <button class="linkBtn favoriteBtn"
+  data-eid="${encodeURIComponent(ev.id || "")}"
+  aria-pressed="${App.events?.isFavorite?.(ev.id) ? "true" : "false"}">
+  ${App.events?.isFavorite?.(ev.id) ? "❤️ Guardado" : "🤍 Guardar"}
+</button>
+
   <button class="linkBtn routeBtn"
     data-lat="${ev.lat}"
     data-lng="${ev.lng}"
@@ -365,6 +371,12 @@ if (logoutBtn) {
           }
 
           <div class="eventCardActions">
+
+          <button class="linkBtn favoriteBtn"
+  data-eid="${encodeURIComponent(ev.id || "")}"
+  aria-pressed="${App.events?.isFavorite?.(ev.id) ? "true" : "false"}">
+  ${App.events?.isFavorite?.(ev.id) ? "❤️ Guardado" : "🤍 Guardar"}
+</button>
   <button class="linkBtn mapFocusBtn"
     data-eid="${encodeURIComponent(ev.id || "")}"
     data-lat="${ev.lat}"
@@ -815,6 +827,25 @@ const todayList = util.getTodayEvents(list || []);
 
       App.actions?.focusPlaceOnMapFlow?.({ button: btn });
     });
+
+document.addEventListener("click", (e) => {
+  const btn = e.target.closest(".favoriteBtn");
+  if (!btn) return;
+
+  e.preventDefault();
+  e.stopPropagation();
+
+  const eventId = decodeURIComponent((btn.dataset.eid || "").trim());
+  if (!eventId) return;
+
+  const result = App.actions?.toggleFavorite?.(eventId);
+  if (!result?.ok) return;
+
+  App.renderAll?.({
+    rebuildMarkers: false,
+    recomputeNearby: false
+  });
+});
 
     document.addEventListener("click", async (e) => {
       const btn = e.target.closest(".deleteEventBtn, .popupDeleteBtn");

@@ -299,6 +299,35 @@ function rebuildLocationMarkers(list = state.logic.events) {
           return;
         }
 
+        if (btn.classList.contains("favoriteBtn")) {
+  const eventId = decodeURIComponent((btn.dataset.eid || "").trim());
+  if (!eventId) return;
+
+  const result = App.actions?.toggleFavorite?.(eventId);
+  if (!result?.ok) return;
+
+  const html = App.map?.buildPlacePopupHTML?.(loc) || "";
+  try {
+    loc.marker.bindPopup(html, {
+      closeButton: true,
+      autoPan: true,
+      keepInView: true,
+      autoPanPadding: [16, 16],
+      offset: [0, -10],
+      maxWidth: 260,
+      minWidth: 180
+    });
+
+    setTimeout(() => {
+      try {
+        loc.marker.openPopup();
+      } catch {}
+    }, 30);
+  } catch {}
+
+  return;
+}
+
       if (!util.canManageUI()) return;
       if (btn.classList.contains("deleteEventBtn")) {
   await App.ui?.deleteEventFromButton?.(btn);

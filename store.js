@@ -81,6 +81,12 @@
         result = { ok: true };
         break;
       }
+
+      case "SET_FAVORITES": {
+         state.logic.favorites = Array.isArray(action.favorites) ? action.favorites : [];
+         result = true;
+         break;
+     }
         case "SET_CANDIDATES": {
         state.logic.candidates = Array.isArray(action.candidates) ? action.candidates : [];
         result = { ok: true };

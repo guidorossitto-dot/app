@@ -772,6 +772,13 @@ function clearPendingCalendarDate() {
     return state.runtime.uiPanZoomInProgress;
   }
 
+  function setFavorites(favs) {
+  App.store.dispatch({
+    type: "SET_FAVORITES",
+    favorites: favs
+  });
+}
+
   /* =========================
      COMMIT / REFRESH
   ========================= */
@@ -790,6 +797,56 @@ function clearPendingCalendarDate() {
       ...opts
     });
   }
+
+  function setFavorites(favs = []) {
+  const safe = Array.isArray(favs)
+    ? favs.map((id) => String(id || "").trim()).filter(Boolean)
+    : [];
+
+  App.store?.dispatch?.({
+    type: "SET_FAVORITES",
+    favorites: safe
+  });
+
+  return state.logic.favorites;
+}
+
+function isFavorite(eventId) {
+  const id = String(eventId || "").trim();
+  if (!id) return false;
+
+  const favs = Array.isArray(state.logic.favorites) ? state.logic.favorites : [];
+  return favs.includes(id);
+}
+
+function toggleFavorite(eventId) {
+  const id = String(eventId || "").trim();
+  if (!id) {
+    return { ok: false, error: "INVALID_EVENT_ID", favorites: state.logic.favorites || [] };
+  }
+
+  const current = Array.isArray(state.logic.favorites) ? state.logic.favorites : [];
+  const next = current.includes(id)
+    ? current.filter((favId) => favId !== id)
+    : [...current, id];
+
+  App.store?.dispatch?.({
+    type: "SET_FAVORITES",
+    favorites: next
+  });
+
+  try {
+    localStorage.setItem("recomentos.favorites", JSON.stringify(next));
+  } catch (err) {
+    console.error("No se pudieron guardar favoritos en localStorage.", err);
+  }
+
+  return {
+    ok: true,
+    isFavorite: next.includes(id),
+    favorites: next
+  };
+}
 
     App.events = {
     getAllEvents,
@@ -837,6 +894,10 @@ function clearPendingCalendarDate() {
     clearPendingDeepLinkEventId,
     setBootReady,
     setUiPanZoomInProgress,
+    setFavorites,
+    setFavorites,
+    isFavorite,
+    toggleFavorite,
 
     commit,
     saveAndRefresh

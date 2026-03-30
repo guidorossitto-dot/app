@@ -95,6 +95,12 @@
       : ""
   }
 
+  <button class="popupBtn favoriteBtn"
+  data-eid="${encodeURIComponent(eid)}"
+  aria-pressed="${App.events?.isFavorite?.(eid) ? "true" : "false"}">
+  ${App.events?.isFavorite?.(eid) ? "❤️ Guardado" : "🤍 Guardar"}
+</button>
+
   <button class="popupBtn shareBtn"
     data-eid="${encodeURIComponent(eid)}"
     data-title="${encodeURIComponent(e.title || "")}"
