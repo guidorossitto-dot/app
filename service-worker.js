@@ -1,5 +1,5 @@
-const CACHE_NAME = "agendapp-shell-v1";
-const RUNTIME_CACHE = "agendapp-runtime-v1";
+const CACHE_NAME = "agendapp-shell-v3";
+const RUNTIME_CACHE = "agendapp-runtime-v3";
 
 const APP_SHELL = [
   "./",
@@ -96,6 +96,11 @@ self.addEventListener("fetch", (event) => {
 
   if (req.method !== "GET") return;
 
+  // Ignorar esquemas no soportados por Cache API, ej. chrome-extension://
+  if (!["http:", "https:"].includes(url.protocol)) {
+    return;
+  }
+
   // Navegación HTML: network first, fallback a cache
   if (req.mode === "navigate") {
     event.respondWith(
@@ -137,8 +142,12 @@ self.addEventListener("fetch", (event) => {
       caches.open(RUNTIME_CACHE).then(async (cache) => {
         try {
           const response = await fetch(req);
-          if (response && response.ok) {
-            cache.put(req, response.clone());
+          if (
+            response &&
+            response.ok &&
+            ["http:", "https:"].includes(url.protocol)
+          ) {
+            await cache.put(req, response.clone());
           }
           return response;
         } catch {
@@ -160,8 +169,12 @@ self.addEventListener("fetch", (event) => {
     caches.open(RUNTIME_CACHE).then(async (cache) => {
       try {
         const response = await fetch(req);
-        if (response && response.ok) {
-          cache.put(req, response.clone());
+        if (
+          response &&
+          response.ok &&
+          ["http:", "https:"].includes(url.protocol)
+        ) {
+          await cache.put(req, response.clone());
         }
         return response;
       } catch {

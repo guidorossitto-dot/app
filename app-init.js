@@ -52,6 +52,13 @@ function bindInstallPrompt() {
   if (!installBtn) return;
 
   window.addEventListener("beforeinstallprompt", (event) => {
+  console.log("🔥 beforeinstallprompt disparó");
+  event.preventDefault();
+  deferredInstallPrompt = event;
+  installBtn.hidden = false;
+});
+
+  window.addEventListener("beforeinstallprompt", (event) => {
     event.preventDefault();
     deferredInstallPrompt = event;
     installBtn.hidden = false;
