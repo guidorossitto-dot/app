@@ -1,6 +1,6 @@
 {
-  "name": "RecomEntos",
-  "short_name": "RecomEntos",
+  "name": "AgendApp",
+  "short_name": "AgendApp",
   "description": "Agenda cultural con mapa interactivo y eventos cerca tuyo.",
   "start_url": "./",
   "scope": "./",
