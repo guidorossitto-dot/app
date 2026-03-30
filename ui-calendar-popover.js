@@ -446,11 +446,12 @@ document.body.appendChild(pop);
   };
 }
 
-  App.ui = {
-    ...(App.ui || {}),
-    removeCalendarPopover,
-    showCalendarEventPopover,
-    showCalendarDayPopover,
-    openCalendarDay
-  };
+App.ui = {
+  ...(App.ui || {}),
+  removeCalendarPopover,
+  showCalendarEventPopover,
+  showCalendarDayPopover,
+  openCalendarDay,
+  openCalendarDayByDate
+};
 })();

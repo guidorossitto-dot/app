@@ -75,12 +75,15 @@
       App.auth?.bindAuthListener?.();
       initMapState();
 
-      App.renderAll({ rebuildMarkers: true });
+App.renderAll({ rebuildMarkers: true });
 
-      App.events?.setBootReady?.(true);
+App.events?.setBootReady?.(true);
 
-      App.ui.processQueuedDeepLink();
-      startAutoRefresh();
+App.actions?.queueCalendarDateFromHashFlow?.();
+App.ui.processQueuedDeepLink();
+App.actions?.processQueuedCalendarDateFlow?.();
+
+startAutoRefresh();
   }
 
   App.init = App.init || {};

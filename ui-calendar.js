@@ -1236,14 +1236,18 @@ async function saveVenueForSelectedCandidate() {
   /* =========================
      LISTENERS DE HASH
   ========================= */
-  document.addEventListener("DOMContentLoaded", () => {
-    queueDeepLinkFromHash();
-  });
+document.addEventListener("DOMContentLoaded", () => {
+  queueDeepLinkFromHash();
+  App.actions?.queueCalendarDateFromHashFlow?.();
+});
 
-  window.addEventListener("hashchange", () => {
-    queueDeepLinkFromHash();
-    processQueuedDeepLink();
-  });
+window.addEventListener("hashchange", () => {
+  queueDeepLinkFromHash();
+  App.actions?.queueCalendarDateFromHashFlow?.();
+
+  processQueuedDeepLink();
+  App.actions?.processQueuedCalendarDateFlow?.();
+});
 
     document.addEventListener("click", (e) => {
     const btn = e.target.closest(".mapFocusBtn");
