@@ -52,13 +52,7 @@ function bindInstallPrompt() {
   if (!installBtn) return;
 
   window.addEventListener("beforeinstallprompt", (event) => {
-  console.log("🔥 beforeinstallprompt disparó");
-  event.preventDefault();
-  deferredInstallPrompt = event;
-  installBtn.hidden = false;
-});
-
-  window.addEventListener("beforeinstallprompt", (event) => {
+    console.log("🔥 beforeinstallprompt disparó");
     event.preventDefault();
     deferredInstallPrompt = event;
     installBtn.hidden = false;
@@ -117,6 +111,41 @@ bindInstallPrompt();
         App.renderAll?.({ rebuildMarkers: false });
     }, App.CFG.REFRESH_MS);
   }
+
+ async function refreshAppDataAfterReconnect() {
+  try {
+    const eventsResult = await App.storage.loadEvents();
+    if (eventsResult?.ok && Array.isArray(eventsResult.events)) {
+      App.store?.dispatch?.({
+        type: "SET_ALL_EVENTS",
+        events: eventsResult.events
+      });
+    }
+
+    const venuesResult = await App.storage.loadVenuesRemote();
+    if (venuesResult?.ok && Array.isArray(venuesResult.venues)) {
+      App.venues?.replaceAllVenues?.(venuesResult.venues);
+    }
+
+    App.renderAll?.({
+      rebuildMarkers: true,
+      recomputeNearby: true
+    });
+
+    console.log("Reconexión detectada: datos refrescados");
+  } catch (err) {
+    console.warn("No se pudieron refrescar datos tras reconexión:", err);
+  }
+}
+
+let reconnectRefreshTimer = null;
+
+window.addEventListener("online", () => {
+  clearTimeout(reconnectRefreshTimer);
+  reconnectRefreshTimer = setTimeout(() => {
+    refreshAppDataAfterReconnect();
+  }, 800);
+});
   
   async function bootAfterMapReady() {
     if (state.runtime.bootReady) return;
