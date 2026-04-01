@@ -1964,3 +1964,56 @@ a.popupBtn:active {
     top: 16px;
   }
 }
+/* =========================
+   MAPA MÁS PROTAGONISTA
+========================= */
+
+@media (min-width: 1101px) {
+  .appLayout {
+    grid-template-columns: 320px minmax(0, 1fr);
+    gap: 18px;
+    align-items: start;
+  }
+
+  .panelCard--map {
+    padding: 14px 14px 12px;
+  }
+
+  #map {
+    height: 72vh;
+    min-height: 620px;
+  }
+}
+
+@media (max-width: 1100px) {
+  .panelCard--map {
+    padding: 10px;
+  }
+
+  #map {
+    height: 68svh;
+    min-height: 460px;
+  }
+}
+
+@media (max-width: 768px) {
+  .pageShell {
+    padding: 10px;
+  }
+
+  .panelCard--map {
+    padding: 8px;
+  }
+
+  #map {
+    height: 64svh;
+    min-height: 400px;
+  }
+}
+
+@media (max-width: 520px) {
+  #map {
+    height: 60svh;
+    min-height: 360px;
+  }
+}
