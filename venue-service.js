@@ -66,8 +66,8 @@
       websiteUrl,
       mapsUrl,
       notes,
-      createdAt: safeString(raw.createdAt) || new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+createdAt: safeString(raw.createdAt) || new Date().toISOString(),
+updatedAt: safeString(raw.updatedAt) || new Date().toISOString()
     };
   }
 
