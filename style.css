@@ -2703,3 +2703,24 @@ body {
     white-space: nowrap;
   }
 }
+
+/* =========================
+   HEADER MÁS TIPO APP
+========================= */
+
+header {
+  padding: 10px 14px !important;
+  border-bottom: 1px solid #eee;
+}
+
+header h1 {
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+header button {
+  padding: 5px 8px;
+  font-size: 12px;
+  border-radius: 8px;
+}

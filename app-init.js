@@ -132,12 +132,20 @@ bindInstallPrompt();
   App.ui.bindAdminUI();
 }
 
-  function initMapState() {
-    App.map.bindAdminCategoryChips();
-    App.map.initMap(App.CFG.DEFAULT_LAT, App.CFG.DEFAULT_LNG);
-    App.map.setUserLocation(App.CFG.DEFAULT_LAT, App.CFG.DEFAULT_LNG);
-    App.map.recomputeNearbyEvents(App.CFG.DEFAULT_LAT, App.CFG.DEFAULT_LNG);
-  }
+function initMapState() {
+  const fallbackLat = App.CFG.DEFAULT_LAT;
+  const fallbackLng = App.CFG.DEFAULT_LNG;
+
+  App.map.bindAdminCategoryChips();
+  App.map.initMap(fallbackLat, fallbackLng);
+
+  // 👇 usar geolocalización automática con fallback
+  App.map?.useMyLocation?.({
+    silent: true,
+    fallbackLat,
+    fallbackLng
+  });
+}
 
   function startAutoRefresh() {
     setInterval(() => {

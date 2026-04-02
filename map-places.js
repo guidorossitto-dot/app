@@ -491,9 +491,26 @@ App.ui?.paintCategoryUI?.();
   /* =========================
      GEOLOCATION + INPUT SEARCH
   ========================= */
-  function useMyLocation() {
+  function useMyLocation(opts = {}) {
+  const {
+    silent = false,
+    fallbackLat = -34.6037,
+    fallbackLng = -58.3816
+  } = opts;
+
+  function applyLocation(lat, lng, zoom = 15) {
+    setUserLocation(lat, lng);
+    recomputeNearbyEvents(lat, lng);
+    uiSetView(lat, lng, zoom);
+    App.renderAll?.({ rebuildMarkers: false });
+  }
+
   if (!navigator.geolocation) {
-    alert("Tu navegador no soporta geolocalización.");
+    applyLocation(fallbackLat, fallbackLng, 14);
+
+    if (!silent) {
+      alert("Tu navegador no soporta geolocalización.");
+    }
     return;
   }
 
@@ -501,19 +518,20 @@ App.ui?.paintCategoryUI?.();
     (pos) => {
       const lat = pos.coords.latitude;
       const lng = pos.coords.longitude;
-
-      setUserLocation(lat, lng);
-      recomputeNearbyEvents(lat, lng);
-      uiSetView(lat, lng, 15);
-
-  // if (util.canManageUI()) prepareEventCreation(lat, lng);
-
-      App.renderAll?.({ rebuildMarkers: false });
+      applyLocation(lat, lng, 15);
     },
     (err) => {
-      alert("No se pudo obtener la ubicación: " + err.message);
+      applyLocation(fallbackLat, fallbackLng, 14);
+
+      if (!silent) {
+        alert("No se pudo obtener la ubicación: " + err.message);
+      }
     },
-    { enableHighAccuracy: true, timeout: 10000 }
+    {
+      enableHighAccuracy: true,
+      timeout: 10000,
+      maximumAge: 60000
+    }
   );
 }
 
