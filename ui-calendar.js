@@ -595,9 +595,18 @@ const todayList = util.getTodayEvents(list || []);
     const cat = state.logic.activeCategory || "all";
     const catChip = cat === "all" ? "" : `<span class="miniChip">${util.categoryLabel(cat)}</span>`;
 
-    const featuredList = selectors.getFeaturedNearbyEvents(todayList);
-    const mainFeatured = featuredList[0] || null;
-    const extraFeatured = featuredList.slice(1);
+let featuredList = selectors.getFeaturedNearbyEvents(todayList);
+
+if (!featuredList.length) {
+  const visibleToday = selectors.getVisibleTodayEvents(state.logic.events || []);
+
+  featuredList = [...visibleToday]
+    .filter((ev) => selectors.isFeaturedEvent(ev))
+    .sort((a, b) => selectors.getFeaturedRank(a) - selectors.getFeaturedRank(b));
+}
+
+const mainFeatured = featuredList[0] || null;
+const extraFeatured = featuredList.slice(1);
 
     function renderFeaturedCard(featured) {
       const featuredStatus = util.getEventStatus(featured);

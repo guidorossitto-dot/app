@@ -13,44 +13,53 @@
     return Number.isFinite(m) ? m : null;
   }
 
-  function isFeaturedEvent(ev) {
-    const m = safeMinutesToStart(ev);
-    if (m === null) return false;
+function isFeaturedEvent(ev) {
+  const m = safeMinutesToStart(ev);
+  if (m === null) return false;
 
-    return (m > 0 && m <= 60) || (m <= 0 && m >= -15);
-  }
+  const soonMin = Number(App.CFG?.FEATURED_SOON_MIN ?? 90);
+  const recentMin = Number(App.CFG?.FEATURED_RECENT_MIN ?? 15);
 
-  function getPlaceBadge(events) {
-    const cands = (events || [])
-      .map((ev) => ({ ev, min: safeMinutesToStart(ev) }))
-      .filter((x) => x.min !== null);
+  return (m > 0 && m <= soonMin) || (m <= 0 && m >= -recentMin);
+}
 
-    if (cands.length === 0) return "";
+function getPlaceBadge(events) {
+  const cands = (events || [])
+    .map((ev) => ({ ev, min: safeMinutesToStart(ev) }))
+    .filter((x) => x.min !== null);
 
-    const soon = cands
-      .filter((x) => x.min > 0 && x.min <= 60)
-      .sort((a, b) => a.min - b.min)[0];
+  if (cands.length === 0) return "";
 
-    if (soon) return `🔥 Empieza en ${soon.min} min`;
+  const soonMin = Number(App.CFG?.FEATURED_SOON_MIN ?? 90);
+  const recentMin = Number(App.CFG?.FEATURED_RECENT_MIN ?? 15);
 
-    const inProg = cands
-      .filter((x) => x.min <= 0 && x.min >= -15)
-      .sort((a, b) => Math.abs(a.min) - Math.abs(b.min))[0];
+  const soon = cands
+    .filter((x) => x.min > 0 && x.min <= soonMin)
+    .sort((a, b) => a.min - b.min)[0];
 
-    if (inProg) return "🔴 En curso";
+  if (soon) return `🔥 Empieza en ${soon.min} min`;
 
-    return "";
-  }
+  const inProg = cands
+    .filter((x) => x.min <= 0 && x.min >= -recentMin)
+    .sort((a, b) => Math.abs(a.min) - Math.abs(b.min))[0];
 
-  function getFeaturedRank(ev) {
-    const m = safeMinutesToStart(ev);
-    if (m === null) return 999999;
+  if (inProg) return "🔴 En curso";
 
-    if (m <= 0 && m >= -15) return Math.abs(m);
-    if (m > 0 && m <= 60) return 100 + m;
+  return "";
+}
 
-    return 999999;
-  }
+function getFeaturedRank(ev) {
+  const m = safeMinutesToStart(ev);
+  if (m === null) return 999999;
+
+  const soonMin = Number(App.CFG?.FEATURED_SOON_MIN ?? 90);
+  const recentMin = Number(App.CFG?.FEATURED_RECENT_MIN ?? 15);
+
+  if (m <= 0 && m >= -recentMin) return Math.abs(m);
+  if (m > 0 && m <= soonMin) return 100 + m;
+
+  return 999999;
+}
 
   /* =========================
      GROUPING
