@@ -2637,3 +2637,43 @@ body {
   pointer-events: auto;
 }
 
+.mapOverlay.is-dimmed {
+  opacity: 0.35;
+  transition: opacity 160ms ease;
+}
+
+.mapOverlay.is-dimmed:hover {
+  opacity: 0.8;
+}
+
+/* =========================
+   LIMPIAR FONDO FILTROS
+========================= */
+
+.mapOverlay .filtersBar--map {
+  background: transparent !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+}
+
+.mapFiltersToggleBtn {
+  background: rgba(255,255,255,0.92);
+  border-radius: 999px;
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  box-shadow: 0 6px 14px rgba(0,0,0,0.12);
+}
+
+.featuredFloating {
+  background: transparent !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+}
+
+.featuredToggleBtn {
+  background: rgba(255, 248, 235, 0.95);
+  border: 1px solid rgba(255, 140, 0, 0.25);
+  border-radius: 999px;
+  padding: 8px 12px;
+  box-shadow: 0 6px 14px rgba(0,0,0,0.12);
+}
