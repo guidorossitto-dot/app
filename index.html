@@ -65,34 +65,41 @@
 <div class="panelCard panelCard--map">
   <div class="mapStage">
 <div class="mapOverlay mapOverlay--top">
-          <div id="nearbyCount" class="nearbyCount"></div>
 
-          <div class="filtersBar filtersBar--map">
-            <button
-              type="button"
-              id="toggleMapFiltersBtn"
-              class="mapFiltersToggleBtn"
-              aria-expanded="false">
-              🎛️ Filtros
-            </button>
+  <!-- IZQUIERDA: FILTROS -->
+  <div class="mapOverlayLeft">
+    <div class="filtersBar filtersBar--map">
+      <button
+        type="button"
+        id="toggleMapFiltersBtn"
+        class="mapFiltersToggleBtn"
+        aria-expanded="false">
+        🎛️ Filtros
+      </button>
 
-            <div class="mapFiltersPanel" id="mapFiltersPanel" hidden>
-              <div class="categoryLabel">Filtros</div>
+      <div class="mapFiltersPanel" id="mapFiltersPanel" hidden>
+        <div class="categoryLabel">Filtros</div>
 
-              <div class="chipRow" id="categoryChips">
-                <button type="button" class="chip" id="favoritesOnlyChip">❤️ Favoritos</button>
-                <button type="button" class="chip isActive" data-cat="all">Todo</button>
-                <button type="button" class="chip" data-cat="music">🎵 Música</button>
-                <button type="button" class="chip" data-cat="dance">💃 Danza</button>
-                <button type="button" class="chip" data-cat="theatre">🎭 Teatro</button>
-                <button type="button" class="chip" data-cat="visual_arts">🖼️ Visuales</button>
-                <button type="button" class="chip" data-cat="cinema">🎬 Cine</button>
-                <button type="button" class="chip" data-cat="games">🎯 Juegos</button>
-              </div>
-            </div>
-          </div>
+        <div class="chipRow" id="categoryChips">
+          <button type="button" class="chip" id="favoritesOnlyChip">❤️ Favoritos</button>
+          <button type="button" class="chip isActive" data-cat="all">Todo</button>
+          <button type="button" class="chip" data-cat="music">🎵 Música</button>
+          <button type="button" class="chip" data-cat="dance">💃 Danza</button>
+          <button type="button" class="chip" data-cat="theatre">🎭 Teatro</button>
+          <button type="button" class="chip" data-cat="visual_arts">🖼️ Visuales</button>
+          <button type="button" class="chip" data-cat="cinema">🎬 Cine</button>
+          <button type="button" class="chip" data-cat="games">🎯 Juegos</button>
         </div>
+      </div>
+    </div>
+  </div>
 
+  <!-- DERECHA: DESTACADOS -->
+  <div class="mapOverlayRight">
+    <div id="nearbyCount" class="nearbyCount"></div>
+  </div>
+
+</div>
         <button
           type="button"
           id="mapLocateBtn"

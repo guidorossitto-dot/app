@@ -2578,3 +2578,62 @@ body {
     max-width: calc(100vw - 24px) !important;
   }
 }
+
+.mapOverlay--top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.mapOverlayLeft,
+.mapOverlayRight {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  pointer-events: auto;
+}
+
+.mapOverlayRight {
+  align-items: flex-end;
+}
+
+@media (max-width: 768px) {
+  .mapOverlay--top {
+    gap: 8px;
+  }
+
+  .mapOverlayLeft,
+  .mapOverlayRight {
+    max-width: calc(100vw - 24px);
+  }
+}
+
+/* =========================
+   FIX: overlay en fila (izq / der)
+========================= */
+
+.mapOverlay.mapOverlay--top {
+  display: flex !important;
+  flex-direction: row !important;
+  justify-content: space-between !important;
+  align-items: flex-start !important;
+  gap: 10px;
+}
+
+.mapOverlayLeft {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  pointer-events: auto;
+}
+
+.mapOverlayRight {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  pointer-events: auto;
+}
+

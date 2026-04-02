@@ -529,148 +529,151 @@ function renderAgendaEvents() {
     });
   }
 
-  function updateNearbyCount(list = state.logic.nearbyEvents) {
-    const topEl = document.getElementById("nearbyCount");
-    const bottomEl = document.getElementById("nearbySummaryBlock");
+function updateNearbyCount(list = state.logic.nearbyEvents) {
+  const topEl = document.getElementById("nearbyCount");
+  const bottomEl = document.getElementById("nearbySummaryBlock");
 
-    if (topEl) topEl.innerHTML = "";
-    if (bottomEl) bottomEl.innerHTML = "";
+  if (topEl) topEl.innerHTML = "";
+  if (bottomEl) bottomEl.innerHTML = "";
 
-    if (!topEl && !bottomEl) return;
+  if (!topEl && !bottomEl) return;
 
-    if (!list || list.length === 0) {
-      if (topEl) {
-        topEl.innerHTML = `
-          <div class="nearbyInlineEmpty">
-            No hay eventos cerca tuyo hoy
-          </div>
-        `;
-      }
-
-      if (bottomEl) {
-        bottomEl.innerHTML = `
-          <div class="nearbyInlineEmpty">
-            No hay eventos cerca tuyo hoy
-          </div>
-        `;
-      }
-
-      return;
-    }
-
-const todayList = util.getTodayEvents(list || []);
-
-    if (todayList.length === 0) {
-      if (topEl) {
-        topEl.innerHTML = `
-          <div class="nearbyInlineEmpty">
-            No hay eventos cerca tuyo hoy
-          </div>
-        `;
-      }
-
-      if (bottomEl) {
-        bottomEl.innerHTML = `
-          <div class="nearbyInlineEmpty">
-            No hay eventos cerca tuyo hoy
-          </div>
-        `;
-      }
-      return;
-    }
-
-    const cat = state.logic.activeCategory || "all";
-    const catChip = cat === "all" ? "" : `<span class="miniChip">${util.categoryLabel(cat)}</span>`;
-
-let featuredList = selectors.getFeaturedNearbyEvents(todayList);
-
-if (!featuredList.length) {
-  const visibleToday = selectors.getVisibleTodayEvents(state.logic.events || []);
-
-  featuredList = [...visibleToday]
-    .filter((ev) => selectors.isFeaturedEvent(ev))
-    .sort((a, b) => selectors.getFeaturedRank(a) - selectors.getFeaturedRank(b));
-}
-
-const mainFeatured = featuredList[0] || null;
-const extraFeatured = featuredList.slice(1);
-
-    function renderFeaturedCard(featured) {
-      const featuredStatus = util.getEventStatus(featured);
-      const featuredPlace = util.shortPlaceName(featured.placeName) || "Lugar sin nombre";
-      const featuredKey = util.smartLocationKey(featured, state.logic.events || []);
-
-      return `
-        <div class="featuredBox">
-          <div class="featuredTop">
-            <div class="featuredKicker">
-              <span class="featuredFire">🔥</span>
-              <span>DESTACADO ${catChip ? "· " + catChip : ""}</span>
-            </div>
-            <button class="linkBtn mapFocusBtn"
-              data-eid="${encodeURIComponent(featured.id || "")}"
-              data-lat="${featured.lat}"
-              data-lng="${featured.lng}"
-              data-key="${featuredKey}">
-              Ver en mapa
-            </button>
-          </div>
-
-          <div class="featuredTitle">
-            ${util.formatTimeStart(featured) ? `<span style="opacity:.75;margin-right:6px">${util.formatTimeStart(featured)}</span>` : ""}
-            ${featured.title}
-            ${featuredStatus ? `<span style="opacity:.6;font-size:.85em;margin-left:6px">${featuredStatus}</span>` : ""}
-          </div>
-
-          <div class="featuredMeta">
-            ${featuredPlace} · ${util.formatDateDisplay(featured.date)}
-          </div>
-        </div>
-      `;
-    }
-
-    const featuredHTML = mainFeatured
-      ? `
-        <div class="featuredStack">
-          ${renderFeaturedCard(mainFeatured)}
-
-          ${
-            extraFeatured.length
-              ? `
-                <details class="featuredAccordion">
-                  <summary class="featuredAccordionSummary">
-                    🔥 Ver otros ${extraFeatured.length} destacado${extraFeatured.length === 1 ? "" : "s"}
-                  </summary>
-                  <div class="featuredAccordionBody">
-                    ${extraFeatured.map(renderFeaturedCard).join("")}
-                  </div>
-                </details>
-              `
-              : ""
-          }
-        </div>
-      `
-      : "";
-
-    const n = todayList.length;
-    const header = n === 1 ? "1 evento cerca" : `${n} eventos cerca`;
-
+  if (!list || list.length === 0) {
     if (topEl) {
       topEl.innerHTML = `
-        ${featuredHTML}
+        <div class="featuredFloating">
+          <button id="featuredToggleBtn" class="featuredToggleBtn" aria-expanded="false">
+            🔥 Comienza pronto
+          </button>
 
-      `;
-    }
-
-    if (bottomEl) {
-      bottomEl.innerHTML = `
-        <div class="nearbyInlineHeader">
-          <span class="nearbyInlineCount">${header}</span>
-          ${catChip}
+          <div id="featuredDropdown" class="featuredDropdown" hidden>
+            <div class="nearbyInlineEmpty">
+              No hay eventos cerca tuyo hoy
+            </div>
+          </div>
         </div>
       `;
     }
+
+    bindFeaturedToggle();
+    return;
   }
+
+  const todayList = util.getTodayEvents(list || []);
+
+  if (todayList.length === 0) {
+    if (topEl) {
+      topEl.innerHTML = `
+        <div class="featuredFloating">
+          <button id="featuredToggleBtn" class="featuredToggleBtn" aria-expanded="false">
+            🔥 Comienza pronto
+          </button>
+
+          <div id="featuredDropdown" class="featuredDropdown" hidden>
+            <div class="nearbyInlineEmpty">
+              No hay eventos cerca tuyo hoy
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    bindFeaturedToggle();
+    return;
+  }
+
+  const cat = state.logic.activeCategory || "all";
+  const catChip = cat === "all" ? "" : `<span class="miniChip">${util.categoryLabel(cat)}</span>`;
+
+  let featuredList = selectors.getFeaturedNearbyEvents(todayList);
+
+  if (!featuredList.length) {
+    const visibleToday = selectors.getVisibleTodayEvents(state.logic.events || []);
+
+    featuredList = [...visibleToday]
+      .filter((ev) => selectors.isFeaturedEvent(ev))
+      .sort((a, b) => selectors.getFeaturedRank(a) - selectors.getFeaturedRank(b));
+  }
+
+  const mainFeatured = featuredList[0] || null;
+  const extraFeatured = featuredList.slice(1);
+
+  function renderFeaturedCard(featured) {
+    const featuredStatus = util.getEventStatus(featured);
+    const featuredPlace = util.shortPlaceName(featured.placeName) || "Lugar sin nombre";
+    const featuredKey = util.smartLocationKey(featured, state.logic.events || []);
+
+    return `
+      <div class="featuredBox">
+        <div class="featuredTop">
+          <div class="featuredKicker">
+            <span class="featuredFire">🔥</span>
+            <span>DESTACADO ${catChip ? "· " + catChip : ""}</span>
+          </div>
+
+          <button class="linkBtn mapFocusBtn"
+            data-eid="${encodeURIComponent(featured.id || "")}"
+            data-lat="${featured.lat}"
+            data-lng="${featured.lng}"
+            data-key="${featuredKey}">
+            Ver en mapa
+          </button>
+        </div>
+
+        <div class="featuredTitle">
+          ${util.formatTimeStart(featured) ? `<span style="opacity:.75;margin-right:6px">${util.formatTimeStart(featured)}</span>` : ""}
+          ${featured.title}
+          ${featuredStatus ? `<span style="opacity:.6;font-size:.85em;margin-left:6px">${featuredStatus}</span>` : ""}
+        </div>
+
+        <div class="featuredMeta">
+          ${featuredPlace} · ${util.formatDateDisplay(featured.date)}
+        </div>
+      </div>
+    `;
+  }
+
+  const featuredHTML = mainFeatured
+    ? `
+      <div class="featuredStack">
+        ${renderFeaturedCard(mainFeatured)}
+
+        ${
+          extraFeatured.length
+            ? `
+              <details class="featuredAccordion">
+                <summary class="featuredAccordionSummary">
+                  🔥 Ver otros ${extraFeatured.length} destacado${extraFeatured.length === 1 ? "" : "s"}
+                </summary>
+                <div class="featuredAccordionBody">
+                  ${extraFeatured.map(renderFeaturedCard).join("")}
+                </div>
+              </details>
+            `
+            : ""
+        }
+      </div>
+    `
+    : "";
+
+  if (topEl) {
+    topEl.innerHTML = `
+      <div class="featuredFloating">
+
+        <button id="featuredToggleBtn" class="featuredToggleBtn" aria-expanded="false">
+          🔥 Comienza pronto
+        </button>
+
+        <div id="featuredDropdown" class="featuredDropdown" hidden>
+          ${featuredHTML}
+        </div>
+
+      </div>
+    `;
+  }
+
+  bindFeaturedToggle();
+}
 
   function setListFocus(focus) {
     state.runtime = state.runtime || {};
@@ -777,6 +780,29 @@ const extraFeatured = featuredList.slice(1);
       futureEmpty: "No hay próximos eventos"
     };
   }
+
+  function bindFeaturedToggle() {
+  const toggleBtn = document.getElementById("featuredToggleBtn");
+  const dropdown = document.getElementById("featuredDropdown");
+
+  if (!toggleBtn || !dropdown) return;
+
+  toggleBtn.onclick = () => {
+    const isOpen = !dropdown.hidden;
+    dropdown.hidden = isOpen;
+    toggleBtn.setAttribute("aria-expanded", String(!isOpen));
+  };
+
+  document.addEventListener("click", (e) => {
+    const wrapper = document.querySelector(".featuredFloating");
+    if (!wrapper) return;
+
+    if (!wrapper.contains(e.target)) {
+      dropdown.hidden = true;
+      toggleBtn.setAttribute("aria-expanded", "false");
+    }
+  });
+}
 
   function renderList() {
     const view = getListRenderState();
