@@ -781,6 +781,16 @@ function updateNearbyCount(list = state.logic.nearbyEvents) {
     };
   }
 
+  function closeFeaturedDropdown() {
+  const dropdown = document.getElementById("featuredDropdown");
+  const toggleBtn = document.getElementById("featuredToggleBtn");
+
+  if (dropdown && !dropdown.hidden) {
+    dropdown.hidden = true;
+    toggleBtn?.setAttribute("aria-expanded", "false");
+  }
+}
+
   function bindFeaturedToggle() {
   const toggleBtn = document.getElementById("featuredToggleBtn");
   const dropdown = document.getElementById("featuredDropdown");
@@ -1535,6 +1545,8 @@ window.addEventListener("hashchange", () => {
 
     e.preventDefault();
     e.stopPropagation();
+    
+     closeFeaturedDropdown();
 
     App.actions?.focusEventOnMapFlow?.({ button: btn });
   });
