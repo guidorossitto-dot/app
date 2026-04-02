@@ -810,12 +810,37 @@ const extraFeatured = featuredList.slice(1);
 
 
   function bindSidebarUI() {
-    const layout = document.querySelector(".appLayout--leftSidebar");
-    const btn = document.getElementById("toggleSidebarBtn");
-    if (!layout || !btn) return;
+  const layout = document.querySelector(".appLayout--leftSidebar");
+  const sidebar = document.getElementById("leftSidebar");
+  const btn = document.getElementById("toggleSidebarBtn");
+  if (!layout || !btn || !sidebar) return;
 
-    const saved = localStorage.getItem("leftSidebarCollapsed");
+  const STORAGE_KEY = "leftSidebarCollapsed";
+
+  function isMobileMode() {
+    return window.innerWidth <= 1100;
+  }
+
+  function invalidateMapSoon() {
+    if (!state.runtime.map) return;
+
+    setTimeout(() => {
+      const map = App.state.runtime.map;
+      if (!map) return;
+
+      map.invalidateSize();
+
+      requestAnimationFrame(() => {
+        map.invalidateSize();
+      });
+    }, 220);
+  }
+
+  function applyDesktopState() {
+    const saved = localStorage.getItem(STORAGE_KEY);
     const startsCollapsed = saved === "true";
+
+    sidebar.classList.remove("is-open");
 
     if (startsCollapsed) {
       layout.classList.add("isCollapsed");
@@ -823,33 +848,51 @@ const extraFeatured = featuredList.slice(1);
       btn.textContent = "☰";
       btn.title = "Expandir agenda";
     } else {
+      layout.classList.remove("isCollapsed");
       btn.setAttribute("aria-expanded", "true");
       btn.textContent = "☰ Agenda";
       btn.title = "Contraer agenda";
     }
-
-    btn.addEventListener("click", () => {
-      const collapsed = layout.classList.toggle("isCollapsed");
-      btn.setAttribute("aria-expanded", collapsed ? "false" : "true");
-      btn.textContent = collapsed ? "☰" : "☰ Agenda";
-      btn.title = collapsed ? "Expandir agenda" : "Contraer agenda";
-      localStorage.setItem("leftSidebarCollapsed", String(collapsed));
-
-      if (state.runtime.map) {
-       setTimeout(() => {
-  const map = App.state.runtime.map;
-  if (!map) return;
-
-  map.invalidateSize();
-
-  requestAnimationFrame(() => {
-    map.invalidateSize();
-  });
-}, 220);
-      }
-    });
   }
 
+  function applyMobileState() {
+    layout.classList.remove("isCollapsed");
+    sidebar.classList.remove("is-open");
+    btn.setAttribute("aria-expanded", "false");
+    btn.textContent = "☰ Agenda";
+    btn.title = "Abrir agenda";
+  }
+
+  function syncMode() {
+    if (isMobileMode()) {
+      applyMobileState();
+    } else {
+      applyDesktopState();
+    }
+  }
+
+  syncMode();
+
+  btn.addEventListener("click", () => {
+    if (isMobileMode()) {
+      const isOpen = sidebar.classList.toggle("is-open");
+      btn.setAttribute("aria-expanded", isOpen ? "true" : "false");
+      btn.textContent = "☰ Agenda";
+      btn.title = isOpen ? "Cerrar agenda" : "Abrir agenda";
+      invalidateMapSoon();
+      return;
+    }
+
+    const collapsed = layout.classList.toggle("isCollapsed");
+    btn.setAttribute("aria-expanded", collapsed ? "false" : "true");
+    btn.textContent = collapsed ? "☰" : "☰ Agenda";
+    btn.title = collapsed ? "Expandir agenda" : "Contraer agenda";
+    localStorage.setItem(STORAGE_KEY, String(collapsed));
+    invalidateMapSoon();
+  });
+
+  window.addEventListener("resize", syncMode);
+}
 
 function paintCategoryUI() {
   const row = document.getElementById("categoryChips");

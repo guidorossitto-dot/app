@@ -2198,3 +2198,152 @@ body {
     padding: 7px 10px;
   }
 }
+
+/* =========================
+   MAP STAGE + DESTACADO FLOTANTE
+========================= */
+
+.panelCard--map {
+  position: relative;
+  overflow: hidden;
+}
+
+.mapStage {
+  position: relative;
+}
+
+.mapStage #map {
+  position: relative;
+  z-index: 1;
+}
+
+.mapOverlay {
+  position: absolute;
+  z-index: 20;
+  pointer-events: none;
+}
+
+.mapOverlay--top {
+  top: 10px;
+  left: 10px;
+  right: 10px;
+}
+
+.mapOverlay .nearbyCount {
+  margin: 0;
+  pointer-events: auto;
+}
+
+.mapOverlay .featuredBox {
+  width: fit-content;
+  max-width: min(420px, calc(100vw - 36px));
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.14);
+  border-radius: 16px;
+  backdrop-filter: blur(4px);
+}
+
+.mapOverlay .nearbyCount > :not(.featuredBox) {
+  width: fit-content;
+  max-width: min(360px, calc(100vw - 36px));
+  background: rgba(255, 255, 255, 0.96);
+  border-radius: 14px;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.12);
+  padding: 8px 10px;
+}
+
+@media (max-width: 768px) {
+  .mapOverlay--top {
+    top: 8px;
+    left: 8px;
+    right: 8px;
+  }
+
+  .mapOverlay .featuredBox {
+    max-width: calc(100vw - 24px);
+    border-radius: 14px;
+  }
+
+  .mapOverlay .nearbyCount > :not(.featuredBox) {
+    max-width: calc(100vw - 24px);
+    border-radius: 12px;
+  }
+}
+
+.mapStage .filtersBar--map {
+  position: relative;
+  z-index: 5;
+  margin-top: 90px;
+}
+
+@media (max-width: 768px) {
+  .mapStage .filtersBar--map {
+    margin-top: 110px;
+  }
+}
+
+/* =========================
+   MOBILE: AGENDA COMO BOTTOM SHEET
+========================= */
+
+@media (max-width: 1100px) {
+  #leftSidebar {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1200;
+    margin: 0;
+    background: #fff;
+    border-radius: 18px 18px 0 0;
+    box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.16);
+    transform: translateY(calc(100% - 58px));
+    transition: transform 220ms ease;
+    max-height: 72svh;
+    overflow: hidden;
+  }
+
+  #leftSidebar.is-open {
+    transform: translateY(0);
+  }
+
+  #leftSidebar .sidebarToolbar {
+    margin: 0;
+    padding: 10px 12px 8px;
+    background: #fff;
+    border-bottom: 1px solid #ececec;
+  }
+
+  #leftSidebar .sidebarToggleBtn {
+    width: 100%;
+    min-height: 44px;
+    border-radius: 12px;
+  }
+
+  #leftSidebar .sidebarPanel {
+    opacity: 1 !important;
+    transform: none !important;
+    pointer-events: auto !important;
+    max-height: none !important;
+    margin: 0 !important;
+    padding: 12px !important;
+    border-width: 1px !important;
+    box-shadow: none !important;
+  }
+
+  #leftSidebar .accordion > ul {
+    max-height: 46svh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .appLayout--leftSidebar.isCollapsed .sidebarPanel {
+    opacity: 1 !important;
+    transform: none !important;
+    pointer-events: auto !important;
+    max-height: none !important;
+    margin: 0 !important;
+    padding: 12px !important;
+    border-width: 1px !important;
+    box-shadow: none !important;
+  }
+}

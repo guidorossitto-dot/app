@@ -38,51 +38,55 @@
     </div>
 
     <div class="controlsCard">
-      <div class="mapControls">
-        <div id="nearbyCount" class="nearbyCount"></div>
-      </div>
+  <div class="mapControls"></div>
 
-      <input id="userLat" type="number" step="0.000001" placeholder="Tu latitud" class="debugHidden">
-      <input id="userLng" type="number" step="0.000001" placeholder="Tu longitud" class="debugHidden">
-      <button id="searchNearbyBtn" class="debugHidden" tabindex="-1" aria-hidden="true">¿Qué hay cerca mío?</button>
+  <input id="userLat" type="number" step="0.000001" placeholder="Tu latitud" class="debugHidden">
+  <input id="userLng" type="number" step="0.000001" placeholder="Tu longitud" class="debugHidden">
+  <button id="searchNearbyBtn" class="debugHidden" tabindex="-1" aria-hidden="true">¿Qué hay cerca mío?</button>
+</div>
+
+<div class="appLayout appLayout--leftSidebar">
+  <aside class="sideColumn sideColumn--left" id="leftSidebar">
+    <div class="sidebarToolbar">
+      <button type="button" id="toggleSidebarBtn" class="sidebarToggleBtn" aria-expanded="true">
+        ☰ Agenda
+      </button>
     </div>
 
-    <div class="appLayout appLayout--leftSidebar">
-      <aside class="sideColumn sideColumn--left" id="leftSidebar">
-        <div class="sidebarToolbar">
-          <button type="button" id="toggleSidebarBtn" class="sidebarToggleBtn" aria-expanded="true">
-            ☰ Agenda
-          </button>
+    <div class="panelCard sidebarPanel panelCard--today">
+      <details class="accordion" open>
+        <summary>🗓️ Hoy y próximos</summary>
+        <ul id="todayEvents"></ul>
+      </details>
+    </div>
+  </aside>
+
+  <div class="mainColumn">
+    <div class="panelCard panelCard--map">
+      <div class="mapStage">
+        <div class="mapOverlay mapOverlay--top">
+          <div id="nearbyCount" class="nearbyCount"></div>
         </div>
 
-        <div class="panelCard sidebarPanel panelCard--today">
-  <details class="accordion" open>
-    <summary>🗓️ Hoy y próximos</summary>
-    <ul id="todayEvents"></ul>
-  </details>
-</div>
-      </aside>
+        <div class="filtersBar filtersBar--map">
+          <div class="categoryLabel">Filtros</div>
 
-      <div class="mainColumn">
-        <div class="panelCard panelCard--map">
-          <div class="filtersBar filtersBar--map">
-            <div class="categoryLabel">Filtros</div>
-
-            <div class="chipRow" id="categoryChips">
-              <button type="button" class="chip" id="favoritesOnlyChip">❤️ Favoritos</button>
-              <button type="button" class="chip isActive" data-cat="all">Todo</button>
-              <button type="button" class="chip" data-cat="music">🎵 Música</button>
-              <button type="button" class="chip" data-cat="dance">💃 Danza</button>
-              <button type="button" class="chip" data-cat="theatre">🎭 Teatro</button>
-              <button type="button" class="chip" data-cat="visual_arts">🖼️ Visuales</button>
-              <button type="button" class="chip" data-cat="cinema">🎬 Cine</button>
-              <button type="button" class="chip" data-cat="games">🎯 Juegos</button>
-            </div>
+          <div class="chipRow" id="categoryChips">
+            <button type="button" class="chip" id="favoritesOnlyChip">❤️ Favoritos</button>
+            <button type="button" class="chip isActive" data-cat="all">Todo</button>
+            <button type="button" class="chip" data-cat="music">🎵 Música</button>
+            <button type="button" class="chip" data-cat="dance">💃 Danza</button>
+            <button type="button" class="chip" data-cat="theatre">🎭 Teatro</button>
+            <button type="button" class="chip" data-cat="visual_arts">🖼️ Visuales</button>
+            <button type="button" class="chip" data-cat="cinema">🎬 Cine</button>
+            <button type="button" class="chip" data-cat="games">🎯 Juegos</button>
           </div>
-
-          <div id="map"></div>
         </div>
 
+        <div id="map"></div>
+      </div>
+    </div>
+    
   <div class="panelCard panelCard--nearby">
     <details class="accordion" open>
       <summary>📍 Eventos cerca tuyo</summary>
