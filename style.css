@@ -1965,32 +1965,64 @@ a.popupBtn:active {
   }
 }
 /* =========================
-   MAPA MÁS PROTAGONISTA
+   MAPA FULL-HEIGHT DENTRO DEL LAYOUT
 ========================= */
+
+html,
+body {
+  min-height: 100%;
+}
+
+#publicView,
+.pageShell {
+  min-height: 100svh;
+}
 
 @media (min-width: 1101px) {
   .appLayout {
+    display: grid;
     grid-template-columns: 320px minmax(0, 1fr);
     gap: 18px;
     align-items: start;
+    min-height: calc(100svh - 32px);
+  }
+
+  .mainColumn {
+    display: flex;
+    flex-direction: column;
+    min-height: calc(100svh - 32px);
   }
 
   .panelCard--map {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: calc(100svh - 32px);
     padding: 14px 14px 12px;
   }
 
   #map {
-    height: 72vh;
-    min-height: 620px;
+    flex: 1 1 auto;
+    height: auto;
+    min-height: 0;
+    border-radius: 12px;
   }
 }
 
 @media (max-width: 1100px) {
+  .pageShell {
+    padding-bottom: 12px;
+  }
+
   .panelCard--map {
+    display: flex;
+    flex-direction: column;
+    min-height: 78svh;
     padding: 10px;
   }
 
   #map {
+    flex: 1 1 auto;
     height: 68svh;
     min-height: 460px;
   }
@@ -2002,6 +2034,7 @@ a.popupBtn:active {
   }
 
   .panelCard--map {
+    min-height: 74svh;
     padding: 8px;
   }
 
@@ -2012,6 +2045,10 @@ a.popupBtn:active {
 }
 
 @media (max-width: 520px) {
+  .panelCard--map {
+    min-height: 68svh;
+  }
+
   #map {
     height: 60svh;
     min-height: 360px;

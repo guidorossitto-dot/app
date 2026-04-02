@@ -827,9 +827,16 @@ const todayList = util.getTodayEvents(list || []);
       localStorage.setItem("leftSidebarCollapsed", String(collapsed));
 
       if (state.runtime.map) {
-        setTimeout(() => {
-          state.runtime.map.invalidateSize();
-        }, 240);
+       setTimeout(() => {
+  const map = App.state.runtime.map;
+  if (!map) return;
+
+  map.invalidateSize();
+
+  requestAnimationFrame(() => {
+    map.invalidateSize();
+  });
+}, 220);
       }
     });
   }
