@@ -2043,3 +2043,158 @@ body {
     min-height: 360px;
   }
 }
+
+.calendarEventPopover__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.calendarEventPopover__header .calendarEventPopover__title {
+  margin-bottom: 0;
+  flex: 1 1 auto;
+  min-width: 0;
+  padding-right: 2px;
+}
+
+.calendarPopoverXBtn {
+  flex: 0 0 auto;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: #444;
+  font-size: 24px;
+  line-height: 1;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  margin: -2px -2px 0 0;
+  transition: background 140ms ease, transform 140ms ease, opacity 140ms ease;
+}
+
+.calendarPopoverXBtn:hover {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+.calendarPopoverXBtn:active {
+  transform: scale(0.96);
+}
+
+.calendarPopoverXBtn:focus-visible {
+  outline: 2px solid rgba(0, 0, 0, 0.25);
+  outline-offset: 2px;
+}
+
+@media (max-width: 768px) {
+  .calendarEventPopover__header {
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+
+  .calendarEventPopover__header .calendarEventPopover__title {
+    font-size: 15px;
+    line-height: 1.25;
+    padding-right: 4px;
+  }
+
+  .calendarPopoverXBtn {
+    width: 36px;
+    height: 36px;
+    font-size: 26px;
+    margin: -4px -4px 0 0;
+  }
+}
+
+@media (max-width: 520px) {
+  .calendarPopoverXBtn {
+    width: 38px;
+    height: 38px;
+    font-size: 27px;
+  }
+}
+
+/* =========================
+   POPUP ESTILO APP
+========================= */
+
+.calendarEventPopover {
+  background: #fff;
+  border-radius: 16px;
+  box-shadow:
+    0 10px 30px rgba(0, 0, 0, 0.12),
+    0 2px 8px rgba(0, 0, 0, 0.06);
+  padding: 12px 12px 10px;
+  border: 1px solid rgba(0, 0, 0, 0.04);
+
+  animation: popIn 160ms ease;
+  transform-origin: top left;
+}
+
+/* animación suave */
+@keyframes popIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* contenido interno un poco más respirado */
+.calendarEventPopover__meta {
+  font-size: 13.5px;
+  line-height: 1.4;
+  margin-bottom: 8px;
+}
+
+/* botones más modernos */
+.calendarEventPopover__actions .linkBtn {
+  border-radius: 10px;
+  padding: 6px 9px;
+  font-size: 12.5px;
+}
+
+/* hover más suave */
+.calendarEventPopover__actions .linkBtn:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+/* popup grande (lista de día) */
+.calendarEventPopover--dayList {
+  max-width: 340px;
+}
+
+/* items más separados */
+.calendarDayPopover__item {
+  padding: 8px 6px;
+  border-radius: 10px;
+}
+
+.calendarDayPopover__item:hover {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+/* mobile: un poco más grande y cómodo */
+@media (max-width: 768px) {
+  .calendarEventPopover {
+    border-radius: 18px;
+    padding: 14px 12px 12px;
+  }
+
+  .calendarEventPopover__meta {
+    font-size: 14px;
+  }
+
+  .calendarEventPopover__actions .linkBtn {
+    font-size: 13px;
+    padding: 7px 10px;
+  }
+}
