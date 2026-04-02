@@ -541,9 +541,6 @@ function renderAgendaEvents() {
     if (!list || list.length === 0) {
       if (topEl) {
         topEl.innerHTML = `
-          <div class="mapActionBar mapActionBar--insideNearby">
-            <button id="autoLocationBtnInline" class="primaryMapActionBtn">📍 Usar mi ubicación</button>
-          </div>
           <div class="nearbyInlineEmpty">
             No hay eventos cerca tuyo hoy
           </div>
@@ -557,9 +554,6 @@ function renderAgendaEvents() {
           </div>
         `;
       }
-
-      const inlineBtn = document.getElementById("autoLocationBtnInline");
-      if (inlineBtn) inlineBtn.addEventListener("click", () => App.map?.useMyLocation?.());
 
       return;
     }
@@ -569,9 +563,6 @@ const todayList = util.getTodayEvents(list || []);
     if (todayList.length === 0) {
       if (topEl) {
         topEl.innerHTML = `
-          <div class="mapActionBar mapActionBar--insideNearby">
-            <button id="autoLocationBtnInline" class="primaryMapActionBtn">📍 Usar mi ubicación</button>
-          </div>
           <div class="nearbyInlineEmpty">
             No hay eventos cerca tuyo hoy
           </div>
@@ -585,10 +576,6 @@ const todayList = util.getTodayEvents(list || []);
           </div>
         `;
       }
-
-      const inlineBtn = document.getElementById("autoLocationBtnInline");
-      if (inlineBtn) inlineBtn.addEventListener("click", () => App.map?.useMyLocation?.());
-
       return;
     }
 
@@ -671,9 +658,7 @@ const extraFeatured = featuredList.slice(1);
     if (topEl) {
       topEl.innerHTML = `
         ${featuredHTML}
-        <div class="mapActionBar mapActionBar--insideNearby">
-          <button id="autoLocationBtnInline" class="primaryMapActionBtn">📍 Usar mi ubicación</button>
-        </div>
+
       `;
     }
 
@@ -685,9 +670,6 @@ const extraFeatured = featuredList.slice(1);
         </div>
       `;
     }
-
-    const inlineBtn = document.getElementById("autoLocationBtnInline");
-    if (inlineBtn) inlineBtn.addEventListener("click", () => App.map?.useMyLocation?.());
   }
 
   function setListFocus(focus) {
@@ -807,6 +789,30 @@ const extraFeatured = featuredList.slice(1);
   /* =========================
      CALENDARIO
   ========================= */
+
+function isMobileSidebarMode() {
+  return window.innerWidth <= 1100;
+}
+
+function closeSidebarMobileIfOpen() {
+  const sidebar = document.getElementById("leftSidebar");
+  const btn = document.getElementById("toggleSidebarBtn");
+  if (!sidebar || !btn) return;
+  if (!isMobileSidebarMode()) return;
+
+  const wasOpen = sidebar.classList.contains("is-open");
+  if (!wasOpen) return;
+
+  sidebar.classList.remove("is-open");
+  btn.setAttribute("aria-expanded", "false");
+  btn.textContent = "☰ Agenda";
+  btn.title = "Abrir agenda";
+
+  const map = App.state?.runtime?.map;
+  if (map) {
+    setTimeout(() => map.invalidateSize(), 220);
+  }
+}
 
 
   function bindSidebarUI() {
@@ -1553,6 +1559,7 @@ window.addEventListener("hashchange", () => {
     clearListFocus,
     saveVenueForSelectedCandidate,
 renderSkippedCandidatesList,
+closeSidebarMobileIfOpen,
 applyCandidateVenueToAdmin, 
     renderSkippedCandidatesList,
     applyCandidateVenueToAdmin,

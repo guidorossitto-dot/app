@@ -68,25 +68,49 @@
       <div id="nearbyCount" class="nearbyCount"></div>
 
       <div class="filtersBar filtersBar--map">
-        <div class="categoryLabel">Filtros</div>
+        <button
+          type="button"
+          id="toggleMapFiltersBtn"
+          class="mapFiltersToggleBtn"
+          aria-expanded="false">
+          🎛️ Filtros
+        </button>
 
-        <div class="chipRow" id="categoryChips">
-          <button type="button" class="chip" id="favoritesOnlyChip">❤️ Favoritos</button>
-          <button type="button" class="chip isActive" data-cat="all">Todo</button>
-          <button type="button" class="chip" data-cat="music">🎵 Música</button>
-          <button type="button" class="chip" data-cat="dance">💃 Danza</button>
-          <button type="button" class="chip" data-cat="theatre">🎭 Teatro</button>
-          <button type="button" class="chip" data-cat="visual_arts">🖼️ Visuales</button>
-          <button type="button" class="chip" data-cat="cinema">🎬 Cine</button>
-          <button type="button" class="chip" data-cat="games">🎯 Juegos</button>
+        <div class="mapFiltersPanel" id="mapFiltersPanel" hidden>
+          <div class="categoryLabel">Filtros</div>
+
+          <div class="chipRow" id="categoryChips">
+            <button type="button" class="chip" id="favoritesOnlyChip">❤️ Favoritos</button>
+            <button type="button" class="chip isActive" data-cat="all">Todo</button>
+            <button type="button" class="chip" data-cat="music">🎵 Música</button>
+            <button type="button" class="chip" data-cat="dance">💃 Danza</button>
+            <button type="button" class="chip" data-cat="theatre">🎭 Teatro</button>
+            <button type="button" class="chip" data-cat="visual_arts">🖼️ Visuales</button>
+            <button type="button" class="chip" data-cat="cinema">🎬 Cine</button>
+            <button type="button" class="chip" data-cat="games">🎯 Juegos</button>
+          </div>
         </div>
       </div>
     </div>
-
-    <div id="map"></div>
+    <div class="mapStage">
+  <div class="mapOverlay mapOverlay--top">
+    ...
   </div>
+
+  <button
+    type="button"
+    id="mapLocateBtn"
+    class="mapLocateBtn"
+    aria-label="Usar mi ubicación"
+    title="Usar mi ubicación">
+    📍
+  </button>
+
+  <div id="map"></div>
 </div>
-    
+
+
+
   <div class="panelCard panelCard--nearby">
     <details class="accordion" open>
       <summary>📍 Eventos cerca tuyo</summary>

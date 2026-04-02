@@ -558,6 +558,7 @@ App.ui?.paintCategoryUI?.();
   state.runtime.deepLinkLayer = L.layerGroup().addTo(state.runtime.map);
 
   state.runtime.map.on("click", (e) => {
+    App.ui?.closeSidebarMobileIfOpen?.();
   const t = e.originalEvent?.target;
   if (t && (t.closest?.(".leaflet-marker-icon") || t.closest?.(".leaflet-popup"))) return;
 
@@ -579,11 +580,14 @@ App.ui?.paintCategoryUI?.();
 });
 
   state.runtime.map.on("dragstart", () => {
+    App.ui?.closeSidebarMobileIfOpen?.();
+
     if (state.runtime.uiPanZoomInProgress) return;
     state.runtime.map.closePopup();
   });
 
   state.runtime.map.on("zoomstart", () => {
+    App.ui?.closeSidebarMobileIfOpen?.();
     if (state.runtime.uiPanZoomInProgress) return;
     state.runtime.map.closePopup();
   });

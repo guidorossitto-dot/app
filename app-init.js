@@ -80,6 +80,29 @@ function bindInstallPrompt() {
   });
 }
 
+function bindMapLocateBtn() {
+  const btn = document.getElementById("mapLocateBtn");
+  if (!btn) return;
+
+  btn.addEventListener("click", () => {
+    App.map?.useMyLocation?.();
+  });
+}
+
+function bindMapFiltersToggle() {
+  const btn = document.getElementById("toggleMapFiltersBtn");
+  const panel = document.getElementById("mapFiltersPanel");
+  if (!btn || !panel) return;
+
+  btn.addEventListener("click", () => {
+    const willOpen = panel.hasAttribute("hidden");
+    panel.toggleAttribute("hidden", !willOpen);
+    btn.setAttribute("aria-expanded", willOpen ? "true" : "false");
+  });
+}
+
+
+
 bindInstallPrompt();
 
   function bindUI() {
@@ -89,6 +112,8 @@ bindInstallPrompt();
   App.ui.bindCalendarUI();
   App.ui.bindCategoryUI();
   App.ui.bindDeleteEventUI();
+  bindMapFiltersToggle();
+  bindMapLocateBtn();
   App.ui.bindAdminUI();
 }
 
