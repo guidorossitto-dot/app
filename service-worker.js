@@ -1,5 +1,5 @@
-const CACHE_NAME = "agendapp-shell-v18";
-const RUNTIME_CACHE = "agendapp-runtime-v18";
+const CACHE_NAME = "agendapp-shell-v19";
+const RUNTIME_CACHE = "agendapp-runtime-v19";
 
 const APP_SHELL = [
   "./",
