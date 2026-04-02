@@ -94,13 +94,28 @@ function bindMapFiltersToggle() {
   const panel = document.getElementById("mapFiltersPanel");
   if (!btn || !panel) return;
 
-  btn.addEventListener("click", () => {
-    const willOpen = panel.hasAttribute("hidden");
-    panel.toggleAttribute("hidden", !willOpen);
-    btn.setAttribute("aria-expanded", willOpen ? "true" : "false");
-  });
-}
+  function setState(open) {
+    panel.hidden = !open;
+    btn.setAttribute("aria-expanded", String(open));
+    btn.textContent = open
+      ? "🎛️ Filtros ▴"
+      : "🎛️ Filtros ▾";
+  }
 
+  btn.addEventListener("click", () => {
+    const isOpen = btn.getAttribute("aria-expanded") === "true";
+    setState(!isOpen);
+  });
+
+  document.addEventListener("click", (e) => {
+    if (!btn.contains(e.target) && !panel.contains(e.target)) {
+      setState(false);
+    }
+  });
+
+  // estado inicial
+  setState(false);
+}
 
 
 bindInstallPrompt();

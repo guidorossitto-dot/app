@@ -543,7 +543,7 @@ function updateNearbyCount(list = state.logic.nearbyEvents) {
       topEl.innerHTML = `
         <div class="featuredFloating">
           <button id="featuredToggleBtn" class="featuredToggleBtn" aria-expanded="false">
-            🔥 Comienza pronto
+           🔥 Comienza pronto ▾
           </button>
 
           <div id="featuredDropdown" class="featuredDropdown" hidden>
@@ -797,10 +797,17 @@ function updateNearbyCount(list = state.logic.nearbyEvents) {
 
   if (!toggleBtn || !dropdown) return;
 
+  function setState(open) {
+    dropdown.hidden = !open;
+    toggleBtn.setAttribute("aria-expanded", String(open));
+    toggleBtn.textContent = open
+      ? "🔥 Comienza pronto ▴"
+      : "🔥 Comienza pronto ▾";
+  }
+
   toggleBtn.onclick = () => {
     const isOpen = !dropdown.hidden;
-    dropdown.hidden = isOpen;
-    toggleBtn.setAttribute("aria-expanded", String(!isOpen));
+    setState(!isOpen);
   };
 
   document.addEventListener("click", (e) => {
@@ -808,10 +815,12 @@ function updateNearbyCount(list = state.logic.nearbyEvents) {
     if (!wrapper) return;
 
     if (!wrapper.contains(e.target)) {
-      dropdown.hidden = true;
-      toggleBtn.setAttribute("aria-expanded", "false");
+      setState(false);
     }
   });
+
+  // estado inicial
+  setState(false);
 }
 
   function renderList() {
