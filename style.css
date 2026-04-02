@@ -2677,3 +2677,29 @@ body {
   padding: 8px 12px;
   box-shadow: 0 6px 14px rgba(0,0,0,0.12);
 }
+
+/* =========================
+   MOBILE: filtros del mapa hacia abajo
+========================= */
+
+@media (max-width: 768px) {
+  .mapFiltersPanel {
+    width: min(260px, calc(100vw - 24px)) !important;
+    max-width: calc(100vw - 24px) !important;
+  }
+
+  .mapFiltersPanel .chipRow {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+    overflow: visible !important;
+    flex-wrap: unset !important;
+  }
+
+  .mapFiltersPanel .chip {
+    width: 100%;
+    min-width: 0;
+    justify-content: center;
+    white-space: nowrap;
+  }
+}
