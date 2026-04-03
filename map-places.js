@@ -621,12 +621,43 @@ function closePopupIfTouchesMargin({ margin = 12 } = {}) {
   /* =========================
      MAP INIT
   ========================= */
+
+  function clearPendingMapClick() {
+  if (state.runtime.pendingMapClickTimer) {
+    clearTimeout(state.runtime.pendingMapClickTimer);
+    state.runtime.pendingMapClickTimer = null;
+  }
+}
+
+function handleMapSingleClick(e) {
+  App.ui?.closeSidebarMobileIfOpen?.();
+
+  const t = e.originalEvent?.target;
+  if (t && (t.closest?.(".leaflet-marker-icon") || t.closest?.(".leaflet-popup"))) return;
+
+  const clat = e.latlng.lat;
+  const clng = e.latlng.lng;
+
+  if (util.canManageUI() && state.runtime.eventCreationMarker) {
+    prepareEventCreation(clat, clng);
+    uiSetView(clat, clng, 15);
+    App.renderAll?.({ rebuildMarkers: false });
+    return;
+  }
+
+  setUserLocation(clat, clng);
+  recomputeNearbyEvents(clat, clng);
+  uiSetView(clat, clng, 15);
+
+  App.renderAll?.({ rebuildMarkers: false });
+}
+
   function initMap(lat, lng) {
   state.runtime.map = L.map("map", {
     closePopupOnClick: false
   }).setView([lat, lng], 15);
 
-  state.runtime.map.doubleClickZoom.disable();
+state.runtime.map.doubleClickZoom.enable();
 
   L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
     attribution: "© OpenStreetMap contributors"
@@ -642,27 +673,18 @@ function closePopupIfTouchesMargin({ margin = 12 } = {}) {
   state.runtime.deepLinkLayer = L.layerGroup().addTo(state.runtime.map);
 
   state.runtime.map.on("click", (e) => {
-    App.ui?.closeSidebarMobileIfOpen?.();
+  clearPendingMapClick();
 
-    const t = e.originalEvent?.target;
-    if (t && (t.closest?.(".leaflet-marker-icon") || t.closest?.(".leaflet-popup"))) return;
+  state.runtime.pendingMapClickTimer = setTimeout(() => {
+    state.runtime.pendingMapClickTimer = null;
+    handleMapSingleClick(e);
+  }, 220);
+});
 
-    const clat = e.latlng.lat;
-    const clng = e.latlng.lng;
-
-    if (util.canManageUI() && state.runtime.eventCreationMarker) {
-      prepareEventCreation(clat, clng);
-      uiSetView(clat, clng, 15);
-      App.renderAll?.({ rebuildMarkers: false });
-      return;
-    }
-
-    setUserLocation(clat, clng);
-    recomputeNearbyEvents(clat, clng);
-    uiSetView(clat, clng, 15);
-
-    App.renderAll?.({ rebuildMarkers: false });
-  });
+state.runtime.map.on("dblclick", (e) => {
+  clearPendingMapClick();
+  App.ui?.closeSidebarMobileIfOpen?.();
+});
 
   state.runtime.map.on("dragstart", () => {
     App.ui?.closeSidebarMobileIfOpen?.();
