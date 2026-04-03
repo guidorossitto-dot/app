@@ -245,14 +245,13 @@ function rebuildLocationMarkers(list = state.logic.events) {
     const html = App.map?.buildPlacePopupHTML?.(loc) || "";
 
     loc.marker.bindPopup(html, {
-      closeButton: true,
-      autoPan: true,
-      keepInView: true,
-      autoPanPadding: [16, 16],
-      offset: [0, -10],
-      maxWidth: 260,
-      minWidth: 180
-    });
+  closeButton: true,
+  autoPan: false,
+  keepInView: false,
+  offset: [0, -10],
+  maxWidth: 260,
+  minWidth: 180
+});
 
     loc.marker.off("popupopen");
     loc.marker.on("popupopen", (evt) => {
@@ -277,6 +276,28 @@ function rebuildLocationMarkers(list = state.logic.events) {
 
           const marker = loc?.marker;
           if (!marker) return;
+
+          ev.preventDefault();
+ev.stopPropagation();
+
+if (btn.classList.contains("popupCenterBtn")) {
+  const lat = parseFloat(btn.dataset.lat);
+  const lng = parseFloat(btn.dataset.lng);
+
+  if (!Number.isFinite(lat) || !Number.isFinite(lng) || !state.runtime.map) return;
+
+  const marker = loc?.marker;
+  if (!marker) return;
+
+  state.runtime.skipPopupMarginCloseOnce = true;
+  openMarkerPopupStable(marker, lat, lng, 17);
+  return;
+}
+
+if (btn.classList.contains("shareBtn")) {
+  await App.ui?.shareEventFromButton?.(btn);
+  return;
+}
 
           openMarkerPopupStable(marker, lat, lng, 17);
           return;
@@ -555,11 +576,56 @@ App.ui?.paintCategoryUI?.();
   App.renderAll?.({ rebuildMarkers: false });
 }
 
+function getOpenPopupSafe() {
+  if (!state.runtime.map) return null;
+
+  try {
+    return state.runtime.map._popup || null;
+  } catch {
+    return null;
+  }
+}
+
+function popupTouchesMapMargin(popup, margin = 12) {
+  const mapEl = document.getElementById("map");
+  const popupEl = popup?.getElement?.();
+
+  if (!mapEl || !popupEl) return false;
+
+  const mapRect = mapEl.getBoundingClientRect();
+  const popupRect = popupEl.getBoundingClientRect();
+
+  return (
+    popupRect.left <= mapRect.left + margin ||
+    popupRect.right >= mapRect.right - margin ||
+    popupRect.top <= mapRect.top + margin ||
+    popupRect.bottom >= mapRect.bottom - margin
+  );
+}
+
+function closePopupIfTouchesMargin({ margin = 12 } = {}) {
+  const popup = getOpenPopupSafe();
+  if (!popup || !state.runtime.map) return;
+
+  if (state.runtime.uiPanZoomInProgress) return;
+
+  if (state.runtime.skipPopupMarginCloseOnce) {
+    state.runtime.skipPopupMarginCloseOnce = false;
+    return;
+  }
+
+  if (popupTouchesMapMargin(popup, margin)) {
+    state.runtime.map.closePopup();
+  }
+}
   /* =========================
      MAP INIT
   ========================= */
   function initMap(lat, lng) {
-  state.runtime.map = L.map("map").setView([lat, lng], 15);
+  state.runtime.map = L.map("map", {
+    closePopupOnClick: false
+  }).setView([lat, lng], 15);
+
   state.runtime.map.doubleClickZoom.disable();
 
   L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
@@ -577,38 +643,47 @@ App.ui?.paintCategoryUI?.();
 
   state.runtime.map.on("click", (e) => {
     App.ui?.closeSidebarMobileIfOpen?.();
-  const t = e.originalEvent?.target;
-  if (t && (t.closest?.(".leaflet-marker-icon") || t.closest?.(".leaflet-popup"))) return;
 
-  const clat = e.latlng.lat;
-  const clng = e.latlng.lng;
+    const t = e.originalEvent?.target;
+    if (t && (t.closest?.(".leaflet-marker-icon") || t.closest?.(".leaflet-popup"))) return;
 
-  if (util.canManageUI() && state.runtime.eventCreationMarker) {
-    prepareEventCreation(clat, clng);
+    const clat = e.latlng.lat;
+    const clng = e.latlng.lng;
+
+    if (util.canManageUI() && state.runtime.eventCreationMarker) {
+      prepareEventCreation(clat, clng);
+      uiSetView(clat, clng, 15);
+      App.renderAll?.({ rebuildMarkers: false });
+      return;
+    }
+
+    setUserLocation(clat, clng);
+    recomputeNearbyEvents(clat, clng);
     uiSetView(clat, clng, 15);
+
     App.renderAll?.({ rebuildMarkers: false });
-    return;
-  }
-
-  setUserLocation(clat, clng);
-  recomputeNearbyEvents(clat, clng);
-  uiSetView(clat, clng, 15);
-
-  App.renderAll?.({ rebuildMarkers: false });
-});
+  });
 
   state.runtime.map.on("dragstart", () => {
     App.ui?.closeSidebarMobileIfOpen?.();
+  });
 
-    if (state.runtime.uiPanZoomInProgress) return;
-    state.runtime.map.closePopup();
+  state.runtime.map.on("dragend", () => {
+    closePopupIfTouchesMargin({ margin: 12 });
   });
 
   state.runtime.map.on("zoomstart", () => {
     App.ui?.closeSidebarMobileIfOpen?.();
-    if (state.runtime.uiPanZoomInProgress) return;
-    state.runtime.map.closePopup();
   });
+
+state.runtime.map.on("zoomend", () => {
+  if (state.runtime.skipPopupMarginCloseOnce) {
+    state.runtime.skipPopupMarginCloseOnce = false;
+    return;
+  }
+
+  state.runtime.map.closePopup();
+});
 }
 
   /* =========================
@@ -792,15 +867,15 @@ App.ui?.paintCategoryUI?.();
 
   const m = L.marker([ev.lat, ev.lng], markerOpts);
 
-  m.bindPopup(html, {
-    closeButton: true,
-    autoPan: true,
-    keepInView: true,
-    autoPanPadding: [16, 16],
-    offset: [0, -10],
-    maxWidth: 260,
-    minWidth: 180
-  });
+loc.marker.bindPopup(html, {
+  closeButton: true,
+  autoPan: false,
+  keepInView: false,
+  offset: [0, -10],
+  maxWidth: 260,
+  minWidth: 180
+});
+
   m.on("popupclose", () => {
   if (state.runtime.temporaryFocusMarker === m) {
     clearTemporaryFocusMarker();
