@@ -2724,3 +2724,40 @@ header button {
   font-size: 12px;
   border-radius: 8px;
 }
+
+/* =========================
+   DESTACADOS: scroll interno
+========================= */
+
+.featuredDropdown {
+  max-height: min(58vh, 420px);
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+
+.featuredDropdown::-webkit-scrollbar {
+  width: 8px;
+}
+
+.featuredDropdown::-webkit-scrollbar-thumb {
+  background: #d6d6d6;
+  border-radius: 999px;
+}
+
+.featuredDropdown::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+@media (max-width: 768px) {
+  .featuredDropdown {
+    max-height: min(52vh, 360px);
+  }
+}
+.featuredAccordionBody {
+  max-height: 260px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+}

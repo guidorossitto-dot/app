@@ -223,51 +223,74 @@ async function shareEventFlow(input = {}) {
 
   const ev = eventId ? (App.events?.findEventById?.(eventId) || null) : null;
 
-const title = (ev?.title || decodeURIComponent((btn.dataset.title || "").trim()) || "Evento").trim();
-const place = (App.util?.shortPlaceName?.(ev?.placeName) || decodeURIComponent((btn.dataset.place || "").trim()) || "").trim();
-const date = (App.util?.formatDateDisplay?.(ev?.date) || decodeURIComponent((btn.dataset.date || "").trim()) || "").trim();
-const time = (App.util?.formatTimeStart?.(ev) || decodeURIComponent((btn.dataset.time || "").trim()) || "").trim();
+  const title = (
+    ev?.title ||
+    decodeURIComponent((btn.dataset.title || "").trim()) ||
+    "Evento"
+  ).trim();
 
-const url = customUrl || `${location.origin}${location.pathname}#e=${encodeURIComponent(eventId)}`;
+  const place = (
+    App.util?.shortPlaceName?.(ev?.placeName) ||
+    decodeURIComponent((btn.dataset.place || "").trim()) ||
+    ""
+  ).trim();
 
-const lines = [
-  title ? `Evento: ${title}` : "Evento",
-  place ? `📍 ${place}` : "",
-  (date || time) ? `🗓️ ${date}${time ? ` · ${time}` : ""}` : ""
-].filter(Boolean);
+  const date = (
+    App.util?.formatDateDisplay?.(ev?.date) ||
+    decodeURIComponent((btn.dataset.date || "").trim()) ||
+    ""
+  ).trim();
 
-const shareText = lines.join("\n");
+  const time = (
+    App.util?.formatTimeStart?.(ev) ||
+    decodeURIComponent((btn.dataset.time || "").trim()) ||
+    ""
+  ).trim();
 
-// ✅ GA4
-if (typeof gtag === "function") {
-  gtag("event", "share_event", {
-    event_id: eventId || "unknown"
-  });
-}
+  const url =
+    customUrl ||
+    `${location.origin}${location.pathname}#e=${encodeURIComponent(eventId)}`;
 
-if (navigator.share) {
-  try {
-    await navigator.share({
-      title,
-      text: shareText,
-      url
+  const lines = [
+    title ? `Evento: ${title}` : "Evento",
+    place ? `📍 ${place}` : "",
+    (date || time) ? `🗓️ ${date}${time ? ` · ${time}` : ""}` : ""
+  ].filter(Boolean);
+
+  const shareText = lines.join("\n");
+  const fallbackText = `${shareText}\n\n🔗 ${url}`;
+
+  if (typeof gtag === "function") {
+    gtag("event", "share_event", {
+      event_id: eventId || "unknown"
     });
-    return { ok: true, mode: "native" };
-  } catch {}
-}
+  }
 
-try {
-  await navigator.clipboard.writeText(`${shareText}\n\n${url}`);
-  const prev = btn.textContent;
-  btn.textContent = "Link copiado ✅";
-  setTimeout(() => {
-    btn.textContent = prev || "Compartir";
-  }, 1200);
-  return { ok: true, mode: "clipboard" };
-} catch {
-  window.prompt("Copiá este link:", `${shareText}\n\n${url}`);
-  return { ok: true, mode: "prompt" };
-}
+  // Mantener share nativo intacto para no romper WhatsApp / apps del sistema
+  if (navigator.share) {
+    try {
+      await navigator.share({
+        title,
+        text: shareText,
+        url
+      });
+      return { ok: true, mode: "native" };
+    } catch {}
+  }
+
+  // Solo mejoramos el fallback
+  try {
+    await navigator.clipboard.writeText(fallbackText);
+    const prev = btn.textContent;
+    btn.textContent = "Link copiado ✅";
+    setTimeout(() => {
+      btn.textContent = prev || "Compartir";
+    }, 1200);
+    return { ok: true, mode: "clipboard" };
+  } catch {
+    window.prompt("Copiá este link:", fallbackText);
+    return { ok: true, mode: "prompt" };
+  }
 }
 
 function setFavoritesOnly(value) {
