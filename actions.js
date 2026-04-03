@@ -351,9 +351,12 @@ function focusEventOnMapFlow(input = {}) {
   }
 
   if (eventId && App.map?.focusEventById) {
-    const ok = App.map.focusEventById(eventId);
-    if (ok) return { ok: true, mode: "event", eventId };
-  }
+  const ok = App.map.focusEventById(eventId);
+
+  return ok
+    ? { ok: true, mode: "event", eventId }
+    : { ok: false, error: "EVENT_NOT_FOUND", eventId };
+}
 
   const loc = key ? App.state.runtime.locationMarkers?.[key] : null;
 

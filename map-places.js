@@ -262,116 +262,94 @@ function rebuildLocationMarkers(list = state.logic.events) {
       L.DomEvent.disableScrollPropagation(root);
 
       const onClick = async (ev) => {
-        const btn = ev.target.closest("button");
-        if (!btn) return;
+  const btn = ev.target.closest("button");
+  if (!btn) return;
 
-        ev.preventDefault();
-        ev.stopPropagation();
+  ev.preventDefault();
+  ev.stopPropagation();
 
-        if (btn.classList.contains("popupCenterBtn")) {
-          const lat = parseFloat(btn.dataset.lat);
-          const lng = parseFloat(btn.dataset.lng);
+  if (btn.classList.contains("popupCenterBtn")) {
+    const lat = parseFloat(btn.dataset.lat);
+    const lng = parseFloat(btn.dataset.lng);
 
-          if (!Number.isFinite(lat) || !Number.isFinite(lng) || !state.runtime.map) return;
+    if (!Number.isFinite(lat) || !Number.isFinite(lng) || !state.runtime.map) return;
 
-          const marker = loc?.marker;
-          if (!marker) return;
+    const marker = loc?.marker;
+    if (!marker) return;
 
-          ev.preventDefault();
-ev.stopPropagation();
-
-if (btn.classList.contains("popupCenterBtn")) {
-  const lat = parseFloat(btn.dataset.lat);
-  const lng = parseFloat(btn.dataset.lng);
-
-  if (!Number.isFinite(lat) || !Number.isFinite(lng) || !state.runtime.map) return;
-
-  const marker = loc?.marker;
-  if (!marker) return;
-
-  state.runtime.skipPopupMarginCloseOnce = true;
-  openMarkerPopupStable(marker, lat, lng, 17);
-  return;
-}
-
-if (btn.classList.contains("shareBtn")) {
-  await App.ui?.shareEventFromButton?.(btn);
-  return;
-}
-
-          openMarkerPopupStable(marker, lat, lng, 17);
-          return;
-        }
-          if (btn.classList.contains("shareBtn")) {
-           await App.ui?.shareEventFromButton?.(btn);
-          return;
-}
-
-                if (btn.classList.contains("popupRouteBtn")) {
-          App.actions?.routeToEventFlow?.({ button: btn });
-          return;
-        }
-
-                if (btn.classList.contains("popupEditBtn")) {
-          const eventId = decodeURIComponent((btn.dataset.editEid || "").trim());
-          if (!eventId) return;
-
-          await App.adminForm?.startEditingEventFromId?.(eventId);
-          return;
-        }
-
-        if (btn.classList.contains("favoriteBtn")) {
-  const eventId = decodeURIComponent((btn.dataset.eid || "").trim());
-  if (!eventId) return;
-
-  const result = App.actions?.toggleFavorite?.(eventId);
-  if (!result?.ok) return;
-
-  const isFav = !!result.isFavorite;
-
-  btn.setAttribute("aria-pressed", isFav ? "true" : "false");
-  btn.textContent = isFav ? "❤️ Guardado" : "🤍 Guardar";
-
-App.ui?.renderCalendar?.();
-App.ui?.paintCategoryUI?.();
-
-  return;
-}
-
-      if (!util.canManageUI()) return;
-      if (btn.classList.contains("deleteEventBtn")) {
-  await App.ui?.deleteEventFromButton?.(btn);
-
-  if (
-    state.runtime.deepLinkLayer &&
-    typeof state.runtime.deepLinkLayer.clearLayers === "function"
-  ) {
-    state.runtime.deepLinkLayer.clearLayers();
+    state.runtime.skipPopupMarginCloseOnce = true;
+    openMarkerPopupStable(marker, lat, lng, 17);
+    return;
   }
 
-  return;
-}
+  if (btn.classList.contains("shareBtn")) {
+    await App.ui?.shareEventFromButton?.(btn);
+    return;
+  }
 
-        if (btn.classList.contains("popupAddBtn")) {
-  const lat = Number(btn.dataset.lat);
-  const lng = Number(btn.dataset.lng);
-  const place = decodeURIComponent(btn.dataset.place || "");
+  if (btn.classList.contains("popupRouteBtn")) {
+    App.actions?.routeToEventFlow?.({ button: btn });
+    return;
+  }
 
-  if (!Number.isFinite(lat) || !Number.isFinite(lng) || !state.runtime.map) return;
+  if (btn.classList.contains("popupEditBtn")) {
+    const eventId = decodeURIComponent((btn.dataset.editEid || "").trim());
+    if (!eventId) return;
 
-  uiSetView(lat, lng, 15);
-  prepareEventCreation(lat, lng);
+    await App.adminForm?.startEditingEventFromId?.(eventId);
+    return;
+  }
 
-  const placeEl = document.getElementById("eventPlace");
-  if (placeEl && place && !placeEl.value.trim()) placeEl.value = place;
+  if (btn.classList.contains("favoriteBtn")) {
+    const eventId = decodeURIComponent((btn.dataset.eid || "").trim());
+    if (!eventId) return;
 
-  const titleEl = document.getElementById("eventTitle");
-  if (titleEl) titleEl.focus();
+    const result = App.actions?.toggleFavorite?.(eventId);
+    if (!result?.ok) return;
 
-  App.renderAll?.({ rebuildMarkers: false });
-  return;
-}
-      };
+    const isFav = !!result.isFavorite;
+    btn.setAttribute("aria-pressed", isFav ? "true" : "false");
+    btn.textContent = isFav ? "❤️ Guardado" : "🤍 Guardar";
+
+    App.ui?.renderCalendar?.();
+    App.ui?.paintCategoryUI?.();
+    return;
+  }
+
+  if (!util.canManageUI()) return;
+
+  if (btn.classList.contains("deleteEventBtn")) {
+    await App.ui?.deleteEventFromButton?.(btn);
+
+    if (
+      state.runtime.deepLinkLayer &&
+      typeof state.runtime.deepLinkLayer.clearLayers === "function"
+    ) {
+      state.runtime.deepLinkLayer.clearLayers();
+    }
+    return;
+  }
+
+  if (btn.classList.contains("popupAddBtn")) {
+    const lat = Number(btn.dataset.lat);
+    const lng = Number(btn.dataset.lng);
+    const place = decodeURIComponent(btn.dataset.place || "");
+
+    if (!Number.isFinite(lat) || !Number.isFinite(lng) || !state.runtime.map) return;
+
+    uiSetView(lat, lng, 15);
+    prepareEventCreation(lat, lng);
+
+    const placeEl = document.getElementById("eventPlace");
+    if (placeEl && place && !placeEl.value.trim()) placeEl.value = place;
+
+    const titleEl = document.getElementById("eventTitle");
+    if (titleEl) titleEl.focus();
+
+    App.renderAll?.({ rebuildMarkers: false });
+    return;
+  }
+};
 
       root.addEventListener("click", onClick, true);
 
@@ -694,17 +672,26 @@ state.runtime.map.on("dblclick", (e) => {
     closePopupIfTouchesMargin({ margin: 12 });
   });
 
-  state.runtime.map.on("zoomstart", () => {
-    App.ui?.closeSidebarMobileIfOpen?.();
-  });
+ state.runtime.map.on("zoomstart", () => {
+  App.ui?.closeSidebarMobileIfOpen?.();
+  state.runtime.lastZoomBeforeChange = state.runtime.map.getZoom();
+});
 
 state.runtime.map.on("zoomend", () => {
+  const prevZoom = Number(state.runtime.lastZoomBeforeChange);
+  const nextZoom = Number(state.runtime.map.getZoom());
+
   if (state.runtime.skipPopupMarginCloseOnce) {
     state.runtime.skipPopupMarginCloseOnce = false;
     return;
   }
 
-  state.runtime.map.closePopup();
+  if (Number.isFinite(prevZoom) && Number.isFinite(nextZoom) && nextZoom < prevZoom) {
+    state.runtime.map.closePopup();
+    return;
+  }
+
+  closePopupIfTouchesMargin({ margin: 12 });
 });
 }
 
@@ -887,9 +874,9 @@ state.runtime.map.on("zoomend", () => {
     markerOpts.bubblingMouseEvents = false;
   } catch {}
 
-  const m = L.marker([ev.lat, ev.lng], markerOpts);
+const m = L.marker([ev.lat, ev.lng], markerOpts);
 
-loc.marker.bindPopup(html, {
+m.bindPopup(html, {
   closeButton: true,
   autoPan: false,
   keepInView: false,
