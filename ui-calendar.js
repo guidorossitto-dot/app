@@ -538,54 +538,18 @@ function updateNearbyCount(list = state.logic.nearbyEvents) {
 
   if (!topEl && !bottomEl) return;
 
-  if (!list || list.length === 0) {
-    if (topEl) {
-      topEl.innerHTML = `
-        <div class="featuredFloating">
-          <button id="featuredToggleBtn" class="featuredToggleBtn" aria-expanded="false">
-           🔥 Comienza pronto ▾
-          </button>
+  let featuredList = selectors.getFeaturedNearbyEvents(list || []);
 
-          <div id="featuredDropdown" class="featuredDropdown" hidden>
-            <div class="nearbyInlineEmpty">
-              No hay eventos cerca tuyo hoy
-            </div>
-          </div>
-        </div>
-      `;
-    }
-
-    bindFeaturedToggle();
-    return;
-  }
-
-  const todayList = util.getTodayEvents(list || []);
-
-  if (todayList.length === 0) {
-    if (topEl) {
-      topEl.innerHTML = `
-        <div class="featuredFloating">
-          <button id="featuredToggleBtn" class="featuredToggleBtn" aria-expanded="false">
-            🔥 Comienza pronto
-          </button>
-
-          <div id="featuredDropdown" class="featuredDropdown" hidden>
-            <div class="nearbyInlineEmpty">
-              No hay eventos cerca tuyo hoy
-            </div>
-          </div>
-        </div>
-      `;
-    }
-
-    bindFeaturedToggle();
+  if (!featuredList.length) {
+    if (topEl) topEl.innerHTML = "";
     return;
   }
 
   const cat = state.logic.activeCategory || "all";
+  
   const catChip = cat === "all" ? "" : `<span class="miniChip">${util.categoryLabel(cat)}</span>`;
 
-  let featuredList = selectors.getFeaturedNearbyEvents(todayList);
+featuredList = [...featuredList];
 
   if (!featuredList.length) {
     const visibleToday = selectors.getVisibleTodayEvents(state.logic.events || []);

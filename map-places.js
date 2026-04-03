@@ -103,6 +103,34 @@ function clearTemporaryFocusMarker() {
   state.runtime.temporaryFocusMarker = null;
 }
 
+function restoreActivePopupIfPossible() {
+  if (!state.runtime.map) return false;
+  if (!state.runtime.activePopupWantsPreserve) return false;
+
+  const locationKey = String(state.runtime.activePopupLocationKey || "").trim();
+  const eventId = String(state.runtime.activePopupEventId || "").trim();
+
+  let loc = locationKey ? state.runtime.locationMarkers?.[locationKey] : null;
+
+  if (!loc && eventId) {
+    const ev = App.events?.findEventById?.(eventId) || null;
+    if (ev) {
+      loc = findLocationMarkerByEvent(ev, { rebuildIfMissing: true });
+    }
+  }
+
+  if (!loc?.marker) return false;
+
+  skipNextPopupMarginClose(2);
+  openMarkerPopupStable(loc.marker, loc.lat, loc.lng, 17, {
+    preservePopup: true,
+    eventId: eventId || null,
+    locationKey: locationKey || null
+  });
+
+  return true;
+}
+
 function setTemporaryFocusMarker(marker) {
   clearTemporaryFocusMarker();
   state.runtime.temporaryFocusMarker = marker || null;
@@ -122,40 +150,64 @@ function setTemporaryFocusMarker(marker) {
   /* =========================
      REBUILD LOCATION MARKERS
   ========================= */
-  function openMarkerPopupStable(marker, lat, lng, zoom = 17) {
+ function openMarkerPopupStable(marker, lat, lng, zoom = 17, opts = {}) {
   if (!marker || !state.runtime.map) return;
 
-  const targetZoom = Math.max(state.runtime.map.getZoom(), zoom);
+  const {
+    preservePopup = true,
+    eventId = null,
+    locationKey = null
+  } = opts;
 
-  const doOpen = () => {
-    App.events?.setUiPanZoomInProgress?.(true);
+  const map = state.runtime.map;
+  const targetZoom = Math.max(map.getZoom(), zoom);
 
-    try {
-      state.runtime.map.setView([lat, lng], targetZoom, { animate: true });
+  if (preservePopup) {
+    setActivePopupIntent({
+      eventId,
+      locationKey,
+      lat,
+      lng,
+      preserve: true
+    });
+  }
 
-      setTimeout(() => {
-        try {
-          marker.openPopup();
-        } catch {}
+  skipNextPopupMarginClose(2);
+  App.events?.setUiPanZoomInProgress?.(true);
 
-        try {
-          if (typeof glowMarker === "function") glowMarker(marker);
-        } catch {}
-      }, 120);
-    } finally {
+  const finishOpen = () => {
+    const once = () => {
+      map.off("moveend", once);
+      skipNextPopupMarginClose(1);
+
+      try {
+        marker.openPopup();
+      } catch {}
+
+      try {
+        glowMarker(marker);
+      } catch {}
+
       setTimeout(() => {
         App.events?.setUiPanZoomInProgress?.(false);
-      }, 300);
-    }
+        closePopupIfTouchesMargin({ margin: 12 });
+      }, 80);
+    };
+
+    map.on("moveend", once);
+    map.setView([lat, lng], targetZoom, { animate: true });
   };
 
   if (
     state.runtime.markerCluster &&
     typeof state.runtime.markerCluster.zoomToShowLayer === "function"
   ) {
-    state.runtime.markerCluster.zoomToShowLayer(marker, doOpen);
+    state.runtime.markerCluster.zoomToShowLayer(marker, () => {
+      skipNextPopupMarginClose(2);
+      finishOpen();
+    });
   } else {
-    doOpen();
+    finishOpen();
   }
 }
 
@@ -191,27 +243,33 @@ function rebuildLocationMarkers(list = state.logic.events) {
         icon: getCategoryIcon(ev.category || "music")
       });
 
-      state.runtime.markerCluster.addLayer(marker);
+    state.runtime.markerCluster.addLayer(marker);
 
-      state.runtime.locationMarkers[key] = {
-        marker,
-        events: [],
-        lat: anchor.lat,
-        lng: anchor.lng,
-        placeName: anchor.placeName
-      };
+state.runtime.locationMarkers[key] = {
+  marker,
+  events: [],
+  lat: anchor.lat,
+  lng: anchor.lng,
+  placeName: anchor.placeName
+};
 
-      let clickTimer = null;
+marker.off("popupclose");
+marker.on("popupclose", () => {
+  if (consumePopupIntentClearSkip()) return;
+  clearActivePopupIntent();
+});
 
-      marker.on("click", (e) => {
-        if (e?.originalEvent) L.DomEvent.stop(e.originalEvent);
+let clickTimer = null;
 
-        if (clickTimer) clearTimeout(clickTimer);
-        clickTimer = setTimeout(() => {
-          marker.openPopup();
-          clickTimer = null;
-        }, 180);
-      });
+marker.on("click", (e) => {
+  if (e?.originalEvent) L.DomEvent.stop(e.originalEvent);
+
+  if (clickTimer) clearTimeout(clickTimer);
+  clickTimer = setTimeout(() => {
+    marker.openPopup();
+    clickTimer = null;
+  }, 180);
+});
 
       marker.on("dblclick", (e) => {
         if (e?.originalEvent) L.DomEvent.stop(e.originalEvent);
@@ -253,20 +311,26 @@ function rebuildLocationMarkers(list = state.logic.events) {
   minWidth: 180
 });
 
-    loc.marker.off("popupopen");
-    loc.marker.on("popupopen", (evt) => {
-      const root = evt.popup.getElement();
-      if (!root) return;
+loc.marker.off("popupclose");
+loc.marker.on("popupclose", () => {
+  if (consumePopupIntentClearSkip()) return;
+  clearActivePopupIntent();
+});
 
-      L.DomEvent.disableClickPropagation(root);
-      L.DomEvent.disableScrollPropagation(root);
+loc.marker.off("popupopen");
+loc.marker.on("popupopen", (evt) => {
+  const root = evt.popup.getElement();
+  if (!root) return;
 
-      const onClick = async (ev) => {
-  const btn = ev.target.closest("button");
-  if (!btn) return;
+  L.DomEvent.disableClickPropagation(root);
+  L.DomEvent.disableScrollPropagation(root);
 
-  ev.preventDefault();
-  ev.stopPropagation();
+  const onClick = async (ev) => {
+    const btn = ev.target.closest("button");
+    if (!btn) return;
+
+    ev.preventDefault();
+    ev.stopPropagation();
 
   if (btn.classList.contains("popupCenterBtn")) {
     const lat = parseFloat(btn.dataset.lat);
@@ -277,8 +341,10 @@ function rebuildLocationMarkers(list = state.logic.events) {
     const marker = loc?.marker;
     if (!marker) return;
 
-    state.runtime.skipPopupMarginCloseOnce = true;
-    openMarkerPopupStable(marker, lat, lng, 17);
+openMarkerPopupStable(marker, lat, lng, 17, {
+  preservePopup: true,
+  eventId: state.runtime.activePopupEventId || null
+});
     return;
   }
 
@@ -356,6 +422,26 @@ function rebuildLocationMarkers(list = state.logic.events) {
       evt.popup.once("remove", () => {
         root.removeEventListener("click", onClick, true);
       });
+
+      const popupEventIds = Array.isArray(loc.events)
+  ? loc.events.map((e) => String(e?.id || "").trim()).filter(Boolean)
+  : [];
+
+const preferredEventId =
+  state.runtime.pendingOpenEventId && popupEventIds.includes(String(state.runtime.pendingOpenEventId))
+    ? String(state.runtime.pendingOpenEventId)
+    : (popupEventIds[0] || null);
+
+setActivePopupIntent({
+  eventId: preferredEventId,
+  locationKey: Object.keys(state.runtime.locationMarkers).find(
+    (k) => state.runtime.locationMarkers[k] === loc
+  ) || null,
+  lat: loc.lat,
+  lng: loc.lng,
+  preserve: true
+});
+
 
       const pending = state.runtime.pendingOpenEventId;
       if (pending) {
@@ -564,6 +650,20 @@ function getOpenPopupSafe() {
   }
 }
 
+function consumePopupMarginSkip() {
+  const n = Number(state.runtime.skipPopupMarginCloseCount || 0);
+  if (n > 0) {
+    state.runtime.skipPopupMarginCloseCount = n - 1;
+    return true;
+  }
+  return false;
+}
+
+function skipNextPopupMarginClose(times = 1) {
+  const n = Number(state.runtime.skipPopupMarginCloseCount || 0);
+  state.runtime.skipPopupMarginCloseCount = n + Math.max(1, Number(times) || 1);
+}
+
 function popupTouchesMapMargin(popup, margin = 12) {
   const mapEl = document.getElementById("map");
   const popupEl = popup?.getElement?.();
@@ -581,21 +681,48 @@ function popupTouchesMapMargin(popup, margin = 12) {
   );
 }
 
+function consumePopupIntentClearSkip() {
+  const n = Number(state.runtime.skipPopupIntentClearCount || 0);
+  if (n > 0) {
+    state.runtime.skipPopupIntentClearCount = n - 1;
+    return true;
+  }
+  return false;
+}
+
+function skipNextPopupIntentClear(times = 1) {
+  const n = Number(state.runtime.skipPopupIntentClearCount || 0);
+  state.runtime.skipPopupIntentClearCount = n + Math.max(1, Number(times) || 1);
+}
+
 function closePopupIfTouchesMargin({ margin = 12 } = {}) {
   const popup = getOpenPopupSafe();
   if (!popup || !state.runtime.map) return;
 
   if (state.runtime.uiPanZoomInProgress) return;
-
-  if (state.runtime.skipPopupMarginCloseOnce) {
-    state.runtime.skipPopupMarginCloseOnce = false;
-    return;
-  }
+  if (consumePopupMarginSkip()) return;
 
   if (popupTouchesMapMargin(popup, margin)) {
+    clearActivePopupIntent();
     state.runtime.map.closePopup();
   }
 }
+
+function setActivePopupIntent({ eventId = null, locationKey = null, lat = null, lng = null, preserve = true } = {}) {
+  state.runtime.activePopupEventId = eventId ? String(eventId) : null;
+  state.runtime.activePopupLocationKey = locationKey ? String(locationKey) : null;
+  state.runtime.activePopupLatLng =
+    Number.isFinite(lat) && Number.isFinite(lng) ? { lat, lng } : null;
+  state.runtime.activePopupWantsPreserve = !!preserve;
+}
+
+function clearActivePopupIntent() {
+  state.runtime.activePopupEventId = null;
+  state.runtime.activePopupLocationKey = null;
+  state.runtime.activePopupLatLng = null;
+  state.runtime.activePopupWantsPreserve = false;
+}
+
   /* =========================
      MAP INIT
   ========================= */
@@ -647,6 +774,14 @@ state.runtime.map.doubleClickZoom.enable();
     disableClusteringAtZoom: 16
   });
 
+state.runtime.markerCluster.on("animationend", () => {
+  if (!state.runtime.activePopupWantsPreserve) return;
+  if (state.runtime.uiPanZoomInProgress) return;
+  if (getOpenPopupSafe()) return;
+
+  restoreActivePopupIfPossible();
+});
+
   state.runtime.map.addLayer(state.runtime.markerCluster);
   state.runtime.deepLinkLayer = L.layerGroup().addTo(state.runtime.map);
 
@@ -668,9 +803,13 @@ state.runtime.map.on("dblclick", (e) => {
     App.ui?.closeSidebarMobileIfOpen?.();
   });
 
-  state.runtime.map.on("dragend", () => {
-    closePopupIfTouchesMargin({ margin: 12 });
-  });
+state.runtime.map.on("dragend", () => {
+  closePopupIfTouchesMargin({ margin: 12 });
+});
+
+state.runtime.map.on("moveend", () => {
+  closePopupIfTouchesMargin({ margin: 12 });
+});
 
  state.runtime.map.on("zoomstart", () => {
   App.ui?.closeSidebarMobileIfOpen?.();
@@ -681,15 +820,15 @@ state.runtime.map.on("zoomend", () => {
   const prevZoom = Number(state.runtime.lastZoomBeforeChange);
   const nextZoom = Number(state.runtime.map.getZoom());
 
-  if (state.runtime.skipPopupMarginCloseOnce) {
-    state.runtime.skipPopupMarginCloseOnce = false;
-    return;
-  }
-
   if (Number.isFinite(prevZoom) && Number.isFinite(nextZoom) && nextZoom < prevZoom) {
+    clearActivePopupIntent();
+    state.runtime.skipPopupMarginCloseCount = 0;
+    state.runtime.skipPopupIntentClearCount = 0;
     state.runtime.map.closePopup();
     return;
   }
+
+  if (consumePopupMarginSkip()) return;
 
   closePopupIfTouchesMargin({ margin: 12 });
 });
@@ -838,7 +977,11 @@ state.runtime.map.on("zoomend", () => {
 
   if (loc?.marker) {
     App.actions?.highlightPendingPopupEvent?.(id);
-    openMarkerPopupStable(loc.marker, ev.lat, ev.lng, 17);
+openMarkerPopupStable(loc.marker, ev.lat, ev.lng, 17, {
+  preservePopup: true,
+  eventId: id,
+  locationKey: key
+});
     return true;
   }
 
@@ -899,7 +1042,11 @@ m.bindPopup(html, {
 
   clearTemporaryFocusMarker();
   setTemporaryFocusMarker(m);
-  openMarkerPopupStable(m, ev.lat, ev.lng, 17);
+openMarkerPopupStable(m, ev.lat, ev.lng, 17, {
+  preservePopup: true,
+  eventId: id,
+  locationKey: null
+});
 
   setTimeout(() => {
     const el = m.getElement?.();
@@ -933,76 +1080,31 @@ async function clearAllEvents() {
   });
 }
 
-function focusPlaceByCoords(lat, lng, placeTitle = "Lugar", eventTitle = "", zoom = 16) {
-  if (!state.runtime.map) return false;
-  if (!Number.isFinite(lat) || !Number.isFinite(lng)) return false;
+function focusPlaceByCoords(lat, lng, html, zoom = 17) {
+  if (!state.runtime.map || !Number.isFinite(lat) || !Number.isFinite(lng)) return false;
 
-  const mapEl = document.getElementById("map");
-  if (mapEl) {
-    mapEl.scrollIntoView({ behavior: "smooth", block: "start" });
-  }
+  const tempMarker = L.marker([lat, lng], {
+    interactive: false,
+    keyboard: false,
+    opacity: 0
+  });
 
-  setTimeout(() => {
-    try {
-      state.runtime.map.invalidateSize();
-    } catch {}
+  tempMarker.bindPopup(html, {
+  closeButton: true,
+  autoPan: false,
+  keepInView: false,
+  offset: [0, -10],
+  maxWidth: 260,
+  minWidth: 180
+});
 
-    clearTemporaryFocusMarker();
+  tempMarker.addTo(state.runtime.deepLinkLayer || state.runtime.map);
 
-    if (
-      state.runtime.deepLinkLayer &&
-      typeof state.runtime.deepLinkLayer.clearLayers === "function"
-    ) {
-      try {
-        state.runtime.deepLinkLayer.clearLayers();
-      } catch {}
-    }
-
-    const tempMarker = L.marker([lat, lng], {
-      bubblingMouseEvents: false
-    });
-
-    tempMarker.bindPopup(`
-      <div class="popupCard">
-        <div class="popupHeader">
-          <div>
-            <div class="popupPlace">${placeTitle || "Lugar"}</div>
-            <div class="popupSub">${eventTitle || "Ubicación del lugar"}</div>
-          </div>
-        </div>
-      </div>
-    `, {
-      closeButton: true,
-      autoPan: true,
-      keepInView: true,
-      autoPanPadding: [16, 16],
-      offset: [0, -10],
-      maxWidth: 260,
-      minWidth: 180
-    });
-
-    tempMarker.on("popupclose", () => {
-      if (state.runtime.temporaryFocusMarker === tempMarker) {
-        clearTemporaryFocusMarker();
-      }
-    });
-
-    if (state.runtime.deepLinkLayer) {
-      tempMarker.addTo(state.runtime.deepLinkLayer);
-    } else {
-      tempMarker.addTo(state.runtime.map);
-    }
-
-    setTemporaryFocusMarker(tempMarker);
-
-    state.runtime.map.setView([lat, lng], zoom);
-
-    setTimeout(() => {
-      try {
-        tempMarker.openPopup();
-      } catch {}
-    }, 120);
-  }, 220);
+  openMarkerPopupStable(tempMarker, lat, lng, zoom, {
+  preservePopup: true,
+  eventId: null,
+  locationKey: null
+});
 
   return true;
 }

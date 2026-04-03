@@ -91,6 +91,14 @@ App.CFG.ALLOWED_CATEGORIES = Object.keys(App.CFG.CATEGORIES);
   temporaryFocusMarker: null,
   pendingCalendarDate: null,
 
+activePopupLocationKey: null,
+activePopupEventId: null,
+activePopupLatLng: null,
+activePopupWantsPreserve: false,
+skipPopupIntentClearCount: 0,
+lastZoomBeforeChange: null,
+pendingMapClickTimer: null,
+
   pendingOpenEventId: null,
   pendingDeepLinkEventId: null,
   bootReady: false,
