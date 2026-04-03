@@ -268,29 +268,28 @@ async function shareEventFlow(input = {}) {
 
   // Mantener share nativo intacto para no romper WhatsApp / apps del sistema
   if (navigator.share) {
-    try {
-      await navigator.share({
-        title,
-        text: shareText,
-        url
-      });
-      return { ok: true, mode: "native" };
-    } catch {}
-  }
+  try {
+    await navigator.share({
+      title,
+      text: `${shareText}\n\n🔗 ${url}`
+    });
+    return { ok: true, mode: "native" };
+  } catch {}
+}
 
   // Solo mejoramos el fallback
   try {
-    await navigator.clipboard.writeText(fallbackText);
-    const prev = btn.textContent;
-    btn.textContent = "Link copiado ✅";
-    setTimeout(() => {
-      btn.textContent = prev || "Compartir";
-    }, 1200);
-    return { ok: true, mode: "clipboard" };
-  } catch {
-    window.prompt("Copiá este link:", fallbackText);
-    return { ok: true, mode: "prompt" };
-  }
+  await navigator.clipboard.writeText(`${shareText}\n\n🔗 ${url}`);
+  const prev = btn.textContent;
+  btn.textContent = "Link copiado ✅";
+  setTimeout(() => {
+    btn.textContent = prev || "Compartir";
+  }, 1200);
+  return { ok: true, mode: "clipboard" };
+} catch {
+  window.prompt("Copiá este link:", `${shareText}\n\n🔗 ${url}`);
+  return { ok: true, mode: "prompt" };
+}
 }
 
 function setFavoritesOnly(value) {
