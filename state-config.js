@@ -8,7 +8,7 @@
      CONFIG
   ========================= */
   App.CFG = {
-  SEARCH_RADIUS_KM: 2,
+  SEARCH_RADIUS_KM: 5,
   PIN_PRECISION: 4, 
   DEFAULT_LAT: -34.6037,
   DEFAULT_LNG: -58.3816,
