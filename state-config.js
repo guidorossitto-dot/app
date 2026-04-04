@@ -43,6 +43,15 @@
       label: "Cine",
       emoji: "🎬"
     },
+
+    literature: {
+      label: "Literatura",
+      emoji: "📚"
+    },
+    gastronomy: {
+      label: "Gastronomía",
+      emoji: "🍷"
+    },
     games: {
       label: "Juegos",
       emoji: "🎯"

@@ -2792,3 +2792,38 @@ header button {
 #map {
   animation: none;
 }
+
+.mapFiltersPanel .chipRow {
+  gap: 6px;
+}
+
+.mapFiltersPanel .chip {
+  font-size: 12px;
+  padding: 6px 10px;
+}
+
+.eventMiniCard__icon--literature {
+  background: #f4f1ff;
+  border-color: #ddd6ff;
+}
+
+.eventMiniCard__icon--gastronomy {
+  background: #fff6ee;
+  border-color: #f3d8bf;
+}
+
+.eventMiniCard--literature {
+  border-left: 4px solid #ddd6ff;
+}
+
+.eventMiniCard--gastronomy {
+  border-left: 4px solid #f3d8bf;
+}
+
+.chipRow--favorites {
+  margin-bottom: 8px;
+}
+
+.chipRow--favorites .chip {
+  font-weight: 600;
+}

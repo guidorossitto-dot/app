@@ -77,17 +77,25 @@
 
       <div class="mapFiltersPanel" id="mapFiltersPanel" hidden>
 
-        <div class="chipRow" id="categoryChips">
-          <button type="button" class="chip" id="favoritesOnlyChip">❤️ Favoritos</button>
-          <button type="button" class="chip isActive" data-cat="all">Todo</button>
-          <button type="button" class="chip" data-cat="music">🎵 Música</button>
-          <button type="button" class="chip" data-cat="dance">💃 Danza</button>
-          <button type="button" class="chip" data-cat="theatre">🎭 Teatro</button>
-          <button type="button" class="chip" data-cat="visual_arts">🖼️ Visuales</button>
-          <button type="button" class="chip" data-cat="cinema">🎬 Cine</button>
-          <button type="button" class="chip" data-cat="games">🎯 Juegos</button>
-        </div>
-      </div>
+  <!-- Favoritos -->
+  <div class="chipRow chipRow--favorites">
+    <button type="button" class="chip" id="favoritesOnlyChip">❤️ Favoritos</button>
+  </div>
+
+  <!-- Categorías -->
+  <div class="chipRow" id="categoryChips">
+    <button type="button" class="chip isActive" data-cat="all">Todo</button>
+    <button type="button" class="chip" data-cat="music">🎵 Música</button>
+    <button type="button" class="chip" data-cat="theatre">🎭 Teatro</button>
+    <button type="button" class="chip" data-cat="dance">💃 Danza</button>
+    <button type="button" class="chip" data-cat="cinema">🎬 Cine</button>
+    <button type="button" class="chip" data-cat="visual_arts">🖼️ Visuales</button>
+    <button type="button" class="chip" data-cat="literature">📚 Literatura</button>
+    <button type="button" class="chip" data-cat="gastronomy">🍷 Gastronomía</button>
+    <button type="button" class="chip" data-cat="games">🎯 Juegos</button>
+  </div>
+
+</div>
     </div>
   </div>
 
@@ -153,13 +161,15 @@
 
 <div id="venueSuggestions"></div>
 
-              <div class="chipRow chipRow--admin" id="adminCategoryChips">
+<div class="chipRow chipRow--admin" id="adminCategoryChips">
   <span class="chipLabel">Categoría:</span>
   <button type="button" class="chip chip--sm isActive" data-cat="music">🎵</button>
-  <button type="button" class="chip chip--sm" data-cat="dance">💃</button>
   <button type="button" class="chip chip--sm" data-cat="theatre">🎭</button>
-  <button type="button" class="chip chip--sm" data-cat="visual_arts">🖼️</button>
+  <button type="button" class="chip chip--sm" data-cat="dance">💃</button>
   <button type="button" class="chip chip--sm" data-cat="cinema">🎬</button>
+  <button type="button" class="chip chip--sm" data-cat="visual_arts">🖼️</button>
+  <button type="button" class="chip chip--sm" data-cat="literature">📚</button>
+  <button type="button" class="chip chip--sm" data-cat="gastronomy">🍷</button>
   <button type="button" class="chip chip--sm" data-cat="games">🎯</button>
 </div>
 
