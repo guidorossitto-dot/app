@@ -85,46 +85,67 @@
       cell.classList.add("day--hasFavorite");
     }
 
-      const isMobile = window.innerWidth <= 768;
-      const maxVisible = isMobile ? 2 : 3;
+     const isMobile = window.innerWidth <= 768;
 
-      evs.slice(0, maxVisible).forEach((ev) => {
-  const b = document.createElement("div");
-  const isFav = !!App.events?.isFavorite?.(ev.id);
+if (isMobile) {
+  if (evs.length > 0) {
+    const more = document.createElement("div");
+    more.className = "event event-more event-more--mobile";
+    more.textContent = `+${evs.length}`;
+    more.title = evs.length === 1
+      ? "1 evento"
+      : `${evs.length} eventos`;
 
-  b.className = `event${isFav ? " event--favorite" : ""}`;
+    more.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      App.ui?.showCalendarDayPopover?.(more, dateStr, evs);
+    });
 
-  const icon = util.categoryEmoji(ev.category) || "📍";
-  const favMark = isFav ? "❤️ " : "";
+    cell.appendChild(more);
+  }
+} else {
+  const maxVisible = 3;
 
-  b.textContent = `${favMark}${icon}${ev.title}`;
-  b.dataset.eid = ev.id || "";
+  evs.slice(0, maxVisible).forEach((ev) => {
+    const b = document.createElement("div");
+    const isFav = !!App.events?.isFavorite?.(ev.id);
 
-        b.addEventListener("click", (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          App.ui?.showCalendarEventPopover?.(b, ev);
-        });
+    b.className = `event${isFav ? " event--favorite" : ""}`;
 
-        cell.appendChild(b);
-      });
+    const icon = util.categoryEmoji(ev.category) || "📍";
+    const favMark = isFav ? "❤️ " : "";
 
-      if (evs.length > maxVisible) {
-        const more = document.createElement("div");
-        more.className = "event event-more";
-        const hiddenCount = evs.length - maxVisible;
-        more.textContent = `+${hiddenCount}`;
-        more.title = hiddenCount === 1
-          ? "1 evento más"
-          : `${hiddenCount} eventos más`;
-        more.addEventListener("click", (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          App.ui?.showCalendarDayPopover?.(more, dateStr, evs);
-        });
+    b.textContent = `${favMark}${icon}${ev.title}`;
+    b.dataset.eid = ev.id || "";
 
-        cell.appendChild(more);
-      }
+    b.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      App.ui?.showCalendarEventPopover?.(b, ev);
+    });
+
+    cell.appendChild(b);
+  });
+
+  if (evs.length > maxVisible) {
+    const more = document.createElement("div");
+    more.className = "event event-more";
+    const hiddenCount = evs.length - maxVisible;
+    more.textContent = `+${hiddenCount}`;
+    more.title = hiddenCount === 1
+      ? "1 evento más"
+      : `${hiddenCount} eventos más`;
+
+    more.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      App.ui?.showCalendarDayPopover?.(more, dateStr, evs);
+    });
+
+    cell.appendChild(more);
+  }
+}
 
       cell.addEventListener("click", () => {
         App.ui?.openCalendarDay?.(dateStr);

@@ -2761,3 +2761,17 @@ header button {
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
 }
+
+@media (max-width: 768px) {
+  .event-more--mobile {
+    margin-top: 4px;
+    text-align: center;
+    font-size: 11px;
+    font-weight: 700;
+    border-radius: 999px;
+    padding: 3px 6px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
