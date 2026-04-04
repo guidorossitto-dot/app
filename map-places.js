@@ -198,17 +198,20 @@ function setTemporaryFocusMarker(marker) {
     map.setView([lat, lng], targetZoom, { animate: true });
   };
 
-  if (
-    state.runtime.markerCluster &&
-    typeof state.runtime.markerCluster.zoomToShowLayer === "function"
-  ) {
-    state.runtime.markerCluster.zoomToShowLayer(marker, () => {
-      skipNextPopupMarginClose(2);
-      finishOpen();
-    });
-  } else {
+const canUseClusterZoom =
+  !!state.runtime.markerCluster &&
+  typeof state.runtime.markerCluster.zoomToShowLayer === "function" &&
+  typeof state.runtime.markerCluster.hasLayer === "function" &&
+  state.runtime.markerCluster.hasLayer(marker);
+
+if (canUseClusterZoom) {
+  state.runtime.markerCluster.zoomToShowLayer(marker, () => {
+    skipNextPopupMarginClose(2);
     finishOpen();
-  }
+  });
+} else {
+  finishOpen();
+}
 }
 
 function rebuildLocationMarkers(list = state.logic.events) {

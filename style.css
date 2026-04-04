@@ -2827,3 +2827,22 @@ header button {
 .chipRow--favorites .chip {
   font-weight: 600;
 }
+
+@media (max-width: 768px) {
+  .day {
+    display: block !important;
+  }
+
+  .day-number {
+    display: block !important;
+    font-size: 10.5px !important;
+    margin: 0 0 3px 0 !important;
+    line-height: 1.1 !important;
+  }
+
+  .event-more--mobile {
+    display: inline-block !important;
+    margin-top: 2px !important;
+    vertical-align: top !important;
+  }
+}

@@ -10,6 +10,37 @@
     if (old) old.remove();
   }
 
+function goToEventOnMap(ev) {
+  if (!ev) return false;
+
+  const mapStage =
+    document.querySelector(".mapStage") ||
+    document.getElementById("map") ||
+    document.getElementById("mapSection");
+
+  if (mapStage) {
+    const top = mapStage.getBoundingClientRect().top + window.scrollY - 12;
+    window.scrollTo({
+      top: Math.max(0, top),
+      behavior: "smooth"
+    });
+  }
+
+  setTimeout(() => {
+    let opened = false;
+
+    if (App.map?.focusEventById && ev.id) {
+      opened = !!App.map.focusEventById(ev.id);
+    }
+
+    if (!opened && state.runtime.map && Number.isFinite(Number(ev.lat)) && Number.isFinite(Number(ev.lng))) {
+      state.runtime.map.setView([Number(ev.lat), Number(ev.lng)], 16);
+    }
+  }, 260);
+
+  return true;
+}
+
   function showCalendarEventPopover(anchorEl, ev) {
   if (!anchorEl || !ev) return;
 
@@ -126,44 +157,16 @@
     });
   }
 
-  const mapBtn = pop.querySelector(".calendarPopoverMapBtn");
-  if (mapBtn) {
-    mapBtn.addEventListener("click", (e) => {
-      e.preventDefault();
-      e.stopPropagation();
+const mapBtn = pop.querySelector(".calendarPopoverMapBtn");
+if (mapBtn) {
+  mapBtn.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
 
-      removeCalendarPopover();
-
-      const mapEl = document.getElementById("map");
-      if (mapEl) mapEl.scrollIntoView({ behavior: "smooth", block: "start" });
-
-      const today = util.todayStrYYYYMMDD();
-      const isToday = String(ev.date || "").slice(0, 10) === today;
-
-      if (isToday && App.map?.focusEventById && ev.id) {
-        const ok = App.map.focusEventById(ev.id);
-        if (ok) return;
-      }
-
-      const placeTitle = util.shortPlaceName(ev.placeName) || "Lugar sin nombre";
-      const eventTitle = ev.title || "Evento";
-
-      if (App.map?.focusPlaceByCoords && Number.isFinite(ev.lat) && Number.isFinite(ev.lng)) {
-        App.map.focusPlaceByCoords(
-          Number(ev.lat),
-          Number(ev.lng),
-          placeTitle,
-          eventTitle,
-          16
-        );
-        return;
-      }
-
-      if (state.runtime.map && Number.isFinite(ev.lat) && Number.isFinite(ev.lng)) {
-        state.runtime.map.setView([ev.lat, ev.lng], 16);
-      }
-    });
-  }
+    removeCalendarPopover();
+    goToEventOnMap(ev);
+  });
+}
 
   const shareBtn = pop.querySelector(".calendarPopoverShareBtn");
   if (shareBtn) {
@@ -399,51 +402,18 @@ function showCalendarDayPopover(anchorEl, dateStr, events, opts = {}) {
   }
 
   pop.querySelectorAll(".calendarDayPopover__item[data-eid]").forEach((item) => {
-    item.addEventListener("click", (e) => {
-      const actionBtn = e.target.closest("button, a");
-      if (actionBtn) return;
+  item.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
 
-      e.preventDefault();
-      e.stopPropagation();
+    const eid = decodeURIComponent(item.dataset.eid || "");
+    const ev = safeEvents.find((x) => String(x.id || "") === String(eid));
+    if (!ev) return;
 
-      const eventId = decodeURIComponent(item.dataset.eid || "");
-      if (!eventId) return;
-
-      const ev = App.events?.findEventById?.(eventId) || null;
-      if (!ev) return;
-
-      removeCalendarPopover();
-
-      const today = util.todayStrYYYYMMDD();
-      const isToday = String(ev.date || "").slice(0, 10) === today;
-
-      if (isToday && App.map?.focusEventById) {
-        const ok = App.map.focusEventById(eventId);
-        if (ok) return;
-      }
-
-      const placeTitle = util.shortPlaceName(ev.placeName) || "Lugar sin nombre";
-      const eventTitle = ev.title || "Evento";
-
-      if (App.map?.focusPlaceByCoords && Number.isFinite(ev.lat) && Number.isFinite(ev.lng)) {
-        App.map.focusPlaceByCoords(
-          Number(ev.lat),
-          Number(ev.lng),
-          placeTitle,
-          eventTitle,
-          16
-        );
-        return;
-      }
-
-      const mapEl = document.getElementById("map");
-      if (mapEl) mapEl.scrollIntoView({ behavior: "smooth", block: "start" });
-
-      if (state.runtime.map && Number.isFinite(ev.lat) && Number.isFinite(ev.lng)) {
-        state.runtime.map.setView([ev.lat, ev.lng], 16);
-      }
-    });
+    removeCalendarPopover();
+    goToEventOnMap(ev);
   });
+});
 
   pop.querySelectorAll(".calendarDayPopoverEditBtn[data-edit-eid]").forEach((btn) => {
     btn.addEventListener("click", (e) => {
