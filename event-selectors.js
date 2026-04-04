@@ -148,6 +148,64 @@ function getFeaturedRank(ev) {
     return util.filterByActiveCategory(util.getEventsOnDate(dateStr, list));
   }
 
+  function isMapPersistentCategory(category) {
+  const cat = util.normalizeCategory(category);
+  return cat === "visual_arts" || cat === "games";
+}
+
+function isMapTimedCategory(category) {
+  const cat = util.normalizeCategory(category);
+  return cat === "music" || cat === "dance" || cat === "theatre" || cat === "cinema";
+}
+
+function isEventVisibleOnMap(ev, now = new Date()) {
+  if (!ev?.date) return false;
+
+  const today = util.todayStrYYYYMMDD();
+  const evDate = String(ev.date || "").slice(0, 10);
+
+  if (evDate > today) return false;
+
+  const isTodayLike =
+    evDate === today ||
+    (typeof util.isLateNightCarryoverEvent === "function" && util.isLateNightCarryoverEvent(ev));
+
+  if (!isTodayLike) return false;
+
+  const cat = util.normalizeCategory(ev.category);
+
+  if (cat === "games") {
+    return true;
+  }
+
+  const startTime = String(ev.startTime || "").trim();
+  if (!startTime) return true;
+
+  const start = util.makeLocalDateTime(ev.date, startTime);
+  if (!(start instanceof Date) || Number.isNaN(start.getTime())) return true;
+
+  const diffHours = (now.getTime() - start.getTime()) / 3600000;
+
+  if (cat === "visual_arts") {
+    return diffHours <= 8;
+  }
+
+  if (cat === "music") {
+    return diffHours <= 3;
+  }
+
+  if (cat === "theatre" || cat === "cinema" || cat === "dance") {
+    return diffHours <= 1;
+  }
+
+  return true;
+}
+
+function getMapVisibleEvents(list = state.logic.events) {
+  const base = util.filterByActiveCategory(Array.isArray(list) ? list : []);
+  return base.filter((ev) => isEventVisibleOnMap(ev));
+}
+
   function getGroupedTodayEvents(list = state.logic.events) {
     return getGroupedEvents(getVisibleTodayEvents(list));
   }
@@ -200,6 +258,11 @@ function getFeaturedRank(ev) {
     getGroupedTodayEvents,
     getGroupedFutureEvents,
     getGroupedNearbyEvents,
+
+    isMapPersistentCategory,
+isMapTimedCategory,
+isEventVisibleOnMap,
+getMapVisibleEvents,
 
     getTodayNearbyEvents,
     getFeaturedNearbyEvents,

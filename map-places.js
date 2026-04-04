@@ -3,7 +3,7 @@
   "use strict";
 
   const App = window.App;
-  const { util, state, events } = App;
+const { util, state, events, selectors } = App;
 
   /* =========================
      INPUTS USER
@@ -217,18 +217,10 @@ function rebuildLocationMarkers(list = state.logic.events) {
   clearEventMarkers();
   state.runtime.locationMarkers = {};
 
- for (const ev of list || []) {
-  const isVisibleToday =
-    (ev.date || "").slice(0, 10) === util.todayStrYYYYMMDD() ||
-    (typeof util.isLateNightCarryoverEvent === "function" && util.isLateNightCarryoverEvent(ev));
+const visibleMapEvents = selectors?.getMapVisibleEvents?.(list || []) || [];
 
-  if (!isVisibleToday) continue;
-
-    const active = state.logic.activeCategory;
-    if (active && active !== "all" && ev.category !== active) continue;
-
-    if (!util.isValidCoord(ev.lat) || !util.isValidCoord(ev.lng)) continue;
-
+for (const ev of visibleMapEvents) {
+  if (!util.isValidCoord(ev.lat) || !util.isValidCoord(ev.lng)) continue;
     const key = util.smartLocationKey(ev, list);
 
     if (!state.runtime.locationMarkers[key]) {
@@ -764,9 +756,22 @@ function handleMapSingleClick(e) {
 
 state.runtime.map.doubleClickZoom.enable();
 
-  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-    attribution: "© OpenStreetMap contributors"
-  }).addTo(state.runtime.map);
+  const tiles = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+  attribution: "© OpenStreetMap contributors"
+}).addTo(state.runtime.map);
+
+const mapStageEl = document.querySelector(".mapStage");
+
+function markMapReady() {
+  if (mapStageEl) {
+    mapStageEl.classList.add("is-ready");
+  }
+}
+
+tiles.on("load", markMapReady);
+state.runtime.map.whenReady(() => {
+  setTimeout(markMapReady, 80);
+});
 
   state.runtime.markerCluster = L.markerClusterGroup({
     showCoverageOnHover: false,

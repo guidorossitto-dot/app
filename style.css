@@ -2775,3 +2775,20 @@ header button {
     text-overflow: ellipsis;
   }
 }
+
+.mapStage .mapOverlay,
+.mapStage .mapLocateBtn {
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 180ms ease;
+}
+
+.mapStage.is-ready .mapOverlay,
+.mapStage.is-ready .mapLocateBtn {
+  opacity: 1;
+  visibility: visible;
+}
+
+#map {
+  animation: none;
+}
