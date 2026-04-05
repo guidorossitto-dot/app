@@ -546,10 +546,9 @@ function updateNearbyCount(list = state.logic.nearbyEvents) {
   }
 
   const cat = state.logic.activeCategory || "all";
-  
   const catChip = cat === "all" ? "" : `<span class="miniChip">${util.categoryLabel(cat)}</span>`;
 
-featuredList = [...featuredList];
+  featuredList = [...featuredList];
 
   if (!featuredList.length) {
     const visibleToday = selectors.getVisibleTodayEvents(state.logic.events || []);
@@ -566,13 +565,13 @@ featuredList = [...featuredList];
     const featuredStatus = util.getEventStatus(featured);
     const featuredPlace = util.shortPlaceName(featured.placeName) || "Lugar sin nombre";
     const featuredKey = util.smartLocationKey(featured, state.logic.events || []);
+    const featuredEmoji = util.categoryEmoji(featured.category) || "📍";
 
     return `
       <div class="featuredBox">
         <div class="featuredTop">
           <div class="featuredKicker">
-            <span class="featuredFire">🔥</span>
-            <span>DESTACADO ${catChip ? "· " + catChip : ""}</span>
+            <span>DESTACADO</span>
           </div>
 
           <button class="linkBtn mapFocusBtn"
@@ -585,9 +584,13 @@ featuredList = [...featuredList];
         </div>
 
         <div class="featuredTitle">
+          <span style="margin-right:6px">${featuredEmoji}</span>
           ${util.formatTimeStart(featured) ? `<span style="opacity:.75;margin-right:6px">${util.formatTimeStart(featured)}</span>` : ""}
           ${featured.title}
-          ${featuredStatus ? `<span style="opacity:.6;font-size:.85em;margin-left:6px">${featuredStatus}</span>` : ""}
+        </div>
+
+        <div class="featuredMeta">
+          ${featuredStatus ? `<span style="opacity:.75">🔥 ${featuredStatus}</span>` : ""}
         </div>
 
         <div class="featuredMeta">
@@ -623,7 +626,6 @@ featuredList = [...featuredList];
   if (topEl) {
     topEl.innerHTML = `
       <div class="featuredFloating">
-
         <button id="featuredToggleBtn" class="featuredToggleBtn" aria-expanded="false">
           🔥 Comienza pronto
         </button>
@@ -631,7 +633,6 @@ featuredList = [...featuredList];
         <div id="featuredDropdown" class="featuredDropdown" hidden>
           ${featuredHTML}
         </div>
-
       </div>
     `;
   }
