@@ -403,6 +403,9 @@ function showCalendarDayPopover(anchorEl, dateStr, events, opts = {}) {
 
   pop.querySelectorAll(".calendarDayPopover__item[data-eid]").forEach((item) => {
   item.addEventListener("click", (e) => {
+    const interactive = e.target.closest("a, button");
+    if (interactive) return;
+
     e.preventDefault();
     e.stopPropagation();
 
@@ -460,6 +463,12 @@ function showCalendarDayPopover(anchorEl, dateStr, events, opts = {}) {
       btn.textContent = isFav ? "❤️ Guardado" : "🤍 Guardar";
     });
   });
+
+  pop.querySelectorAll('.calendarDayPopover__item a.linkBtn').forEach((link) => {
+  link.addEventListener("click", (e) => {
+    e.stopPropagation();
+  });
+});
 
   requestAnimationFrame(() => {
     const onDocClick = (e) => {
