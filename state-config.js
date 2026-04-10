@@ -256,7 +256,18 @@ function formatTimeStart(ev) {
   const eventDT = makeLocalDateTime(ev.date, st);
   const diffMs = eventDT - now;
 
-  if (diffMs <= 0) return "En curso";
+  if (diffMs <= 0) {
+    const minutesAgo = Math.abs(Math.floor(diffMs / 60000));
+
+    if (minutesAgo < 60) return `Comenzó hace ${minutesAgo} min`;
+
+    const hoursAgo = Math.floor(minutesAgo / 60);
+    const remAgo = minutesAgo % 60;
+
+    return remAgo > 0
+      ? `Comenzó hace ${hoursAgo} h ${remAgo} min`
+      : `Comenzó hace ${hoursAgo} h`;
+  }
 
   const minutes = Math.floor(diffMs / 60000);
 
@@ -275,28 +286,28 @@ function formatTimeStart(ev) {
 }
 
   function sortEventsByStatusThenTime(a, b) {
-    const sa = getEventStatus(a);
-    const sb = getEventStatus(b);
+  const sa = getEventStatus(a);
+  const sb = getEventStatus(b);
 
-    const rank = (s) => {
-      if (!s) return 3;
-      if (s.startsWith("En curso")) return 0;
-      if (s.startsWith("Comienza en")) return 1;
-      if (s === "Hoy") return 2;
-      return 3;
-    };
+  const rank = (s) => {
+    if (!s) return 3;
+    if (s.startsWith("Comenzó hace")) return 0;
+    if (s.startsWith("Comienza en")) return 1;
+    if (s === "Hoy") return 2;
+    return 3;
+  };
 
-    const ra = rank(sa);
-    const rb = rank(sb);
-    if (ra !== rb) return ra - rb;
+  const ra = rank(sa);
+  const rb = rank(sb);
+  if (ra !== rb) return ra - rb;
 
-    const ta = a?.startTime || "99:99";
-    const tb = b?.startTime || "99:99";
-    const c = ta.localeCompare(tb);
-    if (c !== 0) return c;
+  const ta = a?.startTime || "99:99";
+  const tb = b?.startTime || "99:99";
+  const c = ta.localeCompare(tb);
+  if (c !== 0) return c;
 
-    return (a?.title || "").localeCompare(b?.title || "");
-  }
+  return (a?.title || "").localeCompare(b?.title || "");
+}
 
   /* =========================
      GEO / DISTANCE

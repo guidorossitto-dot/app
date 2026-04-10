@@ -85,7 +85,8 @@
       return;
     }
 
-    const groups = groupByPlace(list);
+    const sortedInput = Array.isArray(list) ? [...list] : [];
+const groups = groupByPlace(sortedInput);
 
     const renderEv = (ev) => {
       const time = util.formatTimeStart(ev);
@@ -186,7 +187,9 @@ const icon = util.categoryEmoji(ev.category) || "📍";
     for (const g of groups) {
       const placeTitle = g.placeTitle;
       const count = g.count;
-      const evs = g.events;
+      const evs = selectors.sortTodayEventsByUrgencyAndDistance
+  ? selectors.sortTodayEventsByUrgencyAndDistance(g.events, state.logic.nearbyCenter)
+  : g.events;
       const badge = g.badge;
 
       const li = document.createElement("li");
@@ -325,74 +328,38 @@ function renderAgendaEvents() {
 
   ul.innerHTML = "";
 
-  const allEvents = state.logic.events || [];
-  const today = util.todayStrYYYYMMDD();
-  const tomorrow = util.addDaysYYYYMMDD(today, 1);
-  const maxDate = util.addDaysYYYYMMDD(today, 3);
+  const todayEvents = selectors.getSortedVisibleTodayEvents
+    ? selectors.getSortedVisibleTodayEvents(state.logic.events || [], state.logic.nearbyCenter)
+    : selectors.getVisibleTodayEvents(state.logic.events || []);
 
-  const todayAll = selectors.getVisibleTodayEvents(allEvents);
-  const futureAll = selectors.getVisibleFutureEvents(allEvents);
-
-  function isUrgentToday(ev) {
-    if (!ev || (ev.date || "").slice(0, 10) !== today) return false;
-    if (typeof util.minutesToStart !== "function") return false;
-
-    const mins = util.minutesToStart(ev);
-    if (typeof mins !== "number") return false;
-
-    return mins >= -15 && mins <= 90;
-  }
-
-  function renderSection(title, list, opts = {}) {
-  if (!list || list.length === 0) return null;
-
-  const container = document.createElement("div");
-  container.className = opts.urgent ? "agendaSection agendaSection--urgent" : "agendaSection";
-
-  const header = document.createElement("div");
-  header.className = opts.urgent
-    ? "agendaSectionTitle agendaSectionTitle--urgent"
-    : "agendaSectionTitle";
-  header.textContent = title;
-
-  const innerUl = document.createElement("ul");
-  innerUl.className = "agendaSectionList";
-  renderGroupedList(innerUl, list);
-
-  container.appendChild(header);
-  container.appendChild(innerUl);
-
-  return container;
-}
-
-  const urgentToday = todayAll.filter(isUrgentToday);
-  const laterToday = todayAll.filter((ev) => !isUrgentToday(ev));
-
-  const tomorrowEvents = futureAll.filter((ev) => {
-    const d = (ev.date || "").slice(0, 10);
-    return d === tomorrow;
-  });
-
-  const upcomingEvents = futureAll.filter((ev) => {
-    const d = (ev.date || "").slice(0, 10);
-    return d > tomorrow && d <= maxDate;
-  });
-
-  const sections = [
-  renderSection("🔥 Ahora o pronto", urgentToday, { urgent: true }),
-  renderSection("🕒 Más tarde", laterToday),
-  renderSection("Mañana", tomorrowEvents),
-  renderSection("Próximamente", upcomingEvents)
-  ].filter(Boolean);
-
-  if (!sections.length) {
-    ul.innerHTML = "<li>No hay eventos hoy ni próximos</li>";
+  if (!todayEvents.length) {
+    ul.innerHTML = "<li>No hay eventos hoy. Mirá la agenda para próximos días.</li>";
     return;
   }
 
-  sections.forEach((section) => {
-    ul.appendChild(section);
+  const enriched = todayEvents.map((ev) => {
+    if (
+      state.logic.nearbyCenter &&
+      util.isValidCoord(state.logic.nearbyCenter.lat) &&
+      util.isValidCoord(state.logic.nearbyCenter.lng) &&
+      util.isValidCoord(ev?.lat) &&
+      util.isValidCoord(ev?.lng)
+    ) {
+      return {
+        ...ev,
+        distanceKm: util.distanceKm(
+          state.logic.nearbyCenter.lat,
+          state.logic.nearbyCenter.lng,
+          Number(ev.lat),
+          Number(ev.lng)
+        )
+      };
+    }
+
+    return ev;
   });
+
+  renderGroupedList(ul, enriched);
 }
 
   function renderNearbyEvents(list) {
@@ -788,13 +755,10 @@ function updateNearbyCount(list = state.logic.nearbyEvents) {
   setState(false);
 }
 
-  function renderList() {
-    const view = getListRenderState();
-
-    renderAgendaEvents();
-    renderNearbyEvents(state.logic.nearbyEvents);
-    updateNearbyCount(state.logic.nearbyEvents);
-  }
+ function renderList() {
+  renderAgendaEvents();
+  updateNearbyCount(state.logic.nearbyEvents);
+}
 
   /* =========================
      CALENDARIO

@@ -43,7 +43,7 @@ function getPlaceBadge(events) {
     .filter((x) => x.min <= 0 && x.min >= -recentMin)
     .sort((a, b) => Math.abs(a.min) - Math.abs(b.min))[0];
 
-  if (inProg) return "🔴 En curso";
+  if (inProg) return `🔴 Comenzó hace ${Math.abs(inProg.min)} min`;
 
   return "";
 }
@@ -238,6 +238,55 @@ function getMapVisibleEvents(list = state.logic.events) {
     return getFeaturedNearbyEvents(list)[0] || null;
   }
 
+  function getTodayUrgencyRank(ev) {
+  const mins = safeMinutesToStart(ev);
+
+  if (mins === null) return 2;
+
+  if (mins < 0) {
+    // empezó hace poco = más prioritario
+    return 0;
+  }
+
+  if (mins <= 60) {
+    return 1;
+  }
+
+  return 2;
+}
+
+function sortTodayEventsByUrgencyAndDistance(list = [], nearbyCenter = state.logic.nearbyCenter) {
+  const safe = Array.isArray(list) ? [...list] : [];
+
+  return safe.sort((a, b) => {
+    const rankA = getTodayUrgencyRank(a);
+    const rankB = getTodayUrgencyRank(b);
+    if (rankA !== rankB) return rankA - rankB;
+
+    const distA = nearbyCenter && util.isValidCoord(a?.lat) && util.isValidCoord(a?.lng)
+      ? util.distanceKm(nearbyCenter.lat, nearbyCenter.lng, Number(a.lat), Number(a.lng))
+      : Infinity;
+
+    const distB = nearbyCenter && util.isValidCoord(b?.lat) && util.isValidCoord(b?.lng)
+      ? util.distanceKm(nearbyCenter.lat, nearbyCenter.lng, Number(b.lat), Number(b.lng))
+      : Infinity;
+
+    if (distA !== distB) return distA - distB;
+
+    const timeA = (a?.startTime || "99:99").slice(0, 5);
+    const timeB = (b?.startTime || "99:99").slice(0, 5);
+    const byTime = timeA.localeCompare(timeB);
+    if (byTime !== 0) return byTime;
+
+    return (a?.title || "").localeCompare(b?.title || "");
+  });
+}
+
+function getSortedVisibleTodayEvents(list = state.logic.events, nearbyCenter = state.logic.nearbyCenter) {
+  const today = getVisibleTodayEvents(list);
+  return sortTodayEventsByUrgencyAndDistance(today, nearbyCenter);
+}
+
   /* =========================
      EXPORT
   ========================= */
@@ -266,6 +315,9 @@ getMapVisibleEvents,
 
     getTodayNearbyEvents,
     getFeaturedNearbyEvents,
-    getFeaturedNearbyEvent
+    getFeaturedNearbyEvent,
+     getTodayUrgencyRank,
+  sortTodayEventsByUrgencyAndDistance,
+  getSortedVisibleTodayEvents
   };
 })();
