@@ -864,7 +864,6 @@ button:active {
 .event--favorite {
   border: 1px solid rgba(220, 20, 60, 0.22);
   background: #fff4f6;
-  font-weight: 700;
 }
 
 .day--hasFavorite {

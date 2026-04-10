@@ -178,23 +178,21 @@ if (mapBtn) {
     });
   }
 
-  const favoriteBtn = pop.querySelector(".favoriteBtn");
-  if (favoriteBtn) {
-    favoriteBtn.addEventListener("click", (e) => {
-      e.preventDefault();
-      e.stopPropagation();
+ const favoriteBtn = pop.querySelector(".favoriteBtn");
+if (favoriteBtn) {
+  favoriteBtn.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
 
-      const eventId = decodeURIComponent((favoriteBtn.dataset.eid || "").trim());
-      if (!eventId) return;
+    const eventId = decodeURIComponent((favoriteBtn.dataset.eid || "").trim());
+    if (!eventId) return;
 
-      const result = App.actions?.toggleFavorite?.(eventId);
-      if (!result?.ok) return;
+    const result = App.actions?.toggleFavorite?.(eventId);
+    if (!result?.ok) return;
 
-      const isFav = !!result.isFavorite;
-      favoriteBtn.setAttribute("aria-pressed", isFav ? "true" : "false");
-      favoriteBtn.textContent = isFav ? "❤️ Guardado" : "🤍 Guardar";
-    });
-  }
+    App.ui?.syncFavoriteUI?.(eventId, !!result.isFavorite);
+  });
+}
 
   const editBtn = pop.querySelector(".calendarPopoverEditBtn");
   if (editBtn) {
@@ -447,24 +445,22 @@ function showCalendarDayPopover(anchorEl, dateStr, events, opts = {}) {
     });
   });
 
-  pop.querySelectorAll(".calendarDayPopoverFavoriteBtn[data-fav-eid]").forEach((btn) => {
-    btn.addEventListener("click", (e) => {
-      e.preventDefault();
-      e.stopPropagation();
+ pop.querySelectorAll(".calendarDayPopoverFavoriteBtn[data-fav-eid]").forEach((btn) => {
+  btn.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
 
-      const eventId = decodeURIComponent(btn.dataset.favEid || "");
-      if (!eventId) return;
+    const eventId = decodeURIComponent(btn.dataset.favEid || "");
+    if (!eventId) return;
 
-      const result = App.actions?.toggleFavorite?.(eventId);
-      if (!result?.ok) return;
+    const result = App.actions?.toggleFavorite?.(eventId);
+    if (!result?.ok) return;
 
-      const isFav = !!result.isFavorite;
-      btn.setAttribute("aria-pressed", isFav ? "true" : "false");
-      btn.textContent = isFav ? "❤️ Guardado" : "🤍 Guardar";
-    });
+    App.ui?.syncFavoriteUI?.(eventId, !!result.isFavorite);
   });
+});
 
-  pop.querySelectorAll('.calendarDayPopover__item a.linkBtn').forEach((link) => {
+pop.querySelectorAll('.calendarDayPopover__item a.linkBtn').forEach((link) => {
   link.addEventListener("click", (e) => {
     e.stopPropagation();
   });

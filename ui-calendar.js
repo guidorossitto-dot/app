@@ -913,11 +913,11 @@ function bindCategoryUI() {
       clearListFocus?.();
       paintCategoryUI();
 
-      commit?.({
+      App.commit?.({
         persist: false,
         purgePast: false,
-        rebuildMarkers: true,
-        recomputeNearby: true
+        rebuildMarkers: false,
+        recomputeNearby: false
       });
     });
   });
@@ -982,7 +982,6 @@ document.addEventListener("click", (e) => {
   const btn = e.target.closest(".favoriteBtn");
   if (!btn) return;
 
-  // si el botón está dentro de un popup o popover, esos ya se manejan localmente
   if (
     btn.closest("#calendarEventPopover") ||
     btn.closest(".leaflet-popup-content")
@@ -999,21 +998,8 @@ document.addEventListener("click", (e) => {
   const result = App.actions?.toggleFavorite?.(eventId);
   if (!result?.ok) return;
 
-  const isFav = !!result.isFavorite;
-  btn.setAttribute("aria-pressed", isFav ? "true" : "false");
-  btn.textContent = isFav ? "❤️ Guardado" : "🤍 Guardar";
+  App.ui?.syncFavoriteUI?.(eventId, !!result.isFavorite);
 });
-
-
-    document.addEventListener("click", async (e) => {
-      const btn = e.target.closest(".deleteEventBtn, .popupDeleteBtn");
-      if (!btn) return;
-
-      e.preventDefault();
-      e.stopPropagation();
-
-      await App.ui?.deleteEventFromButton?.(btn);
-    });
   }
 
     function bindAdminSaveUI() {
@@ -1509,6 +1495,49 @@ window.addEventListener("hashchange", () => {
     await App.ui?.shareEventFromButton?.(btn);
   });
 
+ function syncFavoriteUI(eventId, isFavorite) {
+  const safeId = String(eventId || "").trim();
+  if (!safeId) return;
+
+  // 1) Botones visibles de favorito
+  document
+    .querySelectorAll(".favoriteBtn, .calendarDayPopoverFavoriteBtn")
+    .forEach((btn) => {
+      const rawId = btn.dataset.eid || btn.dataset.favEid || "";
+      const btnId = decodeURIComponent(String(rawId).trim());
+      if (btnId !== safeId) return;
+
+      btn.setAttribute("aria-pressed", isFavorite ? "true" : "false");
+      btn.textContent = isFavorite ? "❤️ Guardado" : "🤍 Guardar";
+    });
+
+  // 2) Mini eventos visibles en el calendario (desktop)
+  document.querySelectorAll(".event[data-eid]").forEach((el) => {
+    const elId = String(el.dataset.eid || "").trim();
+    if (elId !== safeId) return;
+
+    el.classList.toggle("event--favorite", !!isFavorite);
+
+    // Guardamos el texto base una sola vez, sin corazón inicial
+    if (!el.dataset.baseTitle) {
+      el.dataset.baseTitle = (el.textContent || "").replace(/^❤️\s*/, "").trim();
+    }
+
+    el.textContent = isFavorite
+      ? `❤️ ${el.dataset.baseTitle}`
+      : el.dataset.baseTitle;
+  });
+
+  // 3) Estado visual de cada día del calendario
+  document.querySelectorAll(".day").forEach((dayEl) => {
+    const hasFav = !!dayEl.querySelector(".event.event--favorite");
+    dayEl.classList.toggle("day--hasFavorite", hasFav);
+  });
+
+  // 4) Chip / contador de favoritos
+  App.ui?.paintCategoryUI?.();
+}
+
   /* =========================
      EXPORT UI MODULE
   ========================= */
@@ -1539,6 +1568,7 @@ closeSidebarMobileIfOpen,
 applyCandidateVenueToAdmin, 
     renderSkippedCandidatesList,
     applyCandidateVenueToAdmin,
+    syncFavoriteUI,
     processQueuedDeepLink
   };
 })();
