@@ -133,12 +133,53 @@ function getFeaturedRank(ev) {
     });
   }
 
+  function isStillRelevantForTodayAccordion(ev) {
+  if (!ev || !ev.date) return false;
+
+  const today = util.todayStrYYYYMMDD();
+  const evDate = String(ev.date || "").slice(0, 10);
+
+  if (evDate !== today) return false;
+
+  const mins = safeMinutesToStart(ev);
+
+  // si no hay hora, lo dejamos visible
+  if (mins === null) return true;
+
+  // si todavía no empezó, sigue visible
+  if (mins >= 0) return true;
+
+  const startedAgo = Math.abs(mins);
+  const cat = util.normalizeCategory
+    ? util.normalizeCategory(ev.category)
+    : String(ev.category || "").trim();
+
+  const maxStartedAgoByCategory = {
+    music: 120,
+    theatre: 120,
+    cinema: 120,
+    dance: 120,
+    literature: 120,
+    gastronomy: 120,
+    games: 120,
+    visual_arts: 240
+  };
+
+  const maxAgo = maxStartedAgoByCategory[cat];
+
+  // si una categoría no está definida, por defecto la dejamos 120 min
+  return startedAgo <= (Number.isFinite(maxAgo) ? maxAgo : 120);
+}
+
   /* =========================
      FILTERED VIEWS
   ========================= */
-  function getVisibleTodayEvents(list = state.logic.events) {
-    return util.filterByActiveCategory(util.getTodayEvents(list));
-  }
+function getVisibleTodayEvents(list = state.logic.events) {
+  const todayEvents = util.getTodayEvents(list);
+  const filtered = util.filterByActiveCategory(todayEvents);
+
+  return filtered.filter(isStillRelevantForTodayAccordion);
+}
 
   function getVisibleFutureEvents(list = state.logic.events) {
     return util.filterByActiveCategory(util.getFutureEvents(list));
@@ -318,6 +359,7 @@ getMapVisibleEvents,
     getFeaturedNearbyEvent,
      getTodayUrgencyRank,
   sortTodayEventsByUrgencyAndDistance,
+  isStillRelevantForTodayAccordion,
   getSortedVisibleTodayEvents
   };
 })();
