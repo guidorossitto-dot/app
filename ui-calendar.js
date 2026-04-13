@@ -1120,7 +1120,42 @@ function bindAdminBulkActionsUI() {
       alert("No se pudo cargar el candidate en el formulario.");
     }
   });
+
+  document.addEventListener("click", async (e) => {
+  const btn = e.target.closest(".deleteSkippedCandidateBtn");
+  if (!btn) return;
+
+  if (!util.canManageUI()) {
+    alert("No tenés permisos para borrar candidates.");
+    return;
+  }
+
+  const candidateId = decodeURIComponent(btn.dataset.candidateId || "");
+  const candidateTitle = decodeURIComponent(btn.dataset.candidateTitle || "");
+
+  if (!candidateId) return;
+
+  const confirmed = confirm(
+    candidateTitle
+      ? `¿Seguro que querés borrar el candidate "${candidateTitle}"?`
+      : "¿Seguro que querés borrar este candidate?"
+  );
+
+  if (!confirmed) return;
+
+  const result = await App.actions?.deleteSkippedCandidateFlow?.(candidateId);
+
+  if (!result?.ok) {
+    alert("No se pudo borrar el candidate.");
+    return;
+  }
+
+  if (App.ui?.renderSkippedCandidatesList) {
+    await App.ui.renderSkippedCandidatesList("alternativa");
+  }
+});
 }
+
 
   function bindAdminCancelUI() {
     const cancelBtn = document.getElementById("cancelEditBtn");
@@ -1199,15 +1234,24 @@ function bindAdminBulkActionsUI() {
               <div class="eventCardPlace">${candidate.venueName || "Venue sin nombre"}</div>
             </div>
 
-            <div class="eventCardActions">
-              <button
-                type="button"
-                class="linkBtn useCandidateVenueBtn"
-                data-candidate='${encoded}'
-              >
-                Usar venue
-              </button>
-            </div>
+           <div class="eventCardActions">
+  <button
+    type="button"
+    class="linkBtn useCandidateVenueBtn"
+    data-candidate='${encoded}'
+  >
+    Usar venue
+  </button>
+
+  <button
+    type="button"
+    class="linkBtn deleteSkippedCandidateBtn"
+    data-candidate-id="${encodeURIComponent(candidate.id || "")}"
+    data-candidate-title="${encodeURIComponent(candidate.title || "")}"
+  >
+    Borrar
+  </button>
+</div>
           </div>
         </div>
       </li>

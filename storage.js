@@ -689,6 +689,32 @@ async function loadPendingEventCandidatesBySource(sourceName = "") {
     return !!parsed;
   }
 
+  async function deleteEventCandidate(candidateId) {
+  const db = App.supabase;
+  if (!db) {
+    const error = new Error("App.supabase no está inicializado");
+    console.error(error.message);
+    return { ok: false, error };
+  }
+
+  const id = String(candidateId || "").trim();
+  if (!id) {
+    return { ok: false, error: "INVALID_CANDIDATE_ID" };
+  }
+
+  const { error } = await db
+    .from("event_candidates")
+    .delete()
+    .eq("id", id);
+
+  if (error) {
+    console.error("Error borrando event_candidate:", error);
+    return { ok: false, error };
+  }
+
+  return { ok: true, candidateId: id };
+}
+
   App.storage = {
   loadEvents,
   readEvents,
@@ -718,7 +744,7 @@ async function loadPendingEventCandidatesBySource(sourceName = "") {
   insertVenue,
   updateVenueRemote,
   deleteVenueRemote,
-
+deleteEventCandidate,
 
   mapRowToEvent,
   mapEventToRow

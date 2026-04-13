@@ -540,6 +540,29 @@ async function approvePendingCandidatesForSources(sourceNames = []) {
   };
 }
 
+async function deleteCandidateById(candidateId = "") {
+  const id = String(candidateId || "").trim();
+  if (!id) {
+    return { ok: false, error: "INVALID_CANDIDATE_ID" };
+  }
+
+  const result = await App.storage?.deleteEventCandidate?.(id);
+
+  if (!result?.ok) {
+    return { ok: false, error: result?.error || "DELETE_CANDIDATE_FAILED" };
+  }
+
+  const current = Array.isArray(state.logic.candidates) ? state.logic.candidates : [];
+  const next = current.filter((c) => String(c?.id || "").trim() !== id);
+
+  hydrateCandidatesToState(next);
+
+  return {
+    ok: true,
+    candidateId: id
+  };
+}
+
  async function approveCandidates(candidateIds = []) {
   const ids = Array.isArray(candidateIds)
     ? candidateIds.map((id) => String(id || "").trim()).filter(Boolean)
@@ -582,6 +605,7 @@ async function approvePendingCandidatesForSources(sourceNames = []) {
   approveCandidates,
   persistEnrichedCandidates,
   findBestVenueMatch,
+  deleteCandidateById,
   enrichCandidateWithVenue
 };
 })();

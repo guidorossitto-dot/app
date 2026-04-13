@@ -855,6 +855,28 @@ async function approveAllPendingCandidatesFlow() {
   return result;
 }
 
+async function deleteSkippedCandidateFlow(candidateId = "") {
+  if (!App.util?.canManageUI?.()) {
+    return { ok: false, error: "FORBIDDEN" };
+  }
+
+  const id = String(candidateId || "").trim();
+  if (!id) {
+    return { ok: false, error: "MISSING_CANDIDATE_ID" };
+  }
+
+  const result = await App.candidates?.deleteCandidateById?.(id);
+
+  if (!result?.ok) {
+    return { ok: false, error: result?.error || "DELETE_SKIPPED_CANDIDATE_FAILED" };
+  }
+
+  return {
+    ok: true,
+    candidateId: id
+  };
+}
+
   App.actions = {
     setLogin,
     login,
@@ -894,6 +916,7 @@ async function approveAllPendingCandidatesFlow() {
     focusPlaceOnMapFlow,
     approveEventCandidatesBulkFlow,
     approvePendingCandidatesBySourceFlow,
+    deleteSkippedCandidateFlow,
     approveAllPendingCandidatesFlow,
         queueCalendarDateFromHashFlow,
     processQueuedCalendarDateFlow,
