@@ -5,23 +5,38 @@
   const App = window.App;
   const { state } = App;
 
-  async function hydrateInitialState() {
-
+async function hydrateInitialState() {
   const venuesRemote = await App.venues.loadVenuesRemote();
 
   if (!venuesRemote?.ok) {
     await App.storage?.loadVenues?.();
   }
 
-const favs = JSON.parse(localStorage.getItem("recomentos.favorites") || "[]");
-App.events?.setFavorites?.(favs);
+  const favs = JSON.parse(localStorage.getItem("recomentos.favorites") || "[]");
+  App.events?.setFavorites?.(favs);
 
-App.store.dispatch({
-  type: "SET_FAVORITES",
-  favorites: favs
-});
+  App.store.dispatch({
+    type: "SET_FAVORITES",
+    favorites: favs
+  });
 
-  const loadedEvents = await App.storage.loadEvents();
+  let loadedEvents = { ok: false, events: [] };
+
+  for (let attempt = 1; attempt <= 6; attempt += 1) {
+    loadedEvents = await App.storage.loadEvents();
+
+    const count = Array.isArray(loadedEvents?.events)
+      ? loadedEvents.events.length
+      : 0;
+
+
+
+    if (loadedEvents?.ok && count > 0) {
+      break;
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, 250));
+  }
 
   if (loadedEvents?.ok) {
     App.events?.setAllEvents?.(loadedEvents.events || []);
@@ -38,14 +53,17 @@ App.store.dispatch({
     );
   });
 
+
+
   await App.auth?.syncSessionToState?.();
-  
+
+
   App.events.purgePastEventsInState();
 
-  App.events.setCalendarCursor(new Date());
-}
 
-let deferredInstallPrompt = null;
+  App.events.setCalendarCursor(new Date());
+
+}
 
 function bindInstallPrompt() {
   const installBtn = document.getElementById("installAppBtn");

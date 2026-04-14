@@ -183,18 +183,34 @@ function loadVenues() {
     };
   }
 
+  
   try {
-    const { data, error } = await db
-      .from("events")
-      .select("*")
-      .order("date", { ascending: true })
-      .order("start_time", { ascending: true });
+    const PAGE_SIZE = 1000;
+    let from = 0;
+    let allRows = [];
 
-    if (error) throw error;
+    while (true) {
+      const to = from + PAGE_SIZE - 1;
 
-    const events = Array.isArray(data)
-      ? data.map(mapRowToEvent).filter((ev) => util.isValidEvent(ev))
-      : [];
+      const { data, error } = await db
+        .from("events")
+        .select("*")
+        .order("date", { ascending: true })
+        .order("start_time", { ascending: true })
+        .range(from, to);
+
+      if (error) throw error;
+
+      const rows = Array.isArray(data) ? data : [];
+      allRows = allRows.concat(rows);
+
+      if (rows.length < PAGE_SIZE) break;
+      from += PAGE_SIZE;
+    }
+
+    const events = allRows
+      .map(mapRowToEvent)
+      .filter((ev) => util.isValidEvent(ev));
 
     saveEventsCache(events);
 
@@ -202,7 +218,8 @@ function loadVenues() {
   } catch (error) {
     console.warn("Error cargando eventos remotos. Uso cache offline.", error);
 
-    const cachedEvents = loadEventsCache().map((ev) => util.normalizeEvent(ev))
+    const cachedEvents = loadEventsCache()
+      .map((ev) => util.normalizeEvent(ev))
       .filter((ev) => util.isValidEvent(ev));
 
     return {
