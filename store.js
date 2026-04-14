@@ -73,13 +73,6 @@
 
     let result = null;
 
-if (type === "SET_ALL_EVENTS" || type === "CLEAR_ALL_EVENTS") {
-  console.log("STORE ACTION", type, {
-    count: Array.isArray(action.events) ? action.events.length : null,
-    stack: new Error().stack
-  });
-}
-
     switch (type) {
       /* =========================
          LOGIC
