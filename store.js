@@ -66,10 +66,7 @@
     const type = String(action.type || "").trim();
     if (!type) return { ok: false, error: "MISSING_ACTION_TYPE" };
 
-    if (!ALLOWED_CALLERS.has(type) &&
-    ["ADD_EVENT","REPLACE_EVENT","REMOVE_EVENT","CLEAR_ALL_EVENTS"].includes(type)) {
-  console.warn("⚠️ Acción directa bloqueada:", type);
-}
+  
 
     let result = null;
 
