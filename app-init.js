@@ -65,6 +65,8 @@ async function hydrateInitialState() {
 
 }
 
+let deferredInstallPrompt = null;
+
 function bindInstallPrompt() {
   const installBtn = document.getElementById("installAppBtn");
   if (!installBtn) return;
