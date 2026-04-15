@@ -895,6 +895,40 @@ function paintCategoryUI() {
   }
 }
 
+
+
+function closeMapFiltersPanel() {
+  const btn = document.getElementById("toggleMapFiltersBtn");
+  const panel = document.getElementById("mapFiltersPanel");
+
+  if (panel) panel.hidden = true;
+
+  if (btn) {
+    btn.setAttribute("aria-expanded", "false");
+    btn.textContent = "🎛️ Filtros ▾";
+  }
+}
+
+function forceMapRefresh() {
+  try {
+    App.state?.runtime?.markerCluster?.refreshClusters?.();
+  } catch {}
+
+  try {
+    App.state?.runtime?.map?.invalidateSize?.();
+  } catch {}
+
+  requestAnimationFrame(() => {
+    try {
+      App.state?.runtime?.markerCluster?.refreshClusters?.();
+    } catch {}
+
+    try {
+      App.state?.runtime?.map?.panBy?.([0, 0], { animate: false });
+    } catch {}
+  });
+}
+
 function bindCategoryUI() {
   const row = document.getElementById("categoryChips");
   if (!row || row.dataset.bound === "1") {
@@ -916,9 +950,12 @@ function bindCategoryUI() {
       App.commit?.({
         persist: false,
         purgePast: false,
-        rebuildMarkers: false,
-        recomputeNearby: false
+        rebuildMarkers: true,
+        recomputeNearby: true
       });
+
+      closeMapFiltersPanel();
+      forceMapRefresh();
     });
   });
 
@@ -934,6 +971,9 @@ function bindCategoryUI() {
         rebuildMarkers: true,
         recomputeNearby: true
       });
+
+      closeMapFiltersPanel();
+      forceMapRefresh();
     });
   }
 
