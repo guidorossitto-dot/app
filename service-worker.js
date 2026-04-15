@@ -1,55 +1,55 @@
-const CACHE_NAME = "agendapp-shell-v45";
-const RUNTIME_CACHE = "agendapp-runtime-v45";
+const CACHE_NAME = "agendapp-shell-v46";
+const RUNTIME_CACHE = "agendapp-runtime-v46";
 
 const APP_SHELL = [
-  "./",
-  "./index.html",
-  "./style.css",
-  "./manifest.json",
+  "/",
+  "/index.html",
+  "/style.css",
+  "/manifest.json",
 
   // core
-  "./state-config.js",
-  "./store.js",
-  "./actions.js",
-  "./app-init.js",
+  "/state-config.js",
+  "/store.js",
+  "/actions.js",
+  "/app-init.js",
 
   // servicios
-  "./event-service.js",
-  "./storage.js",
-  "./event-selectors.js",
-  "./venue-service.js",
-  "./supabase-client.js",
-  "./auth-service.js",
-  "./candidate-dedupe.js",
-  "./candidate-service.js",
-  "./admin-event-form.js",
+  "/event-service.js",
+  "/storage.js",
+  "/event-selectors.js",
+  "/venue-service.js",
+  "/supabase-client.js",
+  "/auth-service.js",
+  "/candidate-dedupe.js",
+  "/candidate-service.js",
+  "/admin-event-form.js",
 
   // UI
-  "./ui-render.js",
-  "./ui-calendar.js",
-  "./ui-calendar-render.js",
-  "./ui-calendar-bindings.js",
-  "./ui-calendar-popover.js",
+  "/ui-render.js",
+  "/ui-calendar.js",
+  "/ui-calendar-render.js",
+  "/ui-calendar-bindings.js",
+  "/ui-calendar-popover.js",
 
   // mapa
-  "./map-places.js",
-  "./map-popups.js",
+  "/map-places.js",
+  "/map-popups.js",
 
   // libs
-  "./libs/leaflet/leaflet.css",
-  "./libs/leaflet/leaflet.js",
-  "./libs/leaflet/images/marker-icon.png",
-  "./libs/leaflet/images/marker-icon-2x.png",
-  "./libs/leaflet/images/marker-shadow.png",
+  "/libs/leaflet/leaflet.css",
+  "/libs/leaflet/leaflet.js",
+  "/libs/leaflet/images/marker-icon.png",
+  "/libs/leaflet/images/marker-icon-2x.png",
+  "/libs/leaflet/images/marker-shadow.png",
 
-  "./libs/leaflet-markercluster/MarkerCluster.css",
-  "./libs/leaflet-markercluster/MarkerCluster.Default.css",
-  "./libs/leaflet-markercluster/leaflet.markercluster.js",
+  "/libs/leaflet-markercluster/MarkerCluster.css",
+  "/libs/leaflet-markercluster/MarkerCluster.Default.css",
+  "/libs/leaflet-markercluster/leaflet.markercluster.js",
 
   // icons
-  "./icons/icon-192.png",
-  "./icons/icon-512.png",
-  "./icons/icon-512-maskable.png"
+  "/icons/icon-192.png",
+  "/icons/icon-512.png",
+  "/icons/icon-512-maskable.png"
 ];
 
 self.addEventListener("install", (event) => {
@@ -96,7 +96,7 @@ self.addEventListener("fetch", (event) => {
 
   if (req.method !== "GET") return;
 
-  // Ignorar esquemas no soportados por Cache API, ej. chrome-extension://
+  // Ignorar esquemas no soportados por Cache API
   if (!["http:", "https:"].includes(url.protocol)) {
     return;
   }
@@ -104,7 +104,7 @@ self.addEventListener("fetch", (event) => {
   // Navegación HTML: network first, fallback a cache
   if (req.mode === "navigate") {
     event.respondWith(
-      fetch(req).catch(() => caches.match("./index.html"))
+      fetch(req).catch(() => caches.match("/index.html"))
     );
     return;
   }
@@ -142,11 +142,7 @@ self.addEventListener("fetch", (event) => {
       caches.open(RUNTIME_CACHE).then(async (cache) => {
         try {
           const response = await fetch(req);
-          if (
-            response &&
-            response.ok &&
-            ["http:", "https:"].includes(url.protocol)
-          ) {
+          if (response && response.ok) {
             await cache.put(req, response.clone());
           }
           return response;
@@ -169,11 +165,7 @@ self.addEventListener("fetch", (event) => {
     caches.open(RUNTIME_CACHE).then(async (cache) => {
       try {
         const response = await fetch(req);
-        if (
-          response &&
-          response.ok &&
-          ["http:", "https:"].includes(url.protocol)
-        ) {
+        if (response && response.ok) {
           await cache.put(req, response.clone());
         }
         return response;
