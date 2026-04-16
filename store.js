@@ -29,7 +29,12 @@
   "CLEAR_PENDING_DEEP_LINK_EVENT_ID",
   "SET_PENDING_CALENDAR_DATE",
   "CLEAR_PENDING_CALENDAR_DATE",
-  "SET_FAVORITES_ONLY",
+   "SET_FAVORITES_ONLY",
+  "SET_DISCOVERY_MODE",
+  "SET_DISCOVERY_RESULT_EVENT_ID",
+  "SET_DISCOVERY_EXCLUDED_EVENT_IDS",
+  "PUSH_DISCOVERY_EXCLUDED_EVENT_ID",
+  "CLEAR_DISCOVERY_SESSION",
   "SET_BOOT_READY",
   "SET_UI_PAN_ZOOM_IN_PROGRESS"
 ]);
@@ -91,6 +96,58 @@
          result = { ok: true };
          break;
     }
+
+    case "SET_DISCOVERY_MODE": {
+  state.logic.discovery.mode = action.value
+    ? String(action.value).trim()
+    : "smart";
+  result = { ok: true };
+  break;
+}
+
+case "SET_DISCOVERY_RESULT_EVENT_ID": {
+  state.logic.discovery.resultEventId = action.value
+    ? String(action.value).trim()
+    : null;
+  state.logic.discovery.lastGeneratedAt = Date.now();
+  result = { ok: true };
+  break;
+}
+
+case "SET_DISCOVERY_EXCLUDED_EVENT_IDS": {
+  state.logic.discovery.excludedEventIds = Array.isArray(action.value)
+    ? action.value.map((id) => String(id || "").trim()).filter(Boolean)
+    : [];
+  result = { ok: true };
+  break;
+}
+
+case "PUSH_DISCOVERY_EXCLUDED_EVENT_ID": {
+  const id = String(action.value || "").trim();
+  if (!id) return { ok: false, error: "INVALID_DISCOVERY_EVENT_ID" };
+
+  const current = Array.isArray(state.logic.discovery.excludedEventIds)
+    ? state.logic.discovery.excludedEventIds
+    : [];
+
+  if (!current.includes(id)) {
+    state.logic.discovery.excludedEventIds = [...current, id];
+  }
+
+  result = { ok: true };
+  break;
+}
+
+case "CLEAR_DISCOVERY_SESSION": {
+  state.logic.discovery = {
+    mode: "smart",
+    resultEventId: null,
+    excludedEventIds: [],
+    lastGeneratedAt: null
+  };
+  result = { ok: true };
+  break;
+}
      
         case "SET_CANDIDATES": {
         state.logic.candidates = Array.isArray(action.candidates) ? action.candidates : [];

@@ -2845,3 +2845,31 @@ header button {
     vertical-align: top !important;
   }
 }
+
+.discoveryCard {
+  margin-top: 16px;
+}
+
+.discoveryIntro {
+  margin: 0 0 10px;
+  opacity: 0.74;
+  font-size: 14px;
+}
+
+.discoveryActions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+
+.discoveryActions button {
+  margin: 0;
+}
+
+#discoveryResult {
+  min-height: 36px;
+}
+.discoveryActions .primaryMapActionBtn {
+  min-width: 0;
+}

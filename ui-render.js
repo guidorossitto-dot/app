@@ -82,6 +82,78 @@ function bindLoginUI() {
   renderLoginUI();
 }
 
+function renderDiscovery() {
+  const root = document.getElementById("discoveryResult");
+  if (!root) return;
+
+  root.innerHTML = "";
+
+  const eventId = App.state.logic.discovery?.resultEventId;
+  if (!eventId) {
+    root.innerHTML = `
+      <div class="nearbySmall">
+        Probá una sugerencia y te mostramos una salida posible.
+      </div>
+    `;
+    return;
+  }
+
+  const ev = App.events?.findEventById?.(eventId);
+  if (!ev) {
+    root.innerHTML = `
+      <div class="nearbySmall">
+        No encontramos esa sugerencia.
+      </div>
+    `;
+    return;
+  }
+
+  const reason = App.selectors?.buildDiscoveryReason?.(ev) || "Plan recomendado";
+  const place = App.util?.shortPlaceName?.(ev.placeName) || "Lugar a confirmar";
+  const status = App.util?.getEventStatus?.(ev) || "";
+  const cat = App.util?.categoryLabel?.(ev.category) || "";
+  const icon = App.util?.categoryEmoji?.(ev.category) || "📍";
+  const time = (ev.startTime || "").slice(0, 5);
+
+  root.innerHTML = `
+    <div class="eventMiniCard eventMiniCard--${ev.category || "music"}">
+      <div class="eventMiniCard__top">
+        <div class="eventMiniCard__icon eventMiniCard__icon--${ev.category || "music"}">
+          ${icon}
+        </div>
+
+        <div class="eventMiniCard__main">
+          <div class="eventMiniCard__titleRow">
+            <span class="eventMiniCard__time">${time}</span>
+            <span class="eventMiniCard__title">${ev.title || "Evento"}</span>
+          </div>
+
+          <div class="eventMiniCard__status">${reason}</div>
+          <div class="eventMiniCard__meta">
+            ${place}${cat ? ` · ${cat}` : ""}${status ? ` · ${status}` : ""}
+          </div>
+
+          <div class="eventMiniCard__actions">
+            <button
+              class="linkBtn discoveryMapBtn"
+              data-eid="${encodeURIComponent(ev.id)}"
+              data-lat="${Number(ev.lat)}"
+              data-lng="${Number(ev.lng)}">
+              Ver en mapa
+            </button>
+
+            <button
+              class="linkBtn discoveryFavBtn"
+              data-eid="${encodeURIComponent(ev.id)}">
+              ${App.events?.isFavorite?.(ev.id) ? "❤️ Guardado" : "🤍 Guardar"}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
   function renderAll(opts = {}) {
     const finalOpts = {
       persist: false,
@@ -99,8 +171,9 @@ function bindLoginUI() {
     }
 
     
-    App.ui.renderAppShell();
+       App.ui.renderAppShell();
     App.ui.renderLoginUI();
+    App.ui.renderDiscovery?.();
     App.ui.renderList();
     App.ui.renderCalendar();
 
@@ -126,7 +199,8 @@ function bindLoginUI() {
     return renderAll(finalOpts);
   }
 
-  App.ui.renderLoginUI = renderLoginUI;
+    App.ui.renderLoginUI = renderLoginUI;
+  App.ui.renderDiscovery = renderDiscovery;
   App.ui.bindLoginUI = bindLoginUI;
 
   App.renderAll = renderAll;

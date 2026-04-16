@@ -38,6 +38,7 @@
     </div>
 
     <div class="debugHidden" aria-hidden="true">
+
   <input id="userLat" type="number" step="0.000001" placeholder="Tu latitud">
   <input id="userLng" type="number" step="0.000001" placeholder="Tu longitud">
   <button id="searchNearbyBtn" tabindex="-1">¿Qué hay cerca mío?</button>
@@ -118,7 +119,23 @@
       </div>
     </div>
 
+    <section class="panelCard discoveryCard" id="discoveryCard">
+      <div class="panelHeader">
+        <h2>No sabés qué hacer?</h2>
+      </div>
 
+      <p class="discoveryIntro">
+        Te sugerimos un plan según horario, cercanía y categoría.
+      </p>
+
+      <div class="discoveryActions">
+        <button id="discoverySuggestBtn" class="primaryMapActionBtn">Sugerime algo</button>
+        <button id="discoveryNextBtn">Otra opción</button>
+        <button id="discoveryResetBtn">Limpiar</button>
+      </div>
+
+      <div id="discoveryResult"></div>
+    </section>
 
  
           <div class="panelCard">

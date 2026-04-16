@@ -301,6 +301,42 @@ function toggleFavoritesOnly() {
   return App.events?.setFavoritesOnly?.(!App.events?.getFavoritesOnly?.());
 }
 
+function setDiscoveryMode(mode) {
+  return App.events?.setDiscoveryMode?.(mode);
+}
+
+function generateDiscoveryFlow() {
+  const suggestion = App.selectors?.getDiscoverySuggestion?.();
+
+  if (!suggestion?.event) {
+    return { ok: false, error: "NO_DISCOVERY_SUGGESTION" };
+  }
+
+  App.events?.setDiscoveryMode?.(suggestion.mode || "smart");
+  App.events?.setDiscoveryResultEventId?.(suggestion.event.id);
+
+  return {
+    ok: true,
+    event: suggestion.event,
+    score: suggestion.score ?? null,
+    reason: suggestion.reason || ""
+  };
+}
+
+function nextDiscoverySuggestionFlow() {
+  const currentId = String(App.state.logic.discovery?.resultEventId || "").trim();
+
+  if (currentId) {
+    App.events?.pushDiscoveryExcludedEventId?.(currentId);
+  }
+
+  return generateDiscoveryFlow();
+}
+
+function clearDiscoveryFlow() {
+  return App.events?.clearDiscoverySession?.();
+}
+
 function routeToEventFlow(input = {}) {
   const btn = input?.button || null;
   if (!btn) return { ok: false, error: "MISSING_BUTTON" };
@@ -921,8 +957,14 @@ async function deleteSkippedCandidateFlow(candidateId = "") {
     approveAllPendingCandidatesFlow,
         queueCalendarDateFromHashFlow,
     processQueuedCalendarDateFlow,
-    setFavoritesOnly,
+        setFavoritesOnly,
     toggleFavoritesOnly,
+
+    setDiscoveryMode,
+    generateDiscoveryFlow,
+    nextDiscoverySuggestionFlow,
+    clearDiscoveryFlow,
+
     importZibiliaCandidatesFlow
   };
 })();

@@ -52,9 +52,81 @@ App.ui?.clearListFocus?.();
     }
   }
 
+  function bindDiscoveryUI() {
+  if (App.state.runtime.bindings.discoveryUI) return;
+  App.state.runtime.bindings.discoveryUI = true;
 
-  App.ui = {
+  const suggestBtn = document.getElementById("discoverySuggestBtn");
+  const nextBtn = document.getElementById("discoveryNextBtn");
+  const resetBtn = document.getElementById("discoveryResetBtn");
+  const result = document.getElementById("discoveryResult");
+
+  if (suggestBtn) {
+    suggestBtn.addEventListener("click", () => {
+      App.actions?.generateDiscoveryFlow?.();
+      App.commit({
+        persist: false,
+        purgePast: false,
+        rebuildMarkers: false,
+        recomputeNearby: false
+      });
+    });
+  }
+
+  if (nextBtn) {
+    nextBtn.addEventListener("click", () => {
+      App.actions?.nextDiscoverySuggestionFlow?.();
+      App.commit({
+        persist: false,
+        purgePast: false,
+        rebuildMarkers: false,
+        recomputeNearby: false
+      });
+    });
+  }
+
+  if (resetBtn) {
+    resetBtn.addEventListener("click", () => {
+      App.actions?.clearDiscoveryFlow?.();
+      App.commit({
+        persist: false,
+        purgePast: false,
+        rebuildMarkers: false,
+        recomputeNearby: false
+      });
+    });
+  }
+
+  if (result) {
+    result.addEventListener("click", (e) => {
+      const mapBtn = e.target.closest(".discoveryMapBtn");
+      const favBtn = e.target.closest(".discoveryFavBtn");
+
+      if (mapBtn) {
+        App.actions?.focusEventOnMapFlow?.({ button: mapBtn });
+        return;
+      }
+
+      if (favBtn) {
+        const eventId = decodeURIComponent((favBtn.dataset.eid || "").trim());
+        if (!eventId) return;
+
+        App.actions?.toggleFavorite?.(eventId);
+
+        App.commit({
+          persist: false,
+          purgePast: false,
+          rebuildMarkers: false,
+          recomputeNearby: false
+        });
+      }
+    });
+  }
+}
+
+   App.ui = {
     ...(App.ui || {}),
-    bindCalendarUI
+    bindCalendarUI,
+    bindDiscoveryUI
   };
 })();

@@ -140,11 +140,12 @@ function bindMapFiltersToggle() {
 
 bindInstallPrompt();
 
-  function bindUI() {
+function bindUI() {
   App.ui.bindLoginUI();
   App.ui.bindPublicUI();
   App.ui.bindSidebarUI();
   App.ui.bindCalendarUI();
+  App.ui.bindDiscoveryUI();
   App.ui.bindCategoryUI();
   App.ui.bindDeleteEventUI();
   bindMapFiltersToggle();

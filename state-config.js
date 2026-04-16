@@ -84,9 +84,16 @@ App.CFG.ALLOWED_CATEGORIES = Object.keys(App.CFG.CATEGORIES);
   adminVenueSuggestions: [],
   selectedVenueId: null,
   nearbyCenter: null,
-  candidates: [],
+    candidates: [],
   candidateSelection: [],
-  nearbyEvents: []
+  nearbyEvents: [],
+
+  discovery: {
+    mode: "smart",
+    resultEventId: null,
+    excludedEventIds: [],
+    lastGeneratedAt: null
+  }
 },
 
     runtime: {
@@ -114,8 +121,9 @@ pendingMapClickTimer: null,
   uiPanZoomInProgress: false,
 
   // 👇 NUEVO
-  bindings: {
-    loginUI: false
+    bindings: {
+    loginUI: false,
+    discoveryUI: false
   }
 }
   };

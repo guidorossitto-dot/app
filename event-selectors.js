@@ -328,6 +328,174 @@ function getSortedVisibleTodayEvents(list = state.logic.events, nearbyCenter = s
   return sortTodayEventsByUrgencyAndDistance(today, nearbyCenter);
 }
 
+function getDiscoveryBaseCandidates(list = state.logic.events) {
+  const safe = Array.isArray(list) ? list : [];
+  const excluded = new Set(
+    (state.logic.discovery?.excludedEventIds || [])
+      .map((id) => String(id || "").trim())
+      .filter(Boolean)
+  );
+
+  const visibleToday = getVisibleTodayEvents(safe);
+  const visibleFuture = getVisibleFutureEvents(safe).slice(0, 60);
+
+  return [...visibleToday, ...visibleFuture].filter((ev) => {
+    const id = String(ev?.id || "").trim();
+    return id && !excluded.has(id);
+  });
+}
+
+function scoreDiscoveryCandidate(ev) {
+  if (!ev) return -Infinity;
+
+  let score = 0;
+  const mins = safeMinutesToStart(ev);
+  const nearbyCenter = state.logic.nearbyCenter;
+
+  if (ev.date === util.todayStrYYYYMMDD()) {
+    score += 30;
+  }
+
+  if (mins !== null) {
+    if (mins >= 0 && mins <= 90) {
+      score += 40 - Math.floor(mins / 3);
+    } else if (mins > 90 && mins <= 240) {
+      score += 12;
+    } else if (mins < 0 && Math.abs(mins) <= 30) {
+      score += 10;
+    } else if (mins < 0) {
+      score -= 25;
+    }
+  }
+
+  if (
+    nearbyCenter &&
+    util.isValidCoord(ev?.lat) &&
+    util.isValidCoord(ev?.lng)
+  ) {
+    const dist = util.distanceKm(
+      nearbyCenter.lat,
+      nearbyCenter.lng,
+      Number(ev.lat),
+      Number(ev.lng)
+    );
+
+    if (dist <= 1) score += 22;
+    else if (dist <= 3) score += 14;
+    else if (dist <= App.CFG.SEARCH_RADIUS_KM) score += 8;
+    else if (dist <= 10) score += 2;
+    else score -= 8;
+  }
+
+  if (
+    state.logic.activeCategory !== "all" &&
+    ev.category === state.logic.activeCategory
+  ) {
+    score += 8;
+  }
+
+  if (App.events?.isFavorite?.(ev.id)) {
+    score += 4;
+  }
+
+  if (ev.flyerUrl) score += 1;
+  if (ev.link) score += 1;
+
+  return score;
+}
+
+function buildDiscoveryReason(ev) {
+  const mins = safeMinutesToStart(ev);
+  const nearbyCenter = state.logic.nearbyCenter;
+
+  if (mins !== null && mins >= 0 && mins <= 60) {
+    return `Empieza en ${mins} min`;
+  }
+
+  if (
+    nearbyCenter &&
+    util.isValidCoord(ev?.lat) &&
+    util.isValidCoord(ev?.lng)
+  ) {
+    const dist = util.distanceKm(
+      nearbyCenter.lat,
+      nearbyCenter.lng,
+      Number(ev.lat),
+      Number(ev.lng)
+    );
+
+    if (dist <= 2) {
+      return "Te queda cerca";
+    }
+  }
+
+  if (ev.date === util.todayStrYYYYMMDD()) {
+    return "Buena opción para hoy";
+  }
+
+  return "Plan recomendado";
+}
+
+function getDiscoverySuggestion() {
+  const candidates = getDiscoveryBaseCandidates();
+  if (!candidates.length) return null;
+
+  const currentId = String(state.logic.discovery?.resultEventId || "").trim();
+  const currentEvent = currentId
+    ? App.events?.findEventById?.(currentId)
+    : null;
+
+  let ranked = [...candidates]
+    .map((ev) => ({
+      event: ev,
+      score: scoreDiscoveryCandidate(ev)
+    }))
+    .sort((a, b) => b.score - a.score);
+
+  if (!ranked.length) return null;
+
+  // 1) evitar repetir el mismo evento actual si hay otras opciones
+  if (currentId) {
+    const withoutCurrent = ranked.filter(
+      (item) => String(item.event?.id || "").trim() !== currentId
+    );
+
+    if (withoutCurrent.length) {
+      ranked = withoutCurrent;
+    }
+  }
+
+  // 2) si hay evento actual, intentar evitar también mismo título cuando se pueda
+  if (currentEvent?.title) {
+    const currentTitle = String(currentEvent.title || "").trim().toLowerCase();
+
+    const withoutSameTitle = ranked.filter(
+      (item) =>
+        String(item.event?.title || "").trim().toLowerCase() !== currentTitle
+    );
+
+    if (withoutSameTitle.length) {
+      ranked = withoutSameTitle;
+    }
+  }
+
+  if (!ranked.length) return null;
+
+  // 3) elegir dentro de una franja alta de score para variar sin perder calidad
+  const bestScore = ranked[0].score;
+  const topBand = ranked.filter((item) => item.score >= bestScore - 6);
+
+  const pool = topBand.length ? topBand : ranked;
+  const chosen = pool[Math.floor(Math.random() * pool.length)] || ranked[0];
+
+  return {
+    mode: "smart",
+    event: chosen.event,
+    score: chosen.score,
+    reason: buildDiscoveryReason(chosen.event)
+  };
+}
+
   /* =========================
      EXPORT
   ========================= */
@@ -355,11 +523,16 @@ isEventVisibleOnMap,
 getMapVisibleEvents,
 
     getTodayNearbyEvents,
-    getFeaturedNearbyEvents,
-    getFeaturedNearbyEvent,
-     getTodayUrgencyRank,
-  sortTodayEventsByUrgencyAndDistance,
-  isStillRelevantForTodayAccordion,
-  getSortedVisibleTodayEvents
+getFeaturedNearbyEvents,
+getFeaturedNearbyEvent,
+    getTodayUrgencyRank,
+    sortTodayEventsByUrgencyAndDistance,
+    isStillRelevantForTodayAccordion,
+    getSortedVisibleTodayEvents,
+
+    getDiscoveryBaseCandidates,
+    scoreDiscoveryCandidate,
+    buildDiscoveryReason,
+    getDiscoverySuggestion
   };
 })();

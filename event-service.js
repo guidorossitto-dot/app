@@ -869,6 +869,54 @@ function getFavoritesOnly() {
   return !!state.logic.favoritesOnly;
 }
 
+function setDiscoveryMode(mode) {
+  App.store?.dispatch?.({
+    type: "SET_DISCOVERY_MODE",
+    value: mode
+  });
+
+  return state.logic.discovery?.mode || "smart";
+}
+
+function setDiscoveryResultEventId(eventId) {
+  App.store?.dispatch?.({
+    type: "SET_DISCOVERY_RESULT_EVENT_ID",
+    value: eventId
+  });
+
+  return state.logic.discovery?.resultEventId || null;
+}
+
+function setDiscoveryExcludedEventIds(list = []) {
+  const safe = Array.isArray(list)
+    ? list.map((id) => String(id || "").trim()).filter(Boolean)
+    : [];
+
+  App.store?.dispatch?.({
+    type: "SET_DISCOVERY_EXCLUDED_EVENT_IDS",
+    value: safe
+  });
+
+  return state.logic.discovery?.excludedEventIds || [];
+}
+
+function pushDiscoveryExcludedEventId(eventId) {
+  App.store?.dispatch?.({
+    type: "PUSH_DISCOVERY_EXCLUDED_EVENT_ID",
+    value: eventId
+  });
+
+  return state.logic.discovery?.excludedEventIds || [];
+}
+
+function clearDiscoverySession() {
+  App.store?.dispatch?.({
+    type: "CLEAR_DISCOVERY_SESSION"
+  });
+
+  return state.logic.discovery || null;
+}
+
     App.events = {
     getAllEvents,
     findEventById,
@@ -918,9 +966,15 @@ function getFavoritesOnly() {
     setFavorites,
     setFavorites,
     isFavorite,
-    toggleFavorite,
+        toggleFavorite,
     setFavoritesOnly,
     getFavoritesOnly,
+
+    setDiscoveryMode,
+    setDiscoveryResultEventId,
+    setDiscoveryExcludedEventIds,
+    pushDiscoveryExcludedEventId,
+    clearDiscoverySession,
 
     commit,
     saveAndRefresh
