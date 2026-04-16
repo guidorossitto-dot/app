@@ -167,18 +167,23 @@ function initMapState() {
   });
 }
 
-  function startAutoRefresh() {
-    setInterval(() => {
-      if (state.logic.nearbyCenter) {
-  App.map.recomputeNearbyEvents(
-    state.logic.nearbyCenter.lat,
-    state.logic.nearbyCenter.lng
-  );
-}
+function startAutoRefresh() {
+  setInterval(() => {
+    // no rerenderizar mientras el usuario está leyendo un popover del calendario
+    if (document.getElementById("calendarEventPopover")) {
+      return;
+    }
 
-        App.renderAll?.({ rebuildMarkers: false });
-    }, App.CFG.REFRESH_MS);
-  }
+    if (state.logic.nearbyCenter) {
+      App.map.recomputeNearbyEvents(
+        state.logic.nearbyCenter.lat,
+        state.logic.nearbyCenter.lng
+      );
+    }
+
+    App.renderAll?.({ rebuildMarkers: false });
+  }, App.CFG.REFRESH_MS);
+}
 
  async function refreshAppDataAfterReconnect() {
   try {
