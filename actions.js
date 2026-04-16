@@ -271,7 +271,8 @@ async function shareEventFlow(input = {}) {
   try {
     await navigator.share({
       title,
-      text: `${shareText}\n\n🔗 ${url}`
+      text: shareText,
+       url
     });
     return { ok: true, mode: "native" };
   } catch {}
