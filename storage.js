@@ -77,6 +77,7 @@ function loadVenuesCache() {
     startTime: row.start_time || "",
     category: row.category || "music",
     link: row.link || "",
+    flyerUrl: row.flyer_url || "",
     lat: Number(row.lat),
     lng: Number(row.lng),
 
@@ -98,6 +99,8 @@ function loadVenuesCache() {
     instagramUrl: String(row.instagram_url || "").trim(),
     websiteUrl: String(row.website_url || "").trim(),
     mapsUrl: String(row.maps_url || "").trim(),
+    menuUrl: String(row.menu_url || "").trim(),
+    menuType: String(row.menu_type || "").trim(),
     notes: String(row.notes || "").trim(),
     createdAt: String(row.created_at || "").trim(),
     updatedAt: String(row.updated_at || "").trim()
@@ -115,6 +118,8 @@ function mapVenueToRow(venue) {
     instagram_url: venue.instagramUrl || "",
     website_url: venue.websiteUrl || "",
     maps_url: venue.mapsUrl || "",
+    menu_url: venue.menuUrl || "",
+    menu_type: venue.menuType || "",
     notes: venue.notes || "",
     created_at: venue.createdAt || new Date().toISOString(),
     updated_at: new Date().toISOString()
@@ -157,6 +162,7 @@ function loadVenues() {
     start_time: safe.startTime || null,
     category: safe.category || "music",
     link: safe.link || "",
+    flyer_url: safe.flyerUrl || "",
     lat: Number(safe.lat),
     lng: Number(safe.lng),
 
@@ -170,7 +176,6 @@ function loadVenues() {
     updated_at: new Date().toISOString()
   };
 }
-
   async function loadEvents() {
   const db = App.supabase;
   if (!db) {
@@ -540,23 +545,24 @@ async function deleteVenueRemote(venueId) {
     ...patch
   });
 
-  const row = {
-    title: safe.title,
-    place_name: safe.placeName || "",
-    date: safe.date || null,
-    start_time: safe.startTime || null,
-    category: safe.category || "music",
-    link: safe.link || "",
-    lat: Number(safe.lat),
-    lng: Number(safe.lng),
+ const row = {
+  title: safe.title,
+  place_name: safe.placeName || "",
+  date: safe.date || null,
+  start_time: safe.startTime || null,
+  category: safe.category || "music",
+  link: safe.link || "",
+  flyer_url: safe.flyerUrl || "",
+  lat: Number(safe.lat),
+  lng: Number(safe.lng),
 
-    series_id: safe.seriesId || null,
-    recurrence_type: safe.recurrenceType || null,
-    recurrence_interval: Number.isFinite(safe.recurrenceInterval)
-      ? safe.recurrenceInterval
-      : null,
-    recurrence_until: safe.recurrenceUntil || null
-  };
+  series_id: safe.seriesId || null,
+  recurrence_type: safe.recurrenceType || null,
+  recurrence_interval: Number.isFinite(safe.recurrenceInterval)
+    ? safe.recurrenceInterval
+    : null,
+  recurrence_until: safe.recurrenceUntil || null
+};
 
   const { data, error } = await db
     .from("events")

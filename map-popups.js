@@ -27,6 +27,58 @@
   return list.sort(util.sortEventsByStatusThenTime);
 }
 
+function normalizePopupText(value) {
+  return String(value || "")
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+}
+
+function getEventInfoHref(ev) {
+  const link = String(ev?.link || "").trim();
+  const flyerUrl = String(ev?.flyerUrl || "").trim();
+
+  if (link) return link;
+  if (flyerUrl) return flyerUrl;
+  return "";
+}
+
+function getEventInfoLabel(ev) {
+  const link = String(ev?.link || "").trim();
+  const flyerUrl = String(ev?.flyerUrl || "").trim();
+
+  if (link && flyerUrl) return "Ver info";
+  if (link) return "Ver info";
+  if (flyerUrl) return "Ver flyer";
+  return "";
+}
+
+function findVenueForPopup(loc, placeName) {
+  const venues = Array.isArray(state.logic?.venues) ? state.logic.venues : [];
+  if (!venues.length) return null;
+
+  const targetName = normalizePopupText(util.shortPlaceName(placeName));
+  let best = null;
+
+  for (const venue of venues) {
+if (!venue) continue;
+if (!Number.isFinite(Number(venue.lat)) || !Number.isFinite(Number(venue.lng))) continue;
+
+    const venueName = normalizePopupText(util.shortPlaceName(venue.name || ""));
+    const sameName = !!targetName && targetName === venueName;
+    const dist = util.distanceKm(loc.lat, loc.lng, venue.lat, venue.lng);
+
+    if (!sameName || dist > 0.15) continue;
+
+    if (!best || dist < best.dist) {
+      best = { ...venue, dist };
+    }
+  }
+
+  return best;
+}
+
     function buildPlacePopupHTML(loc) {
     if (!loc) return "";
 
@@ -34,6 +86,8 @@
       (loc.events?.find((e) => (e.placeName || "").trim())?.placeName || "").trim();
     const placeName = util.shortPlaceName(placeNameFull);
     const placeTitle = placeName ? placeName : "Eventos en este punto";
+const matchedVenue = findVenueForPopup(loc, placeNameFull || placeTitle);
+const menuUrl = String(matchedVenue?.menuUrl || "").trim();
 
     const sorted = getPopupEventsForLocation(loc.events || []);
     const total = sorted.length;
@@ -53,6 +107,16 @@ if (uniqueDates.length === 1) {
         data-place="${encodeURIComponent(placeName || "")}">
       Cargar evento acá
     </button>`
+  : "";
+  const menuBtn = menuUrl
+  ? `
+    <a class="popupBtn"
+      href="${menuUrl}"
+      target="_blank"
+      rel="noopener noreferrer">
+      Ver carta
+    </a>
+  `
   : "";
 
     const centerBtn = `
@@ -82,10 +146,11 @@ if (uniqueDates.length === 1) {
         </div>
 
         <div class="popupActions">
-          ${centerBtn}
-          ${routeBtn}
-          ${actionBtn}
-        </div>
+           ${centerBtn}
+            ${routeBtn}
+           ${menuBtn}
+            ${actionBtn}
+          </div>
 
         <div class="popupList">
     `;
@@ -94,6 +159,8 @@ if (uniqueDates.length === 1) {
   const st = util.formatTimeStart(e);
   const status = util.getEventStatus(e);
   const eid = e.id != null ? String(e.id) : "";
+  const infoHref = getEventInfoHref(e);
+const infoLabel = getEventInfoLabel(e);
 
   html += `
     <div class="popupItem" ${eid ? `data-eid="${encodeURIComponent(eid)}"` : ""}>
@@ -112,12 +179,12 @@ if (uniqueDates.length === 1) {
           ? `
             <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:6px;">
   ${
-    e.link
-      ? `<a class="popupBtn" href="${e.link}" target="_blank" rel="noopener noreferrer">
-          Ver info
-        </a>`
-      : ""
-  }
+  infoHref
+    ? `<a class="popupBtn" href="${infoHref}" target="_blank" rel="noopener noreferrer">
+        ${infoLabel}
+      </a>`
+    : ""
+}
 
   <button class="popupBtn favoriteBtn"
   data-eid="${encodeURIComponent(eid)}"

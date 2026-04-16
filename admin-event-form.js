@@ -57,6 +57,8 @@
     const startEl = document.getElementById("eventStart");
     const catEl = document.getElementById("eventCategory");
     const linkEl = document.getElementById("eventLink");
+    const flyerEl = document.getElementById("eventFlyerUrl");
+    const venueMenuUrlEl = document.getElementById("venueMenuUrl");
     const createModeEl = document.getElementById("eventCreateMode");
     const endDateEl = document.getElementById("eventEndDate");
 
@@ -70,6 +72,8 @@
         startEl,
         catEl,
         linkEl,
+        flyerEl,
+        venueMenuUrlEl,
         createModeEl,
         endDateEl
       },
@@ -83,6 +87,8 @@
         startTime: startEl?.value.trim() || "",
         category: catEl?.value || "music",
         link: linkEl?.value.trim() || "",
+        flyerUrl: flyerEl?.value.trim() || "",
+        venueMenuUrl: venueMenuUrlEl?.value.trim() || "",
         createMode: createModeEl?.value || "single",
         endDate: endDateEl?.value?.trim() || ""
       }
@@ -129,7 +135,8 @@
       placeName: formValues.placeName,
       startTime: formValues.startTime,
       category: formValues.category,
-      link: formValues.link
+      link: formValues.link,
+      flyerUrl: formValues.flyerUrl
     };
   }
 
@@ -142,6 +149,8 @@
     const startEl = document.getElementById("eventStart");
     const catEl = document.getElementById("eventCategory");
     const linkEl = document.getElementById("eventLink");
+    const flyerEl = document.getElementById("eventFlyerUrl");
+    const venueMenuUrlEl = document.getElementById("venueMenuUrl");
     const addBtn = document.getElementById("addEventBtn");
     const cancelBtn = document.getElementById("cancelEditBtn");
     const createModeEl = document.getElementById("eventCreateMode");
@@ -158,6 +167,8 @@
     if (startEl) startEl.value = "";
     if (catEl) catEl.value = "music";
     if (linkEl) linkEl.value = "";
+    if (venueMenuUrlEl) venueMenuUrlEl.value = "";
+    if (flyerEl) flyerEl.value = "";
     if (createModeEl) createModeEl.value = "single";
 
     if (endDateEl) {
@@ -215,6 +226,8 @@
       startTime,
       category,
       link,
+      flyerUrl,
+      venueMenuUrl,
       createMode,
       endDate
     } = values;
@@ -238,7 +251,8 @@
       placeName,
       startTime,
       category,
-      link
+      link,
+      flyerUrl
     });
 
     const editingId = String(state.logic.editingEventId || "").trim() || null;
@@ -284,11 +298,19 @@
         return;
       }
 
-    await App.venues?.ensureVenueExistsFromEventData?.({
-        placeName,
-        lat,
-        lng
-      });
+const ensuredVenueResult = await App.venues?.ensureVenueExistsFromEventData?.({
+  placeName,
+  lat,
+  lng
+});
+
+if (!ensuredVenueResult?.ok) {
+  console.warn("No se pudo asegurar el venue del evento.");
+} else if (venueMenuUrl) {
+  await App.venues?.updateVenueRemote?.(ensuredVenueResult.venue.id, {
+    menuUrl: venueMenuUrl
+  });
+}
 
             if ((saveResult?.createdCount || 0) > 1) {
         alert(`Se crearon ${saveResult.createdCount} eventos.`);
@@ -319,6 +341,7 @@ App.commit?.({
     const startEl = document.getElementById("eventStart");
     const catEl = document.getElementById("eventCategory");
     const linkEl = document.getElementById("eventLink");
+    const flyerEl = document.getElementById("eventFlyerUrl");
     const addBtn = document.getElementById("addEventBtn");
     const cancelBtn = document.getElementById("cancelEditBtn");
 
@@ -330,6 +353,7 @@ App.commit?.({
     if (startEl) startEl.value = evData.startTime || "";
     if (catEl) catEl.value = evData.category || "music";
     if (linkEl) linkEl.value = evData.link || "";
+    if (flyerEl) flyerEl.value = evData.flyerUrl || "";
 
     const adminRow = document.getElementById("adminCategoryChips");
     if (adminRow) {

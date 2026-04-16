@@ -44,32 +44,36 @@
   }
 
   function normalizeVenue(raw = {}) {
-    const name = safeString(raw.name);
-    const address = safeString(raw.address);
-    const neighborhood = safeString(raw.neighborhood);
-    const instagramUrl = safeString(raw.instagramUrl);
-    const websiteUrl = safeString(raw.websiteUrl);
-    const mapsUrl = safeString(raw.mapsUrl);
-    const notes = safeString(raw.notes);
+  const name = safeString(raw.name);
+  const address = safeString(raw.address);
+  const neighborhood = safeString(raw.neighborhood);
+  const instagramUrl = safeString(raw.instagramUrl);
+  const websiteUrl = safeString(raw.websiteUrl);
+  const mapsUrl = safeString(raw.mapsUrl);
+  const menuUrl = safeString(raw.menuUrl ?? raw.menu_url);
+  const menuType = safeString(raw.menuType ?? raw.menu_type);
+  const notes = safeString(raw.notes);
 
-    const lat = toNumberOrNull(raw.lat);
-    const lng = toNumberOrNull(raw.lng);
+  const lat = toNumberOrNull(raw.lat);
+  const lng = toNumberOrNull(raw.lng);
 
-    return {
-      id: safeString(raw.id) || makeVenueId(),
-      name,
-      address,
-      neighborhood,
-      lat,
-      lng,
-      instagramUrl,
-      websiteUrl,
-      mapsUrl,
-      notes,
-createdAt: safeString(raw.createdAt) || new Date().toISOString(),
-updatedAt: safeString(raw.updatedAt) || new Date().toISOString()
-    };
-  }
+  return {
+    id: safeString(raw.id) || makeVenueId(),
+    name,
+    address,
+    neighborhood,
+    lat,
+    lng,
+    instagramUrl,
+    websiteUrl,
+    mapsUrl,
+    menuUrl,
+    menuType,
+    notes,
+    createdAt: safeString(raw.createdAt) || new Date().toISOString(),
+    updatedAt: safeString(raw.updatedAt) || new Date().toISOString()
+  };
+}
 
   function validateVenue(raw = {}) {
     const name = safeString(raw.name);
@@ -263,6 +267,52 @@ App.store?.dispatch?.({
     };
   }
 
+  async function updateVenueRemote(venueId, patch = {}) {
+  ensureVenueState();
+
+  const idx = findVenueIndexById(venueId);
+  if (idx < 0) {
+    return { ok: false, error: "VENUE_NOT_FOUND" };
+  }
+
+  const current = state.logic.venues[idx];
+
+  const merged = {
+    ...current,
+    ...patch,
+    id: current.id,
+    createdAt: current.createdAt
+  };
+
+  const validation = validateVenue(merged);
+  if (!validation.ok) {
+    return { ok: false, error: validation.error };
+  }
+
+  const normalized = normalizeVenue(merged);
+  normalized.id = current.id;
+  normalized.createdAt = current.createdAt;
+  normalized.updatedAt = new Date().toISOString();
+
+  const remote = await App.storage?.updateVenueRemote?.(normalized);
+  if (!remote?.ok) return remote;
+
+  App.store?.dispatch?.({
+    type: "REPLACE_VENUE",
+    venueId,
+    venue: remote.venue
+  });
+
+  if (App.storage?.saveVenues) {
+    App.storage.saveVenues();
+  }
+
+  return {
+    ok: true,
+    venue: cloneVenue(remote.venue)
+  };
+}
+
   function removeVenue(venueId, options = {}) {
   ensureVenueState();
 
@@ -409,6 +459,7 @@ App.store?.dispatch?.({
   addVenueRemote,
   ensureVenueExistsFromEventData,
   updateVenue,
+  updateVenueRemote,
   removeVenue,
   replaceAllVenues,
   loadVenuesRemote,

@@ -353,7 +353,7 @@ function categoryLabel(cat) {
   /* =========================
      EVENT MODEL
   ========================= */
-  function normalizeEvent(raw) {
+ function normalizeEvent(raw) {
   const lat = Number(raw?.lat);
   const lng = Number(raw?.lng);
 
@@ -372,6 +372,7 @@ function categoryLabel(cat) {
     startTime: (raw?.startTime ?? "").toString().trim(),
     category: normalizeCategory(raw?.category),
     link: (raw?.link ?? "").toString().trim(),
+    flyerUrl: (raw?.flyerUrl ?? raw?.flyer_url ?? "").toString().trim(),
 
     seriesId: (raw?.seriesId ?? "").toString().trim(),
     recurrenceType: (raw?.recurrenceType ?? "").toString().trim(),
