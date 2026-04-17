@@ -2954,3 +2954,66 @@ header button {
 .brandInstagramLink *:active {
   text-decoration: none !important;
 }
+
+@media (max-width: 768px) {
+  .discoveryCard {
+    margin-top: 10px;
+    padding: 10px;
+  }
+
+  .discoveryCard .panelHeader h2 {
+    font-size: 17px;
+  }
+
+  .discoveryIntro {
+    font-size: 13px;
+    margin: 0 0 8px;
+  }
+
+  .discoveryActions {
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+
+  .discoveryActions button {
+    padding: 7px 9px;
+    font-size: 13px;
+    border-radius: 9px;
+  }
+
+  .discoveryActions .primaryMapActionBtn {
+    min-width: 0;
+    padding: 8px 11px;
+    font-size: 13px;
+  }
+
+  #discoveryResult {
+    min-height: 28px;
+  }
+
+  #discoveryResult .eventMiniCard {
+    padding: 8px 9px;
+    margin-top: 6px;
+  }
+
+  #discoveryResult .eventMiniCard__icon {
+    width: 28px;
+    height: 28px;
+    font-size: 14px;
+  }
+
+  #discoveryResult .eventMiniCard__title {
+    font-size: 0.9rem;
+  }
+
+  #discoveryResult .eventMiniCard__meta,
+  #discoveryResult .eventMiniCard__status {
+    font-size: 0.8rem;
+  }
+
+  #discoveryResult .eventMiniCard__actions {
+    gap: 10px;
+    margin-top: 7px;
+    padding-top: 7px;
+  }
+}
