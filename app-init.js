@@ -109,6 +109,19 @@ function bindMapLocateBtn() {
   });
 }
 
+function bindBrandInstagramLink() {
+  const link = document.querySelector(".brandTitle a");
+  if (!link) return;
+
+  link.addEventListener("click", () => {
+    if (typeof gtag === "function") {
+      gtag("event", "click_instagram_header", {
+        location: "header_brand"
+      });
+    }
+  });
+}
+
 function bindMapFiltersToggle() {
   const btn = document.getElementById("toggleMapFiltersBtn");
   const panel = document.getElementById("mapFiltersPanel");
@@ -150,6 +163,7 @@ function bindUI() {
   App.ui.bindDeleteEventUI();
   bindMapFiltersToggle();
   bindMapLocateBtn();
+  bindBrandInstagramLink();    
   App.ui.bindAdminUI();
 }
 

@@ -2870,6 +2870,60 @@ header button {
 #discoveryResult {
   min-height: 36px;
 }
-.discoveryActions .primaryMapActionBtn {
-  min-width: 0;
+.brandTitle a {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: inherit;
+  text-decoration: none;
+}
+
+.brandIcon {
+  font-size: 14px;
+  line-height: 1;
+}
+.brandTitle a,
+.brandTitle a:visited,
+.brandTitle a:hover,
+.brandTitle a:active {
+  color: inherit;
+  text-decoration: none;
+}
+.brandTitle a {
+  -webkit-tap-highlight-color: transparent;
+}
+.brandTitle a {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.brandTitle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.brandInstagramLink,
+.brandInstagramLink:visited,
+.brandInstagramLink:hover,
+.brandInstagramLink:active {
+  color: inherit;
+  text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.brandInstagramLink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.brandIcon {
+  font-size: 14px;
+  line-height: 1;
+}
+
+.brandText {
+  color: inherit;
 }
