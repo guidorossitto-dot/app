@@ -90,17 +90,20 @@ const groups = groupByPlace(sortedInput);
 
     const renderEv = (ev) => {
       const time = util.formatTimeStart(ev);
-      const status = util.getEventStatus(ev);
+const status = util.getEventStatus(ev);
+const mins = util.minutesToStart(ev);
 
-      let soonBadge = "";
+let soonBadge = "";
 
-      if (
-        status &&
-        typeof ev.distanceKm === "number" &&
-        ev.distanceKm <= 1
-      ) {
-        soonBadge = `🔥 ${status}`;
-      }
+if (status) {
+  if (mins !== null && mins >= 0 && mins <= 60) {
+    soonBadge = `🔥 ${status}`;
+  } else if (mins !== null && mins < 0 && Math.abs(mins) <= 20) {
+    soonBadge = `🔴 ${status}`;
+  } else {
+    soonBadge = status;
+  }
+}
 
 const icon = util.categoryEmoji(ev.category) || "📍";
 

@@ -55,8 +55,11 @@ function getFeaturedRank(ev) {
   const soonMin = Number(App.CFG?.FEATURED_SOON_MIN ?? 90);
   const recentMin = Number(App.CFG?.FEATURED_RECENT_MIN ?? 15);
 
-  if (m <= 0 && m >= -recentMin) return Math.abs(m);
-  if (m > 0 && m <= soonMin) return 100 + m;
+  // primero lo que está por empezar
+  if (m > 0 && m <= soonMin) return m;
+
+  // después lo que recién empezó
+  if (m <= 0 && m >= -recentMin) return 100 + Math.abs(m);
 
   return 999999;
 }
@@ -279,21 +282,28 @@ function getMapVisibleEvents(list = state.logic.events) {
     return getFeaturedNearbyEvents(list)[0] || null;
   }
 
-  function getTodayUrgencyRank(ev) {
+ function getTodayUrgencyRank(ev) {
   const mins = safeMinutesToStart(ev);
 
   if (mins === null) return 2;
 
-  if (mins < 0) {
-    // empezó hace poco = más prioritario
+  // 1) empieza pronto: arriba de todo
+  if (mins >= 0 && mins <= 60) {
     return 0;
   }
 
-  if (mins <= 60) {
+  // 2) más tarde hoy
+  if (mins > 60) {
     return 1;
   }
 
-  return 2;
+  // 3) recién empezó (hasta 20 min)
+  if (mins < 0 && Math.abs(mins) <= 20) {
+    return 2;
+  }
+
+  // 4) empezó hace más de 20 min
+  return 3;
 }
 
 function sortTodayEventsByUrgencyAndDistance(list = [], nearbyCenter = state.logic.nearbyCenter) {
