@@ -3557,3 +3557,10 @@ header button {
     font-size: 13.5px;
   }
 }
+
+@media (max-width: 768px) {
+  .venuesGuideItem {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+}
