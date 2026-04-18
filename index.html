@@ -129,11 +129,11 @@
       </div>
     </div>
 
-    <section class="panelCard discoveryCard" id="discoveryCard">
-      <div class="panelHeader">
-        <h2>No sabés qué hacer?</h2>
-      </div>
+   <section class="panelCard discoveryCard" id="discoveryCard">
+  <details class="accordion discoveryAccordion">
+    <summary>🤔 No sabés qué hacer?</summary>
 
+    <div class="discoveryAccordionBody">
       <p class="discoveryIntro">
         Te sugerimos un plan según horario, cercanía y categoría.
       </p>
@@ -145,23 +145,29 @@
       </div>
 
       <div id="discoveryResult"></div>
-    </section>
+    </div>
+  </details>
+</section>
 
  
-          <div class="panelCard">
-            <div class="panelHeader">
-              <h3>Buscar lugar real</h3>
-            </div>
+          <section class="panelCard placeSearchCard" hidden>
+  <details class="accordion placeSearchAccordion">
+    <summary>🔎 Buscar lugar</summary>
 
-            <div class="placeSearchRow">
-              <input id="placeQuery" placeholder="Ej: Teatro Colón">
-              <button id="searchPlaceBtn">Buscar</button>
-            </div>
+    <div class="placeSearchBody">
+      <div class="placeSearchRow">
+        <input id="placeQuery" placeholder="Ej: Teatro Colón">
+        <button id="searchPlaceBtn">Buscar</button>
+      </div>
 
-            <ul id="placeResults"></ul>
-          </div>
-           <section id="adminView" class="panelCard" hidden>
-            <div class="panelHeader">
+      <ul id="placeResults"></ul>
+    </div>
+  </details>
+</section>
+
+<section id="adminView" class="panelCard" hidden>
+  <div class="panelHeader">
+
               <h2>Panel administrador</h2>
             </div>
 

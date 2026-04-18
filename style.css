@@ -3422,3 +3422,138 @@ header button {
     font-size: 11px;
   }
 }
+
+.discoveryCard {
+  margin-top: 12px;
+  padding: 10px 12px;
+}
+
+.discoveryAccordion {
+  margin: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.discoveryAccordion > summary {
+  padding: 0;
+  font-size: 14px;
+  font-weight: 700;
+  opacity: 0.82;
+}
+
+.discoveryAccordion > summary:hover {
+  background: transparent;
+  padding-left: 0;
+}
+
+.discoveryAccordionBody {
+  padding-top: 10px;
+}
+
+.discoveryIntro {
+  margin: 0 0 8px;
+  opacity: 0.68;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.discoveryActions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+
+.discoveryActions button {
+  margin: 0;
+}
+
+.discoveryActions .primaryMapActionBtn {
+  min-width: 0;
+  padding: 8px 12px;
+  font-size: 13px;
+}
+
+#discoveryNextBtn,
+#discoveryResetBtn {
+  padding: 7px 10px;
+  font-size: 13px;
+}
+
+#discoveryResult {
+  min-height: 0;
+}
+
+@media (max-width: 768px) {
+  .discoveryCard {
+    margin-top: 10px;
+    padding: 9px 10px;
+  }
+
+  .discoveryAccordion > summary {
+    font-size: 13.5px;
+  }
+
+  .discoveryIntro {
+    font-size: 12.5px;
+  }
+
+  .discoveryActions {
+    gap: 7px;
+  }
+
+  .discoveryActions .primaryMapActionBtn,
+  #discoveryNextBtn,
+  #discoveryResetBtn {
+    width: 100%;
+  }
+}
+.placeSearchCard {
+  max-width: 760px;
+  margin: 12px auto 0;
+  padding: 10px 12px;
+}
+
+.placeSearchAccordion {
+  margin: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.placeSearchAccordion > summary {
+  padding: 0;
+  font-size: 14px;
+  font-weight: 700;
+  opacity: 0.82;
+}
+
+.placeSearchAccordion > summary:hover {
+  background: transparent;
+  padding-left: 0;
+}
+
+.placeSearchBody {
+  padding-top: 10px;
+}
+
+.placeSearchBody .placeSearchRow,
+.placeSearchBody #placeResults {
+  max-width: 560px;
+}
+
+.placeSearchBody #placeResults {
+  margin-top: 8px;
+}
+
+@media (max-width: 768px) {
+  .placeSearchCard {
+    margin: 10px auto 0;
+    padding: 9px 10px;
+  }
+
+  .placeSearchAccordion > summary {
+    font-size: 13.5px;
+  }
+}
