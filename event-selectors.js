@@ -13,6 +13,45 @@
     return Number.isFinite(m) ? m : null;
   }
 
+  function passesDiscoveryLeadTime(ev) {
+  const mins = safeMinutesToStart(ev);
+  const nearbyCenter = state.logic.nearbyCenter;
+
+  // si no hay hora, no lo bloqueamos
+  if (mins === null) return true;
+
+  // excepción: si está muy cerca (< 500 m), no exigimos +15 min
+  if (
+    nearbyCenter &&
+    util.isValidCoord(ev?.lat) &&
+    util.isValidCoord(ev?.lng)
+  ) {
+    const dist = util.distanceKm(
+      nearbyCenter.lat,
+      nearbyCenter.lng,
+      Number(ev.lat),
+      Number(ev.lng)
+    );
+
+    if (dist < 0.5) {
+      return true;
+    }
+  }
+
+  // resto: tiene que empezar en 15 min o más
+  return mins >= 15;
+}
+
+  function passesDiscoveryLeadTime(ev) {
+  const mins = safeMinutesToStart(ev);
+
+  // si no hay hora, no lo bloqueamos
+  if (mins === null) return true;
+
+  // mostrar solo lo que empieza en 30 min o más
+  return mins >= 15;
+}
+
 function isFeaturedEvent(ev) {
   const m = safeMinutesToStart(ev);
   if (m === null) return false;
@@ -351,7 +390,7 @@ function getDiscoveryBaseCandidates(list = state.logic.events) {
 
   return [...visibleToday, ...visibleFuture].filter((ev) => {
     const id = String(ev?.id || "").trim();
-    return id && !excluded.has(id);
+    return id && !excluded.has(id) && passesDiscoveryLeadTime(ev);
   });
 }
 
@@ -541,8 +580,10 @@ getFeaturedNearbyEvent,
     getSortedVisibleTodayEvents,
 
     getDiscoveryBaseCandidates,
+    passesDiscoveryLeadTime,
     scoreDiscoveryCandidate,
     buildDiscoveryReason,
+    passesDiscoveryLeadTime,
     getDiscoverySuggestion
   };
 })();

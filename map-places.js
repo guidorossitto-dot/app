@@ -94,18 +94,18 @@ function buildVenueGuideHTML() {
         state.logic.events || []
       );
 
-     const venueNameNorm = normalizeVenueGuideText(venue.name || "");
-const venueAddressNorm = normalizeVenueGuideText(venue.address || "");
+      const venueNameNorm = normalizeVenueGuideText(venue.name || "");
+      const venueAddressNorm = normalizeVenueGuideText(venue.address || "");
 
-const safeAddress =
-  venueAddressNorm && venueAddressNorm !== venueNameNorm
-    ? venue.address
-    : "";
+      const safeAddress =
+        venueAddressNorm && venueAddressNorm !== venueNameNorm
+          ? venue.address
+          : "";
 
-const meta = [
-  venue.neighborhood || "",
-  safeAddress
-].filter(Boolean).join(" · ");
+      const meta = [
+        venue.neighborhood || "",
+        safeAddress
+      ].filter(Boolean).join(" · ");
 
       const instagramBtn = venue.instagramUrl
         ? `
@@ -145,13 +145,16 @@ const meta = [
     if (!itemsHTML) return "";
 
     return `
-      <div class="venuesGuideSection">
-        <h4 class="venuesGuideTitle">${group.title}</h4>
-        <ul class="venuesGuideList">
-          ${itemsHTML}
-        </ul>
-      </div>
-    `;
+  <details class="venuesGuideCategory">
+    <summary class="venuesGuideCategorySummary">
+      <span>${group.title}</span>
+    </summary>
+
+    <ul class="venuesGuideList">
+      ${itemsHTML}
+    </ul>
+  </details>
+`;
   }).filter(Boolean).join("");
 
   return groupsHTML || `
