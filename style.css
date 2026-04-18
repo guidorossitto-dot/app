@@ -3494,10 +3494,30 @@ header button {
     font-size: 13.5px;
   }
 }
-
 @media (max-width: 768px) {
   .venuesGuideItem {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr) auto;
     gap: 8px;
+    align-items: center;
+  }
+
+  .venuesGuideMain {
+    min-width: 0;
+  }
+
+  .venuesGuideActions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 6px;
+    flex-wrap: nowrap;
+    align-self: center;
+  }
+
+  .venuesGuideActions .linkBtn {
+    min-height: 0;
+    padding: 0;
+    white-space: nowrap;
+    font-size: 11.5px;
   }
 }
