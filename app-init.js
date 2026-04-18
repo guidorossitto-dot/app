@@ -163,7 +163,7 @@ function bindUI() {
   App.ui.bindDeleteEventUI();
   bindMapFiltersToggle();
   bindMapLocateBtn();
-  bindBrandInstagramLink();    
+  bindBrandInstagramLink();   
   App.ui.bindAdminUI();
 }
 
