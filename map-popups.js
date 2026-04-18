@@ -89,6 +89,35 @@ if (!Number.isFinite(Number(venue.lat)) || !Number.isFinite(Number(venue.lng))) 
 const matchedVenue = findVenueForPopup(loc, placeNameFull || placeTitle);
 const menuUrl = String(matchedVenue?.menuUrl || "").trim();
 
+const instagramUrl = String(matchedVenue?.instagramUrl || "").trim();
+const websiteUrl = String(matchedVenue?.websiteUrl || "").trim();
+const address = String(matchedVenue?.address || "").trim();
+const neighborhood = String(matchedVenue?.neighborhood || "").trim();
+
+const venueMeta = [address, neighborhood].filter(Boolean).join(" · ");
+
+const instagramBtn = instagramUrl
+  ? `
+    <a class="popupBtn"
+      href="${instagramUrl}"
+      target="_blank"
+      rel="noopener noreferrer">
+      Instagram
+    </a>
+  `
+  : "";
+
+const websiteBtn = websiteUrl
+  ? `
+    <a class="popupBtn"
+      href="${websiteUrl}"
+      target="_blank"
+      rel="noopener noreferrer">
+      Web
+    </a>
+  `
+  : "";
+
     const sorted = getPopupEventsForLocation(loc.events || []);
     const total = sorted.length;
 
@@ -138,19 +167,22 @@ if (uniqueDates.length === 1) {
 
     let html = `
       <div class="popupCard">
-        <div class="popupHeader">
-          <div>
-            <div class="popupPlace">${placeTitle}</div>
-            <div class="popupSub">${subText}</div>
-          </div>
-        </div>
+       <div class="popupHeader">
+  <div>
+    <div class="popupPlace">${placeTitle}</div>
+    <div class="popupSub">${subText}</div>
+    ${venueMeta ? `<div class="popupSub popupSub--secondary">${venueMeta}</div>` : ""}
+  </div>
+</div>
 
-        <div class="popupActions">
-           ${centerBtn}
-            ${routeBtn}
-           ${menuBtn}
-            ${actionBtn}
-          </div>
+<div class="popupActions">
+   ${centerBtn}
+   ${routeBtn}
+   ${instagramBtn}
+   ${websiteBtn}
+   ${menuBtn}
+   ${actionBtn}
+</div>
 
         <div class="popupList">
     `;

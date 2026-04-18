@@ -5,6 +5,185 @@
   const App = window.App;
 const { util, state, events, selectors } = App;
 
+const VENUE_GUIDE_GROUPS = [
+  {
+    title: "🎯 Juegos",
+    venues: [
+      "DODA",
+      "Geek out!"
+    ]
+  },
+  {
+    title: "🏛 Centro cultural",
+    venues: [
+      "Cultural Thames",
+      "Centro Cultural Matienzo"
+    ]
+  },
+  {
+    title: "🖼️ Galería",
+    venues: [
+      "Museo de Arte Contemporáneo de Buenos Aires",
+      "Museo de Arte Decorativo"
+    ]
+  },
+  {
+    title: "🍷 Gastronomía",
+    venues: [
+      "Josefina Wine House"
+    ]
+  },
+  {
+    title: "🍸 Bar cultural",
+    venues: [
+    
+      "La Carbonera",
+      "Virasoro Bar"
+      
+    ]
+  },
+  {
+    title: "🎭 Teatro",
+    venues: [
+      "Teatro Payró",
+      "Teatro el extranjero"
+    ]
+  },
+  {
+    title: "🎬 Cine",
+    venues: [
+      "Cine Teatro Alvear",
+      "Cine Gaumont"
+    ]
+  }
+];
+
+function normalizeVenueGuideText(value) {
+  return String(value || "")
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+}
+
+function findVenueForGuide(name) {
+  const venues = Array.isArray(state.logic?.venues) ? state.logic.venues : [];
+  const wanted = normalizeVenueGuideText(name);
+
+  return venues.find((venue) => {
+    const venueName = normalizeVenueGuideText(venue?.name);
+    const shortName = normalizeVenueGuideText(util.shortPlaceName(venue?.name || ""));
+    return venueName === wanted || shortName === wanted;
+  }) || null;
+}
+
+function buildVenueGuideHTML() {
+  const groupsHTML = VENUE_GUIDE_GROUPS.map((group) => {
+    const itemsHTML = (group.venues || []).map((venueName) => {
+      const venue = findVenueForGuide(venueName);
+      if (!venue || !Number.isFinite(Number(venue.lat)) || !Number.isFinite(Number(venue.lng))) {
+        return "";
+      }
+
+      const key = util.smartLocationKey(
+        {
+          placeName: venue.name,
+          lat: Number(venue.lat),
+          lng: Number(venue.lng)
+        },
+        state.logic.events || []
+      );
+
+     const venueNameNorm = normalizeVenueGuideText(venue.name || "");
+const venueAddressNorm = normalizeVenueGuideText(venue.address || "");
+
+const safeAddress =
+  venueAddressNorm && venueAddressNorm !== venueNameNorm
+    ? venue.address
+    : "";
+
+const meta = [
+  venue.neighborhood || "",
+  safeAddress
+].filter(Boolean).join(" · ");
+
+      const instagramBtn = venue.instagramUrl
+        ? `
+          <a
+            class="linkBtn"
+            href="${venue.instagramUrl}"
+            target="_blank"
+            rel="noopener noreferrer">
+            Instagram
+          </a>
+        `
+        : "";
+
+      return `
+        <li class="venuesGuideItem">
+          <div class="venuesGuideMain">
+            <div class="venuesGuidePlace" data-place-title>${venue.name}</div>
+            ${meta ? `<div class="venuesGuideMeta">${meta}</div>` : ""}
+          </div>
+
+          <div class="venuesGuideActions">
+            ${instagramBtn}
+
+            <button
+              type="button"
+              class="linkBtn venuesGuideMapBtn"
+              data-lat="${Number(venue.lat)}"
+              data-lng="${Number(venue.lng)}"
+              data-key="${key}">
+              Ver en mapa
+            </button>
+          </div>
+        </li>
+      `;
+    }).filter(Boolean).join("");
+
+    if (!itemsHTML) return "";
+
+    return `
+      <div class="venuesGuideSection">
+        <h4 class="venuesGuideTitle">${group.title}</h4>
+        <ul class="venuesGuideList">
+          ${itemsHTML}
+        </ul>
+      </div>
+    `;
+  }).filter(Boolean).join("");
+
+  return groupsHTML || `
+    <div class="nearbySmall">
+      Todavía no hay lugares listos para mostrar en esta guía.
+    </div>
+  `;
+}
+
+function renderVenueGuide() {
+  const root = document.getElementById("venuesGuide");
+  if (!root) return;
+
+  root.innerHTML = buildVenueGuideHTML();
+}
+
+function bindVenueGuideUI() {
+  const root = document.getElementById("venuesGuide");
+  if (!root || root.dataset.bound === "true") return;
+  root.dataset.bound = "true";
+
+  root.addEventListener("click", (e) => {
+    const btn = e.target.closest(".venuesGuideMapBtn");
+    if (!btn) return;
+
+    e.preventDefault();
+    e.stopPropagation();
+
+    App.actions?.focusPlaceOnMapFlow?.({ button: btn });
+  });
+}
+
   /* =========================
      INPUTS USER
   ========================= */
@@ -508,6 +687,7 @@ setActivePopupIntent({
   }
 
   highlightNearbyMarkers(state.logic.nearbyEvents || []);
+  renderVenueGuide();
 }
 
   /* =========================
@@ -1140,8 +1320,11 @@ function focusPlaceByCoords(lat, lng, html, zoom = 17) {
     focusEventById,
     focusPlaceByCoords,
     openMarkerPopupStable,
+    renderVenueGuide,
+bindVenueGuideUI,
     clearAllEvents
   };
 
   App.map.bindPlaceSearchUI();
+  App.map.bindVenueGuideUI();
 })();
