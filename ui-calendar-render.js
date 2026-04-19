@@ -12,18 +12,22 @@
     return `${y}-${m}-${day}`;
   }
 
-  function eventsByDateMap() {
-    const mapObj = {};
-    const visible = util.filterByActiveCategory(state.logic.events || []);
+function eventsByDateMap() {
+  const mapObj = {};
 
-    for (const ev of visible) {
-      if (!ev?.date) continue;
-      if (!mapObj[ev.date]) mapObj[ev.date] = [];
-      mapObj[ev.date].push(ev);
-    }
+  const categoryFiltered = util.filterByActiveCategory(state.logic.events || []);
+  const visible = App.selectors?.applyBaficiFilter
+    ? App.selectors.applyBaficiFilter(categoryFiltered)
+    : categoryFiltered;
 
-    return mapObj;
+  for (const ev of visible) {
+    if (!ev?.date) continue;
+    if (!mapObj[ev.date]) mapObj[ev.date] = [];
+    mapObj[ev.date].push(ev);
   }
+
+  return mapObj;
+}
 
   function renderCalendar() {
     const cal = document.getElementById("calendar");

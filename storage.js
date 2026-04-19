@@ -81,6 +81,9 @@ function loadVenuesCache() {
     lat: Number(row.lat),
     lng: Number(row.lng),
 
+    sourceName: row.source_name || "",
+    sourceUrl: row.source_url || "",
+
     seriesId: row.series_id || "",
     recurrenceType: row.recurrence_type || "",
     recurrenceInterval: row.recurrence_interval,
@@ -166,6 +169,9 @@ function loadVenues() {
     lat: Number(safe.lat),
     lng: Number(safe.lng),
 
+    source_name: safe.sourceName || "",
+    source_url: safe.sourceUrl || "",
+
     series_id: safe.seriesId || null,
     recurrence_type: safe.recurrenceType || null,
     recurrence_interval: Number.isFinite(safe.recurrenceInterval)
@@ -176,6 +182,7 @@ function loadVenues() {
     updated_at: new Date().toISOString()
   };
 }
+
   async function loadEvents() {
   const db = App.supabase;
   if (!db) {

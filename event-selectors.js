@@ -13,14 +13,14 @@
     return Number.isFinite(m) ? m : null;
   }
 
-  function passesDiscoveryLeadTime(ev) {
+ function passesDiscoveryLeadTime(ev) {
   const mins = safeMinutesToStart(ev);
   const nearbyCenter = state.logic.nearbyCenter;
 
-  // si no hay hora, no lo bloqueamos
+  // Si no hay hora, no lo bloqueamos
   if (mins === null) return true;
 
-  // excepción: si está muy cerca (< 500 m), no exigimos +15 min
+  // Excepción: si está muy cerca (< 500 m), no exigimos lead time
   if (
     nearbyCenter &&
     util.isValidCoord(ev?.lat) &&
@@ -38,17 +38,7 @@
     }
   }
 
-  // resto: tiene que empezar en 15 min o más
-  return mins >= 15;
-}
-
-  function passesDiscoveryLeadTime(ev) {
-  const mins = safeMinutesToStart(ev);
-
-  // si no hay hora, no lo bloqueamos
-  if (mins === null) return true;
-
-  // mostrar solo lo que empieza en 30 min o más
+  // Resto: tiene que empezar en 15 min o más
   return mins >= 15;
 }
 
@@ -216,20 +206,29 @@ function getFeaturedRank(ev) {
   /* =========================
      FILTERED VIEWS
   ========================= */
+function applyBaficiFilter(list = []) {
+  const safe = Array.isArray(list) ? list : [];
+  if (!state.logic.baficiOnly) return safe;
+  return safe.filter(isBaficiEvent);
+}
+  
 function getVisibleTodayEvents(list = state.logic.events) {
   const todayEvents = util.getTodayEvents(list);
   const filtered = util.filterByActiveCategory(todayEvents);
+  const baficiFiltered = applyBaficiFilter(filtered);
 
-  return filtered.filter(isStillRelevantForTodayAccordion);
+  return baficiFiltered.filter(isStillRelevantForTodayAccordion);
 }
 
-  function getVisibleFutureEvents(list = state.logic.events) {
-    return util.filterByActiveCategory(util.getFutureEvents(list));
-  }
+function getVisibleFutureEvents(list = state.logic.events) {
+  const filtered = util.filterByActiveCategory(util.getFutureEvents(list));
+  return applyBaficiFilter(filtered);
+}
 
-  function getVisibleEventsOnDate(dateStr, list = state.logic.events) {
-    return util.filterByActiveCategory(util.getEventsOnDate(dateStr, list));
-  }
+function getVisibleEventsOnDate(dateStr, list = state.logic.events) {
+  const filtered = util.filterByActiveCategory(util.getEventsOnDate(dateStr, list));
+  return applyBaficiFilter(filtered);
+}
 
   function isMapPersistentCategory(category) {
   const cat = util.normalizeCategory(category);
@@ -286,7 +285,8 @@ function isEventVisibleOnMap(ev, now = new Date()) {
 
 function getMapVisibleEvents(list = state.logic.events) {
   const base = util.filterByActiveCategory(Array.isArray(list) ? list : []);
-  return base.filter((ev) => isEventVisibleOnMap(ev));
+  const baficiFiltered = applyBaficiFilter(base);
+  return baficiFiltered.filter((ev) => isEventVisibleOnMap(ev));
 }
 
   function getGroupedTodayEvents(list = state.logic.events) {
@@ -304,8 +304,9 @@ function getMapVisibleEvents(list = state.logic.events) {
   /* =========================
      FEATURED / NEARBY
   ========================= */
-  function getTodayNearbyEvents(list = state.logic.nearbyEvents) {
-  return util.getTodayEvents(list || []);
+ function getTodayNearbyEvents(list = state.logic.nearbyEvents) {
+  const today = util.getTodayEvents(list || []);
+  return applyBaficiFilter(today);
 }
 
   function getFeaturedNearbyEvents(list = state.logic.nearbyEvents) {
@@ -545,6 +546,115 @@ function getDiscoverySuggestion() {
   };
 }
 
+function isBaficiModeActive(now = new Date()) {
+  if (!App.CFG?.BAFICI_MODE_ENABLED) return false;
+
+  const start = String(App.CFG.BAFICI_MODE_START || "").trim();
+  const end = String(App.CFG.BAFICI_MODE_END || "").trim();
+  const today = util.todayStrYYYYMMDD();
+
+  if (start && today < start) return false;
+  if (end && today > end) return false;
+  return true;
+}
+
+function isBaficiEvent(ev) {
+  if (!ev) return false;
+
+  const allowedSources = Array.isArray(App.CFG?.BAFICI_SOURCE_NAMES)
+    ? App.CFG.BAFICI_SOURCE_NAMES.map((s) => String(s).trim().toLowerCase())
+    : [];
+
+  const source = String(ev.sourceName || ev.source_name || "").trim().toLowerCase();
+  if (source && allowedSources.includes(source)) return true;
+
+  const link = String(ev.link || "").trim().toLowerCase();
+  if (link.includes("bafici")) return true;
+
+  const place = String(ev.placeName || "").trim().toLowerCase();
+  const title = String(ev.title || "").trim().toLowerCase();
+  const cat = String(ev.category || "").trim().toLowerCase();
+  const date = String(ev.date || "").slice(0, 10);
+
+  const start = String(App.CFG?.BAFICI_MODE_START || "").trim();
+  const end = String(App.CFG?.BAFICI_MODE_END || "").trim();
+
+  const inFestivalRange = !!date && !!start && !!end && date >= start && date <= end;
+
+  const knownBaficiVenues = [
+    "teatro san martín",
+    "sala lugones",
+    "hall alcón",
+    "casacuberta",
+    "coronado",
+    "cine teatro alvear",
+    "centro cultural 25 de mayo",
+    "cinépolis plaza houssay",
+    "cinepolis plaza houssay",
+    "cinépolis recoleta",
+    "cinepolis recoleta",
+    "cinearte cacodelphia",
+    "cine gaumont",
+    "usina del arte",
+    "museo del cine",
+    "pablo ducrós hicken",
+    "pablo ducros hicken"
+  ];
+
+  const matchesKnownVenue = knownBaficiVenues.some((v) => place.includes(v));
+
+  if (inFestivalRange && cat === "cinema" && (matchesKnownVenue || title.includes("bafici"))) {
+    return true;
+  }
+
+  return false;
+}
+
+function getBaficiEvents(list = state.logic.events) {
+  const safe = Array.isArray(list) ? list : [];
+  return safe.filter(isBaficiEvent);
+}
+
+function getVisibleBaficiEvents(list = state.logic.events) {
+  return util.filterByActiveCategory(getBaficiEvents(list));
+}
+
+function getTodayBaficiEvents(list = state.logic.events) {
+  return util.getTodayEvents(getVisibleBaficiEvents(list));
+}
+
+function getSoonBaficiEvents(list = state.logic.events) {
+  const soonMin = Number(App.CFG?.BAFICI_SOON_MIN ?? 120);
+
+  return getTodayBaficiEvents(list)
+    .filter((ev) => {
+      const mins = safeMinutesToStart(ev);
+      return mins !== null && mins >= -15 && mins <= soonMin;
+    })
+    .sort((a, b) => {
+      const ma = safeMinutesToStart(a);
+      const mb = safeMinutesToStart(b);
+      return (ma ?? 999999) - (mb ?? 999999);
+    });
+}
+
+function getBaficiHeroData(list = state.logic.events) {
+  if (!isBaficiModeActive()) return null;
+
+  const all = getBaficiEvents(list);
+  if (!all.length) return null;
+
+  const today = getTodayBaficiEvents(list);
+  const soon = getSoonBaficiEvents(list);
+
+  return {
+    total: all.length,
+    todayCount: today.length,
+    soonCount: soon.length,
+    nextEvent: soon[0] || today[0] || all[0] || null
+  };
+}
+
   /* =========================
      EXPORT
   ========================= */
@@ -583,7 +693,15 @@ getFeaturedNearbyEvent,
     passesDiscoveryLeadTime,
     scoreDiscoveryCandidate,
     buildDiscoveryReason,
-    passesDiscoveryLeadTime,
-    getDiscoverySuggestion
+    getDiscoverySuggestion,
+
+        isBaficiModeActive,
+    isBaficiEvent,
+    getBaficiEvents,
+    getVisibleBaficiEvents,
+    getTodayBaficiEvents,
+    getSoonBaficiEvents,
+    getBaficiHeroData,
+    applyBaficiFilter,
   };
 })();

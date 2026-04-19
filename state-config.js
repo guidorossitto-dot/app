@@ -74,6 +74,7 @@ App.CFG.ALLOWED_CATEGORIES = Object.keys(App.CFG.CATEGORIES);
   calendarCursor: new Date(),
   favorites: [],
   favoritesOnly: false,
+  baficiOnly: false,
   activeCategory: App.CFG.CATEGORY_ALL,
   editingEventId: null,
   editingMode: null,
@@ -107,6 +108,9 @@ App.CFG.ALLOWED_CATEGORIES = Object.keys(App.CFG.CATEGORIES);
   temporaryFocusMarker: null,
   pendingCalendarDate: null,
 
+  festivalTickerInterval: null,
+festivalTickerIndex: 0,
+
 activePopupLocationKey: null,
 activePopupEventId: null,
 activePopupLatLng: null,
@@ -127,6 +131,21 @@ pendingMapClickTimer: null,
   }
 }
   };
+
+
+  App.CFG = {
+  ...(App.CFG || {}),
+
+  BAFICI_MODE_ENABLED: true,
+  BAFICI_MODE_START: "2026-04-01",
+  BAFICI_MODE_END: "2026-04-26",
+
+  BAFICI_SOURCE_NAMES: ["bafici_web", "bafici_pdf"],
+  BAFICI_CHIP_LABEL: "🎬 BAFICI",
+  BAFICI_HERO_TITLE: "🎬 BAFICI ahora",
+  BAFICI_HERO_TEXT: "Funciones y sedes del festival en tu mapa.",
+  BAFICI_SOON_MIN: 120
+};
 
   /* =========================
      BASIC HELPERS
@@ -381,6 +400,9 @@ function categoryLabel(cat) {
     category: normalizeCategory(raw?.category),
     link: (raw?.link ?? "").toString().trim(),
     flyerUrl: (raw?.flyerUrl ?? raw?.flyer_url ?? "").toString().trim(),
+
+    sourceName: (raw?.sourceName ?? raw?.source_name ?? "").toString().trim(),
+sourceUrl: (raw?.sourceUrl ?? raw?.source_url ?? "").toString().trim(),
 
     seriesId: (raw?.seriesId ?? "").toString().trim(),
     recurrenceType: (raw?.recurrenceType ?? "").toString().trim(),

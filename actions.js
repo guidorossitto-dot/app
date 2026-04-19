@@ -22,9 +22,12 @@ async function logout() {
      LOGIC STATE
   ========================= */
 function selectCategory(category) {
+  if (App.state.logic.baficiOnly) {
+    App.state.logic.baficiOnly = false;
+  }
+
   return App.events?.setActiveCategory?.(category);
 }
-
   function setCalendarMonth(date) {
   return App.events?.setCalendarCursor?.(date);
 }
@@ -299,6 +302,28 @@ function setFavoritesOnly(value) {
 
 function toggleFavoritesOnly() {
   return App.events?.setFavoritesOnly?.(!App.events?.getFavoritesOnly?.());
+}
+
+function setBaficiOnly(value) {
+  const nextValue = !!value;
+  App.state.logic.baficiOnly = nextValue;
+
+  if (nextValue) {
+    App.events?.setActiveCategory?.("all");
+  }
+
+  App.commit?.({
+    persist: false,
+    purgePast: false,
+    rebuildMarkers: true,
+    recomputeNearby: true
+  });
+
+  return App.state.logic.baficiOnly;
+}
+
+function toggleBaficiOnly() {
+  return setBaficiOnly(!App.state.logic.baficiOnly);
 }
 
 function setDiscoveryMode(mode) {
@@ -959,6 +984,9 @@ async function deleteSkippedCandidateFlow(candidateId = "") {
     processQueuedCalendarDateFlow,
         setFavoritesOnly,
     toggleFavoritesOnly,
+
+    setBaficiOnly,
+toggleBaficiOnly,
 
     setDiscoveryMode,
     generateDiscoveryFlow,

@@ -640,11 +640,11 @@ function updateNearbyCount(list = state.logic.nearbyEvents) {
     }
 
     if (focus.type === "day" && focus.dateStr) {
-      const dayEvents = util.getEventsOnDate(focus.dateStr, state.logic.events || []);
+        const dayEvents = selectors.getVisibleEventsOnDate(focus.dateStr, state.logic.events || []);
 
       if (focus.dateStr === today) {
         return {
-          todayList: util.filterByActiveCategory(dayEvents),
+          todayList: dayEvents,
           todayEmpty: "No hay eventos hoy",
           futureList: [],
           futureEmpty: "No hay próximos eventos"
@@ -655,7 +655,7 @@ function updateNearbyCount(list = state.logic.nearbyEvents) {
         return {
           todayList: selectors.getVisibleTodayEvents(state.logic.events || []),
           todayEmpty: "No hay eventos hoy",
-          futureList: util.filterByActiveCategory(dayEvents),
+          futureList: dayEvents,
           futureEmpty: "No hay eventos ese día"
         };
       }
@@ -684,8 +684,10 @@ function updateNearbyCount(list = state.logic.nearbyEvents) {
 
       if (dateStr === today) {
         return {
-          todayList: util.filterByActiveCategory([ev]),
-          todayEmpty: "No hay eventos hoy",
+        todayList: selectors.applyBaficiFilter
+            ? selectors.applyBaficiFilter(util.filterByActiveCategory([ev]))
+           : util.filterByActiveCategory([ev]),
+            todayEmpty: "No hay eventos hoy",
           futureList: [],
           futureEmpty: "No hay próximos eventos"
         };
@@ -695,8 +697,10 @@ function updateNearbyCount(list = state.logic.nearbyEvents) {
         return {
           todayList: selectors.getVisibleTodayEvents(state.logic.events || []),
           todayEmpty: "No hay eventos hoy",
-          futureList: util.filterByActiveCategory([ev]),
-          futureEmpty: "No hay próximos eventos"
+        futureList: selectors.applyBaficiFilter
+          ? selectors.applyBaficiFilter(util.filterByActiveCategory([ev]))
+          : util.filterByActiveCategory([ev]),
+            futureEmpty: "No hay próximos eventos"
         };
       }
 

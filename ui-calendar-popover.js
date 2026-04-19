@@ -482,7 +482,9 @@ pop.querySelectorAll('.calendarDayPopover__item a.linkBtn').forEach((link) => {
   const safeDate = String(dateStr || "").trim();
   if (!safeDate) return { ok: false, error: "MISSING_DATE" };
 
-  const dayEvents = util.getEventsOnDate(safeDate, state.logic.events || []);
+const dayEvents = App.selectors?.getVisibleEventsOnDate
+  ? App.selectors.getVisibleEventsOnDate(safeDate, state.logic.events || [])
+  : util.getEventsOnDate(safeDate, state.logic.events || []);
 
   if (anchorEl) {
     showCalendarDayPopover(anchorEl, safeDate, dayEvents);
@@ -518,7 +520,9 @@ pop.querySelectorAll('.calendarDayPopover__item a.linkBtn').forEach((link) => {
   const cell = cal.querySelector(`.day[data-date="${safeDate}"]`);
   if (!cell) return { ok: false, error: "DAY_CELL_NOT_FOUND", dateStr: safeDate };
 
-  const dayEvents = util.getEventsOnDate(safeDate, state.logic.events || []);
+const dayEvents = App.selectors?.getVisibleEventsOnDate
+  ? App.selectors.getVisibleEventsOnDate(safeDate, state.logic.events || [])
+  : util.getEventsOnDate(safeDate, state.logic.events || []);
 
   removeCalendarPopover();
   App.ui?.clearListFocus?.();

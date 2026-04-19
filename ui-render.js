@@ -154,6 +154,126 @@ function renderDiscovery() {
   `;
 }
 
+function renderFestivalHero() {
+  const pageShell = document.querySelector("#publicView .pageShell");
+  const appLayout = document.querySelector(".appLayout");
+  if (!pageShell || !appLayout) return;
+
+  const existing = document.getElementById("festivalHeroCard");
+  if (existing) existing.remove();
+
+  const data = App.selectors?.getBaficiHeroData?.();
+  if (!data) return;
+
+  const soonList = (App.selectors?.getSoonBaficiEvents?.() || []).slice(0, 8);
+
+  const card = document.createElement("section");
+  card.className = "panelCard festivalHeroCard";
+  card.id = "festivalHeroCard";
+
+  card.innerHTML = `
+    <div class="festivalHeroTop">
+      <div>
+        <div class="festivalHeroKicker">Modo festival</div>
+        <h2 class="festivalHeroTitle">${App.CFG?.BAFICI_HERO_TITLE || "🎬 BAFICI ahora"}</h2>
+        <p class="festivalHeroText">${App.CFG?.BAFICI_HERO_TEXT || ""}</p>
+      </div>
+
+      <div class="festivalHeroStats">
+        <span class="festivalStat">${data.todayCount} hoy</span>
+        <span class="festivalStat">${data.soonCount} pronto</span>
+      </div>
+    </div>
+
+    <div class="festivalHeroActions">
+      <button
+        type="button"
+        class="chip festivalChip"
+        id="baficiOnlyChip">
+        ${App.CFG?.BAFICI_CHIP_LABEL || "🎬 BAFICI"}
+      </button>
+    </div>
+
+    ${
+      soonList.length
+        ? `
+          <div class="festivalTicker" id="festivalTicker">
+            <div class="festivalTicker__item" id="festivalTickerItem">
+              ${(() => {
+  const initialIndex =
+    soonList.length > 0
+      ? (Number(App.state.runtime.festivalTickerIndex || 0) % soonList.length + soonList.length) % soonList.length
+      : 0;
+
+  const ev = soonList[initialIndex];
+  const evTime = (ev?.startTime || "").slice(0, 5);
+  const evTitle = ev?.title || "Función";
+  const evPlace = App.util?.shortPlaceName?.(ev?.placeName) || "";
+  return `${evTime ? `${evTime} · ` : ""}${evTitle}${evPlace ? ` · ${evPlace}` : ""}`;
+})()}
+            </div>
+          </div>
+        `
+        : ""
+    }
+  `;
+
+  pageShell.insertBefore(card, appLayout);
+
+  const baficiChip = card.querySelector("#baficiOnlyChip");
+  if (baficiChip) {
+    baficiChip.classList.toggle("isActive", !!App.state.logic.baficiOnly);
+
+    baficiChip.addEventListener("click", () => {
+      App.actions?.toggleBaficiOnly?.();
+    });
+  }
+
+  const tickerEl = card.querySelector("#festivalTickerItem");
+
+if (tickerEl && soonList.length > 0) {
+  let tickerIndex = Number(App.state.runtime.festivalTickerIndex || 0);
+  if (!Number.isFinite(tickerIndex) || tickerIndex < 0) tickerIndex = 0;
+  tickerIndex = tickerIndex % soonList.length;
+
+  const currentEv = soonList[tickerIndex];
+  if (currentEv) {
+    const evTime = (currentEv?.startTime || "").slice(0, 5);
+    const evTitle = currentEv?.title || "Función";
+    const evPlace = App.util?.shortPlaceName?.(currentEv?.placeName) || "";
+
+    tickerEl.textContent = `${evTime ? `${evTime} · ` : ""}${evTitle}${evPlace ? ` · ${evPlace}` : ""}`;
+  }
+
+  window.clearInterval(App.state.runtime.festivalTickerInterval);
+
+  if (soonList.length > 1) {
+    App.state.runtime.festivalTickerInterval = window.setInterval(() => {
+      tickerEl.classList.add("is-leaving");
+
+      window.setTimeout(() => {
+        tickerIndex = (tickerIndex + 1) % soonList.length;
+        App.state.runtime.festivalTickerIndex = tickerIndex;
+
+        const ev = soonList[tickerIndex];
+        const evTime = (ev?.startTime || "").slice(0, 5);
+        const evTitle = ev?.title || "Función";
+        const evPlace = App.util?.shortPlaceName?.(ev?.placeName) || "";
+
+        tickerEl.textContent = `${evTime ? `${evTime} · ` : ""}${evTitle}${evPlace ? ` · ${evPlace}` : ""}`;
+
+        tickerEl.classList.remove("is-leaving");
+        tickerEl.classList.add("is-entering");
+
+        window.setTimeout(() => {
+          tickerEl.classList.remove("is-entering");
+        }, 320);
+      }, 220);
+    }, 3700);
+  }
+}
+}
+
   function renderAll(opts = {}) {
     const finalOpts = {
       persist: false,
@@ -173,6 +293,7 @@ function renderDiscovery() {
     
        App.ui.renderAppShell();
     App.ui.renderLoginUI();
+    App.ui.renderFestivalHero?.();
     App.ui.renderDiscovery?.();
     App.ui.renderList();
     App.ui.renderCalendar();
@@ -202,6 +323,7 @@ function renderDiscovery() {
     App.ui.renderLoginUI = renderLoginUI;
   App.ui.renderDiscovery = renderDiscovery;
   App.ui.bindLoginUI = bindLoginUI;
+  App.ui.renderFestivalHero = renderFestivalHero;
 
   App.renderAll = renderAll;
   App.commit = commit;

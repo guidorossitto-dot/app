@@ -3328,3 +3328,124 @@ header button {
     font-size: 11.5px;
   }
 }
+
+.festivalHeroCard {
+  margin-bottom: 14px;
+  border: 1px solid #ead7b1;
+  background: linear-gradient(180deg, #fff8ec 0%, #ffffff 100%);
+}
+
+.festivalHeroTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.festivalHeroKicker {
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  opacity: 0.62;
+  margin-bottom: 4px;
+}
+
+.festivalHeroTitle {
+  margin: 0 0 4px;
+  font-size: 20px;
+}
+
+.festivalHeroText {
+  margin: 0;
+  font-size: 14px;
+  opacity: 0.78;
+}
+
+.festivalHeroStats {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.festivalStat {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.82);
+  border: 1px solid #ead7b1;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.festivalHeroActions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+  align-items: center;
+}
+
+.festivalChip {
+  font-weight: 700;
+}
+
+.festivalNextMapBtn {
+  font-weight: 600;
+}
+
+@media (max-width: 768px) {
+  .festivalHeroCard {
+    margin-bottom: 10px;
+  }
+
+  .festivalHeroTitle {
+    font-size: 18px;
+  }
+
+  .festivalHeroText {
+    font-size: 13px;
+  }
+}
+.festivalSoonList {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.festivalTicker {
+  margin-top: 10px;
+  overflow: hidden;
+  min-height: 22px;
+}
+
+.festivalTicker__item {
+  font-size: 13px;
+  font-weight: 600;
+  opacity: 0.82;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transform: translateX(0);
+transition:
+  opacity 300ms ease,
+  transform 300ms ease;
+}
+
+.festivalTicker__item.is-leaving {
+  opacity: 0;
+  transform: translateX(16px);
+}
+
+.festivalTicker__item.is-entering {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+@media (max-width: 768px) {
+  .festivalTicker__item {
+    font-size: 12px;
+  }
+}
