@@ -185,14 +185,18 @@ function renderFestivalHero() {
       </div>
     </div>
 
-    <div class="festivalHeroActions">
-      <button
-        type="button"
-        class="chip festivalChip"
-        id="baficiOnlyChip">
-        ${App.CFG?.BAFICI_CHIP_LABEL || "🎬 BAFICI"}
-      </button>
-    </div>
+<div class="festivalHeroActions">
+  <button
+    type="button"
+    class="chip festivalChip"
+    id="baficiOnlyChip">
+    ${App.CFG?.BAFICI_CHIP_LABEL || "🎬 BAFICI"}
+  </button>
+</div>
+
+<div class="festivalHeroHint">
+  Tocá 🎬 BAFICI para seguir solo la programación
+</div>
 
     ${
       soonList.length

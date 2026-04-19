@@ -3319,16 +3319,6 @@ header button {
   font-weight: 600;
 }
 
-@media (max-width: 768px) {
-  .discoveryActions .primaryMapActionBtn,
-  #discoveryNextBtn,
-  #discoveryResetBtn {
-    width: auto;
-    padding: 6px 9px;
-    font-size: 11.5px;
-  }
-}
-
 .festivalHeroCard {
   margin-bottom: 14px;
   border: 1px solid #ead7b1;
@@ -3374,7 +3364,7 @@ header button {
   align-items: center;
   padding: 6px 10px;
   border-radius: 999px;
-  background: rgba(255,255,255,0.82);
+  background: rgba(255, 255, 255, 0.82);
   border: 1px solid #ead7b1;
   font-size: 12px;
   font-weight: 700;
@@ -3392,27 +3382,11 @@ header button {
   font-weight: 700;
 }
 
-.festivalNextMapBtn {
-  font-weight: 600;
-}
-
-@media (max-width: 768px) {
-  .festivalHeroCard {
-    margin-bottom: 10px;
-  }
-
-  .festivalHeroTitle {
-    font-size: 18px;
-  }
-
-  .festivalHeroText {
-    font-size: 13px;
-  }
-}
-.festivalSoonList {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
+.festivalHeroHint {
+  margin-top: 8px;
+  font-size: 12px;
+  line-height: 1.35;
+  opacity: 0.68;
 }
 
 .festivalTicker {
@@ -3429,9 +3403,9 @@ header button {
   overflow: hidden;
   text-overflow: ellipsis;
   transform: translateX(0);
-transition:
-  opacity 300ms ease,
-  transform 300ms ease;
+  transition:
+    opacity 300ms ease,
+    transform 300ms ease;
 }
 
 .festivalTicker__item.is-leaving {
@@ -3445,7 +3419,63 @@ transition:
 }
 
 @media (max-width: 768px) {
-  .festivalTicker__item {
+  .festivalHeroCard {
+    padding: 10px 11px;
+    margin-bottom: 8px;
+    border-radius: 12px;
+  }
+
+  .festivalHeroTop {
+    gap: 8px;
+  }
+
+  .festivalHeroKicker {
+    font-size: 10px;
+    margin-bottom: 3px;
+  }
+
+  .festivalHeroTitle {
+    font-size: 16px;
+    margin: 0 0 2px;
+    line-height: 1.15;
+  }
+
+  .festivalHeroText {
     font-size: 12px;
+    line-height: 1.3;
+  }
+
+  .festivalHeroStats {
+    gap: 6px;
+  }
+
+  .festivalStat {
+    padding: 5px 8px;
+    font-size: 11px;
+  }
+
+  .festivalHeroActions {
+    margin-top: 8px;
+    gap: 6px;
+  }
+
+  .festivalChip {
+    padding: 5px 8px;
+    font-size: 12px;
+  }
+
+  .festivalHeroHint {
+    margin-top: 6px;
+    font-size: 11px;
+    line-height: 1.25;
+  }
+
+  .festivalTicker {
+    margin-top: 8px;
+    min-height: 18px;
+  }
+
+  .festivalTicker__item {
+    font-size: 11.5px;
   }
 }
