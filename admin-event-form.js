@@ -49,6 +49,7 @@
   }
 
   function readAdminEventFormValues() {
+      const weeklyMultiDayValuesEl = document.getElementById("weeklyMultiDayValues");
     const titleEl = document.getElementById("eventTitle");
     const dateEl = document.getElementById("eventDate");
     const latEl = document.getElementById("eventLat");
@@ -74,6 +75,7 @@
         linkEl,
         flyerEl,
         venueMenuUrlEl,
+        weeklyMultiDayValuesEl,
         createModeEl,
         endDateEl
       },
@@ -89,6 +91,7 @@
         link: linkEl?.value.trim() || "",
         flyerUrl: flyerEl?.value.trim() || "",
         venueMenuUrl: venueMenuUrlEl?.value.trim() || "",
+        weeklyMultiDayValues: weeklyMultiDayValuesEl?.value.trim() || "", 
         createMode: createModeEl?.value || "single",
         endDate: endDateEl?.value?.trim() || ""
       }
@@ -113,15 +116,27 @@
     }
 
     if (
-      (v.createMode === "dailyRange" || v.createMode === "weeklyRange") &&
-      (!v.date || !v.endDate)
-    ) {
-      return {
-        ok: false,
-        error: "MISSING_RANGE",
-        message: "Completá fecha inicio y fecha fin."
-      };
-    }
+  (
+    v.createMode === "dailyRange" ||
+    v.createMode === "weeklyRange" ||
+    v.createMode === "weeklyMultiDayRange"
+  ) &&
+  (!v.date || !v.endDate)
+) {
+  return {
+    ok: false,
+    error: "MISSING_RANGE",
+    message: "Completá fecha inicio y fecha fin."
+  };
+}
+
+if (v.createMode === "weeklyMultiDayRange" && !v.weeklyMultiDayValues) {
+  return {
+    ok: false,
+    error: "MISSING_WEEKDAYS",
+    message: "Elegí al menos un día de la semana."
+  };
+}
 
     return { ok: true };
   }
@@ -158,6 +173,18 @@
     const endDateLabelEl = document.getElementById("eventEndDateLabel");
     const venueSearchInput = document.getElementById("venueSearchInput");
     const venueSuggestions = document.getElementById("venueSuggestions");
+    const weeklyMultiDayValuesEl = document.getElementById("weeklyMultiDayValues");
+    const weeklyMultiDayPickerEl = document.getElementById("weeklyMultiDayPicker");
+    const weeklyMultiDayChipsRow = document.getElementById("weeklyMultiDayChips");
+
+if (weeklyMultiDayValuesEl) weeklyMultiDayValuesEl.value = "";
+if (weeklyMultiDayPickerEl) weeklyMultiDayPickerEl.hidden = true;
+
+if (weeklyMultiDayChipsRow) {
+  [...weeklyMultiDayChipsRow.querySelectorAll("[data-dow]")].forEach((btn) => {
+    btn.classList.remove("isActive");
+  });
+}
 
     if (titleEl) titleEl.value = "";
     if (dateEl) dateEl.value = "";
@@ -217,20 +244,21 @@
       return;
     }
 
-    let {
-      title,
-      date,
-      lat,
-      lng,
-      placeName,
-      startTime,
-      category,
-      link,
-      flyerUrl,
-      venueMenuUrl,
-      createMode,
-      endDate
-    } = values;
+   let {
+  title,
+  date,
+  lat,
+  lng,
+  placeName,
+  startTime,
+  category,
+  link,
+  flyerUrl,
+  venueMenuUrl,
+  createMode,
+  endDate,
+  weeklyMultiDayValues
+} = values;
 
     const canonical = findCanonicalPlace(placeName, lat, lng);
     if (canonical) {
@@ -278,18 +306,67 @@
     } else {
             const baseEvent = { ...patch };
 
-      const buildResult = App.events?.buildEventsFromCreateMode?.(baseEvent, {
-        mode: createMode,
-        startDate: date,
-        endDate
+let eventsToCreate = [];
+
+if (createMode === "weeklyMultiDayRange") {
+  const weekdays = String(weeklyMultiDayValues || "")
+    .split(",")
+    .map((v) => Number(v))
+    .filter((n) => Number.isInteger(n) && n >= 0 && n <= 6);
+
+  if (!endDate) {
+    alert("Completá fecha inicio y fecha fin.");
+    return;
+  }
+
+  if (!weekdays.length) {
+    alert("Elegí al menos un día de la semana.");
+    return;
+  }
+
+  const start = new Date(`${date}T00:00:00`);
+  const end = new Date(`${endDate}T00:00:00`);
+
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || start > end) {
+    alert("Revisá el rango de fechas.");
+    return;
+  }
+
+  const wantedSet = new Set(weekdays);
+  const cur = new Date(start);
+
+  while (cur <= end) {
+    const dow = cur.getDay();
+
+    if (wantedSet.has(dow)) {
+      const y = cur.getFullYear();
+      const m = String(cur.getMonth() + 1).padStart(2, "0");
+      const d = String(cur.getDate()).padStart(2, "0");
+
+      eventsToCreate.push({
+        ...baseEvent,
+        date: `${y}-${m}-${d}`
       });
+    }
 
-      if (!buildResult?.ok) {
-        alert(buildResult?.message || "No se pudieron preparar los eventos.");
-        return;
-      }
+    cur.setDate(cur.getDate() + 1);
 
-      const eventsToCreate = buildResult.events || [];
+    if (eventsToCreate.length > 366) break;
+  }
+} else {
+  const buildResult = App.events?.buildEventsFromCreateMode?.(baseEvent, {
+    mode: createMode,
+    startDate: date,
+    endDate
+  });
+
+  if (!buildResult?.ok) {
+    alert(buildResult?.message || "No se pudieron preparar los eventos.");
+    return;
+  }
+
+  eventsToCreate = buildResult.events || [];
+}
 
       const saveResult = await App.events?.addEventsRemote?.(eventsToCreate);
 
@@ -321,6 +398,7 @@ if (!ensuredVenueResult?.ok) {
 
     if (addBtn) addBtn.textContent = "Agregar evento";
     if (cancelBtn) cancelBtn.hidden = true;
+
 
 App.commit?.({
   persist: false,

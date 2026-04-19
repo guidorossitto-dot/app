@@ -76,6 +76,46 @@
     return out;
   }
 
+  function generateWeeklyMultiDayOccurrences(baseEvent, startDate, endDate, weekdays = []) {
+  const out = [];
+
+  if (!baseEvent || !startDate || !endDate) return out;
+
+  const start = new Date(`${startDate}T00:00:00`);
+  const end = new Date(`${endDate}T00:00:00`);
+
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return out;
+  if (start > end) return out;
+
+  const wantedDays = Array.isArray(weekdays)
+    ? weekdays
+        .map((n) => Number(n))
+        .filter((n) => Number.isInteger(n) && n >= 0 && n <= 6)
+    : [];
+
+  if (!wantedDays.length) return out;
+
+  const wantedSet = new Set(wantedDays);
+  const cur = new Date(start);
+
+  while (cur <= end) {
+    const dow = cur.getDay(); // 0 dom, 1 lun, ... 6 sab
+
+    if (wantedSet.has(dow)) {
+      out.push({
+        ...baseEvent,
+        date: formatYMD(cur)
+      });
+    }
+
+    cur.setDate(cur.getDate() + 1);
+
+    if (out.length > 366) break;
+  }
+
+  return out;
+}
+
   function renderGroupedList(ul, list) {
     if (!ul) return;
     ul.innerHTML = "";
@@ -1491,18 +1531,61 @@ async function saveVenueForSelectedCandidate() {
   const endDateEl = document.getElementById("eventEndDate");
   const endDateLabelEl = document.getElementById("eventEndDateLabel");
 
-  function syncCreateModeUI() {
+const weeklyMultiDayValuesEl = document.getElementById("weeklyMultiDayValues");
+const weeklyMultiDayChipsRow = document.getElementById("weeklyMultiDayChips");
+
+const weeklyMultiDayPickerEl = document.getElementById("weeklyMultiDayPicker");
+
+function readWeeklyMultiDayValues() {
+  const raw = String(weeklyMultiDayValuesEl?.value || "").trim();
+  if (!raw) return [];
+
+  return raw
+    .split(",")
+    .map((v) => Number(v))
+    .filter((n) => Number.isInteger(n) && n >= 0 && n <= 6);
+}
+
+function writeWeeklyMultiDayValues(days = []) {
+  const safe = Array.isArray(days)
+    ? [...new Set(
+        days
+          .map((n) => Number(n))
+          .filter((n) => Number.isInteger(n) && n >= 0 && n <= 6)
+      )]
+    : [];
+
+  if (weeklyMultiDayValuesEl) {
+    weeklyMultiDayValuesEl.value = safe.join(",");
+  }
+
+  if (weeklyMultiDayChipsRow) {
+    [...weeklyMultiDayChipsRow.querySelectorAll("[data-dow]")].forEach((btn) => {
+      const dow = Number(btn.dataset.dow);
+      btn.classList.toggle("isActive", safe.includes(dow));
+    });
+  }
+}
+
+function syncCreateModeUI() {
   const mode = createModeEl?.value || "single";
-  const showEndDate = mode === "dailyRange" || mode === "weeklyRange";
+
+  const showEndDate =
+    mode === "dailyRange" ||
+    mode === "weeklyRange" ||
+    mode === "weeklyMultiDayRange";
+
+  const showWeeklyMultiDay = mode === "weeklyMultiDayRange";
 
   if (endDateEl) endDateEl.hidden = !showEndDate;
   if (endDateLabelEl) endDateLabelEl.hidden = !showEndDate;
+  if (weeklyMultiDayPickerEl) weeklyMultiDayPickerEl.hidden = !showWeeklyMultiDay;
 }
 
-  if (createModeEl) {
-    createModeEl.addEventListener("change", syncCreateModeUI);
-    syncCreateModeUI();
-  }
+if (createModeEl) {
+  createModeEl.addEventListener("change", syncCreateModeUI);
+  syncCreateModeUI();
+}
 
   /* =========================
      DEEP LINK (#e=EVENT_ID)
@@ -1586,6 +1669,26 @@ window.addEventListener("hashchange", () => {
     await App.ui?.shareEventFromButton?.(btn);
   });
 
+  if (weeklyMultiDayChipsRow) {
+  weeklyMultiDayChipsRow.addEventListener("click", (e) => {
+    const btn = e.target.closest("[data-dow]");
+    if (!btn) return;
+
+    const dow = Number(btn.dataset.dow);
+    if (!Number.isInteger(dow)) return;
+
+    const current = readWeeklyMultiDayValues();
+
+    const next = current.includes(dow)
+      ? current.filter((n) => n !== dow)
+      : [...current, dow].sort((a, b) => a - b);
+
+    writeWeeklyMultiDayValues(next);
+  });
+
+  writeWeeklyMultiDayValues([]);
+}
+
  function syncFavoriteUI(eventId, isFavorite) {
   const safeId = String(eventId || "").trim();
   if (!safeId) return;
@@ -1660,6 +1763,8 @@ applyCandidateVenueToAdmin,
     renderSkippedCandidatesList,
     applyCandidateVenueToAdmin,
     syncFavoriteUI,
-    processQueuedDeepLink
+    processQueuedDeepLink,
+    
   };
 })();
+

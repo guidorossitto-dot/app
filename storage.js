@@ -169,9 +169,6 @@ function loadVenues() {
     lat: Number(safe.lat),
     lng: Number(safe.lng),
 
-    source_name: safe.sourceName || "",
-    source_url: safe.sourceUrl || "",
-
     series_id: safe.seriesId || null,
     recurrence_type: safe.recurrenceType || null,
     recurrence_interval: Number.isFinite(safe.recurrenceInterval)

@@ -209,6 +209,21 @@
 
               <input id="eventTitle" placeholder="Título del evento">
               <input id="eventDate" type="date">
+              <div id="weeklyMultiDayPicker" hidden>
+  <label>Días de la semana</label>
+
+  <div class="chipRow chipRow--weekdays" id="weeklyMultiDayChips">
+    <button type="button" class="chip chip--sm" data-dow="1">Lun</button>
+    <button type="button" class="chip chip--sm" data-dow="2">Mar</button>
+    <button type="button" class="chip chip--sm" data-dow="3">Mié</button>
+    <button type="button" class="chip chip--sm" data-dow="4">Jue</button>
+    <button type="button" class="chip chip--sm" data-dow="5">Vie</button>
+    <button type="button" class="chip chip--sm" data-dow="6">Sáb</button>
+    <button type="button" class="chip chip--sm" data-dow="0">Dom</button>
+  </div>
+
+  <input type="hidden" id="weeklyMultiDayValues" value="">
+</div>
               <input id="eventStart" type="time">
 
               <input id="eventLat" type="number" step="0.000001" placeholder="Latitud">
@@ -232,6 +247,7 @@
   <option value="single">Evento único</option>
   <option value="dailyRange">Varios días seguidos</option>
   <option value="weeklyRange">Una vez por semana</option>
+  <option value="weeklyMultiDayRange">Varios días por semana</option>
 </select>
 
 <label for="eventEndDate" id="eventEndDateLabel" hidden>Fecha fin</label>
