@@ -195,7 +195,7 @@ function renderFestivalHero() {
 </div>
 
 <div class="festivalHeroHint">
-  Tocá 🎬 BAFICI para seguir solo la programación
+  Presioná arriba para seguir solo la programación
 </div>
 
     ${

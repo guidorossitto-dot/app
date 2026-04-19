@@ -333,6 +333,12 @@ if (createMode === "weeklyMultiDayRange") {
   }
 
   const wantedSet = new Set(weekdays);
+
+  const seriesId =
+    (typeof crypto !== "undefined" && crypto.randomUUID)
+      ? crypto.randomUUID()
+      : `series_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+
   const cur = new Date(start);
 
   while (cur <= end) {
@@ -345,7 +351,10 @@ if (createMode === "weeklyMultiDayRange") {
 
       eventsToCreate.push({
         ...baseEvent,
-        date: `${y}-${m}-${d}`
+        date: `${y}-${m}-${d}`,
+        seriesId,
+        recurrenceType: "weekly_multi_day",
+        recurrenceUntil: endDate
       });
     }
 
