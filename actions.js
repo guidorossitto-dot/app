@@ -443,6 +443,8 @@ function focusPlaceOnMapFlow(input = {}) {
   const lat = Number(btn.dataset.lat);
   const lng = Number(btn.dataset.lng);
   const key = btn.dataset.key || "";
+  const venueId = decodeURIComponent((btn.dataset.venueId || "").trim());
+  const explicitPlaceTitle = decodeURIComponent((btn.dataset.placeTitle || "").trim());
 
   const mapEl = document.getElementById("map");
   if (mapEl) {
@@ -478,7 +480,13 @@ function focusPlaceOnMapFlow(input = {}) {
     });
   }
 
+  const matchedVenue = venueId
+    ? (App.venues?.getVenueById?.(venueId) || null)
+    : null;
+
   const placeTitle =
+    explicitPlaceTitle ||
+    matchedVenue?.name ||
     btn.closest("li, .accordion, .panelCard, .featuredBox")
       ?.querySelector("[data-place-title]")?.textContent?.trim()
     || "Lugar";
@@ -486,11 +494,14 @@ function focusPlaceOnMapFlow(input = {}) {
   const popupLoc = {
     lat,
     lng,
-    events: selectedEvents
+    events: selectedEvents,
+    venue: matchedVenue,
+    placeTitle,
+    source: btn.classList.contains("venuesGuideMapBtn") ? "guide" : "map"
   };
 
   const popupHTML =
-    selectedEvents.length && typeof App.map?.buildPlacePopupHTML === "function"
+    typeof App.map?.buildPlacePopupHTML === "function"
       ? App.map.buildPlacePopupHTML(popupLoc)
       : `
         <div class="popupCard">
@@ -505,10 +516,7 @@ function focusPlaceOnMapFlow(input = {}) {
 
   const loc = key ? App.state.runtime.locationMarkers?.[key] : null;
 
-  if (
-    loc?.marker &&
-    App.state.runtime.map
-  ) {
+  if (loc?.marker && App.state.runtime.map) {
     const p = loc.marker.getLatLng();
 
     try {

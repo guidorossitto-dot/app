@@ -10,7 +10,7 @@
     return t ? ` <span class="catTag">${t}</span>` : "";
   }
 
-  function getPopupEventsForLocation(events = []) {
+  function getPopupEventsForLocation(events = [], options = {}) {
   const list = Array.isArray(events) ? [...events] : [];
   if (!list.length) return [];
 
@@ -22,6 +22,12 @@
 
   if (todayEvents.length) {
     return todayEvents.sort(util.sortEventsByStatusThenTime);
+  }
+
+  // Si el popup viene desde la guía de lugares,
+  // no mostramos eventos futuros lejanos.
+  if (options.source === "guide") {
+    return [];
   }
 
   return list.sort(util.sortEventsByStatusThenTime);
@@ -79,22 +85,54 @@ if (!Number.isFinite(Number(venue.lat)) || !Number.isFinite(Number(venue.lng))) 
   return best;
 }
 
+
+function sanitizeVenueUrl(value) {
+  const raw = String(value || "").trim();
+  if (!raw) return "";
+
+  const normalized = raw.toUpperCase();
+
+  const blockedTokens = [
+    "PEGAR_",
+    "_O_DEJAR_VACIO",
+    "DEJAR_VACIO",
+    "PONER_",
+    "URL_AQUI",
+    "URL_ACA"
+  ];
+
+  if (blockedTokens.some((token) => normalized.includes(token))) {
+    return "";
+  }
+
+  if (!/^https?:\/\//i.test(raw)) {
+    return "";
+  }
+
+  return raw;
+}
+
     function buildPlacePopupHTML(loc) {
     if (!loc) return "";
 
-    const placeNameFull =
-      (loc.events?.find((e) => (e.placeName || "").trim())?.placeName || "").trim();
-    const placeName = util.shortPlaceName(placeNameFull);
-    const placeTitle = placeName ? placeName : "Eventos en este punto";
-const matchedVenue = findVenueForPopup(loc, placeNameFull || placeTitle);
-const menuUrl = String(matchedVenue?.menuUrl || "").trim();
+  const placeNameFull =
+  (loc.events?.find((e) => (e.placeName || "").trim())?.placeName || "").trim();
 
-const instagramUrl = String(matchedVenue?.instagramUrl || "").trim();
-const websiteUrl = String(matchedVenue?.websiteUrl || "").trim();
+const explicitPlaceTitle = String(loc.placeTitle || "").trim();
+const placeName = util.shortPlaceName(placeNameFull || explicitPlaceTitle);
+const placeTitle = placeName || explicitPlaceTitle || "Lugar";
+
+const matchedVenue =
+  loc.venue ||
+  findVenueForPopup(loc, placeNameFull || explicitPlaceTitle || placeTitle);
+const menuUrl = sanitizeVenueUrl(matchedVenue?.menuUrl);
+const instagramUrl = sanitizeVenueUrl(matchedVenue?.instagramUrl);
+const websiteUrl = sanitizeVenueUrl(matchedVenue?.websiteUrl);
 const address = String(matchedVenue?.address || "").trim();
 const neighborhood = String(matchedVenue?.neighborhood || "").trim();
 
 const venueMeta = [address, neighborhood].filter(Boolean).join(" · ");
+const venueNotes = String(matchedVenue?.notes || "").trim();
 
 const instagramBtn = instagramUrl
   ? `
@@ -118,12 +156,16 @@ const websiteBtn = websiteUrl
   `
   : "";
 
-    const sorted = getPopupEventsForLocation(loc.events || []);
-    const total = sorted.length;
+    const sorted = getPopupEventsForLocation(loc.events || [], {
+  source: loc.source || "map"
+});
+const total = sorted.length;
 
-    const uniqueDates = [...new Set(sorted.map(e => e.date).filter(Boolean))];
+const uniqueDates = [...new Set(sorted.map(e => e.date).filter(Boolean))];
 
-let subText = `${total} ${total === 1 ? "evento" : "eventos"}`;
+let subText = total
+  ? `${total} ${total === 1 ? "evento" : "eventos"}`
+  : "Lugar recomendado";
 
 if (uniqueDates.length === 1) {
   subText += ` · ${util.formatDateDisplay(uniqueDates[0])}`;
@@ -172,6 +214,7 @@ if (uniqueDates.length === 1) {
     <div class="popupPlace">${placeTitle}</div>
     <div class="popupSub">${subText}</div>
     ${venueMeta ? `<div class="popupSub popupSub--secondary">${venueMeta}</div>` : ""}
+    ${venueNotes ? `<div class="popupSub popupSub--secondary">${venueNotes}</div>` : ""}
   </div>
 </div>
 
@@ -186,6 +229,19 @@ if (uniqueDates.length === 1) {
 
         <div class="popupList">
     `;
+
+    if (!sorted.length) {
+  html += `
+    <div class="popupItem">
+      <div class="popupItemTitle">
+        No hay eventos cargados hoy en este lugar.
+      </div>
+      <div class="popupItemMeta">
+        Podés ver igualmente la info del venue acá arriba.
+      </div>
+    </div>
+  `;
+}
 
  for (const e of sorted) {
   const st = util.formatTimeStart(e);

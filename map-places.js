@@ -129,14 +129,16 @@ function buildVenueGuideHTML() {
           <div class="venuesGuideActions">
             ${instagramBtn}
 
-            <button
-              type="button"
-              class="linkBtn venuesGuideMapBtn"
-              data-lat="${Number(venue.lat)}"
-              data-lng="${Number(venue.lng)}"
-              data-key="${key}">
-              Ver en mapa
-            </button>
+         <button
+            type="button"
+            class="linkBtn venuesGuideMapBtn"
+               data-lat="${Number(venue.lat)}"
+                data-lng="${Number(venue.lng)}"
+              data-key="${key}"
+            data-venue-id="${encodeURIComponent(venue.id || "")}"
+        data-place-title="${encodeURIComponent(venue.name || "")}">
+       Ver en mapa
+      </button>
           </div>
         </li>
       `;
