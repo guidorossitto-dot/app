@@ -155,7 +155,7 @@ if (v.createMode === "weeklyMultiDayRange" && !v.weeklyMultiDayValues) {
     };
   }
 
-  function resetAdminEventForm() {
+    function resetAdminEventForm() {
     const titleEl = document.getElementById("eventTitle");
     const dateEl = document.getElementById("eventDate");
     const latEl = document.getElementById("eventLat");
@@ -177,14 +177,14 @@ if (v.createMode === "weeklyMultiDayRange" && !v.weeklyMultiDayValues) {
     const weeklyMultiDayPickerEl = document.getElementById("weeklyMultiDayPicker");
     const weeklyMultiDayChipsRow = document.getElementById("weeklyMultiDayChips");
 
-if (weeklyMultiDayValuesEl) weeklyMultiDayValuesEl.value = "";
-if (weeklyMultiDayPickerEl) weeklyMultiDayPickerEl.hidden = true;
+    if (weeklyMultiDayValuesEl) weeklyMultiDayValuesEl.value = "";
+    if (weeklyMultiDayPickerEl) weeklyMultiDayPickerEl.hidden = true;
 
-if (weeklyMultiDayChipsRow) {
-  [...weeklyMultiDayChipsRow.querySelectorAll("[data-dow]")].forEach((btn) => {
-    btn.classList.remove("isActive");
-  });
-}
+    if (weeklyMultiDayChipsRow) {
+      [...weeklyMultiDayChipsRow.querySelectorAll("[data-dow]")].forEach((btn) => {
+        btn.classList.remove("isActive");
+      });
+    }
 
     if (titleEl) titleEl.value = "";
     if (dateEl) dateEl.value = "";
@@ -196,26 +196,24 @@ if (weeklyMultiDayChipsRow) {
     if (linkEl) linkEl.value = "";
     if (venueMenuUrlEl) venueMenuUrlEl.value = "";
     if (flyerEl) flyerEl.value = "";
-    if (createModeEl) createModeEl.value = "single";
+   if (createModeEl) {
+  createModeEl.value = template.createMode || "single";
+}
 
-    if (endDateEl) {
-      endDateEl.value = "";
-      endDateEl.hidden = true;
-    }
+if (endDateEl) {
+  endDateEl.value = template.endDate || "";
+}
 
-    if (endDateLabelEl) endDateLabelEl.hidden = true;
-    if (venueSearchInput) venueSearchInput.value = "";
-    if (venueSuggestions) venueSuggestions.innerHTML = "";
+if (endDateLabelEl) {
+  const mode = template.createMode || "single";
+  const showEndDate =
+    mode === "dailyRange" ||
+    mode === "weeklyRange" ||
+    mode === "weeklyMultiDayRange";
 
-    if (App.venues?.clearSelectedVenueForAdmin) {
-      App.venues.clearSelectedVenueForAdmin();
-    }
-
-    const adminRow = document.getElementById("adminCategoryChips");
-    if (adminRow) {
-      const chips = [...adminRow.querySelectorAll(".chip[data-cat]")];
-      chips.forEach((b) => b.classList.toggle("isActive", b.dataset.cat === "music"));
-    }
+  endDateLabelEl.hidden = !showEndDate;
+  endDateEl.hidden = !showEndDate;
+}
 
     if (addBtn) addBtn.textContent = "Agregar evento";
     if (cancelBtn) cancelBtn.hidden = true;
@@ -227,13 +225,134 @@ if (weeklyMultiDayChipsRow) {
     App.map?.clearEventCreationMarker?.();
   }
 
-    async function createEventFromAdminForm() {
+  function recycleAdminEventForm(template = {}) {
+    const titleEl = document.getElementById("eventTitle");
+    const dateEl = document.getElementById("eventDate");
+    const latEl = document.getElementById("eventLat");
+    const lngEl = document.getElementById("eventLng");
+    const placeEl = document.getElementById("eventPlace");
+    const startEl = document.getElementById("eventStart");
+    const catEl = document.getElementById("eventCategory");
+    const linkEl = document.getElementById("eventLink");
+    const flyerEl = document.getElementById("eventFlyerUrl");
+    const venueMenuUrlEl = document.getElementById("venueMenuUrl");
+
+    const addBtn = document.getElementById("addEventBtn");
+    const cancelBtn = document.getElementById("cancelEditBtn");
+
+    const createModeEl = document.getElementById("eventCreateMode");
+    const endDateEl = document.getElementById("eventEndDate");
+    const endDateLabelEl = document.getElementById("eventEndDateLabel");
+
+    const venueSearchInput = document.getElementById("venueSearchInput");
+    const venueSuggestions = document.getElementById("venueSuggestions");
+
+    const weeklyMultiDayValuesEl = document.getElementById("weeklyMultiDayValues");
+    const weeklyMultiDayPickerEl = document.getElementById("weeklyMultiDayPicker");
+    const weeklyMultiDayChipsRow = document.getElementById("weeklyMultiDayChips");
+
+    const safeLat = Number(template.lat);
+    const safeLng = Number(template.lng);
+
+    if (titleEl) titleEl.value = template.title || "";
+    if (dateEl) dateEl.value = template.date || "";
+    if (latEl) latEl.value = Number.isFinite(safeLat) ? safeLat.toFixed(6) : "";
+    if (lngEl) lngEl.value = Number.isFinite(safeLng) ? safeLng.toFixed(6) : "";
+    if (placeEl) placeEl.value = template.placeName || "";
+
+    if (startEl) startEl.value = "";
+
+    if (catEl) catEl.value = template.category || "music";
+    if (linkEl) linkEl.value = template.link || "";
+    if (flyerEl) flyerEl.value = template.flyerUrl || "";
+    if (venueMenuUrlEl) venueMenuUrlEl.value = template.venueMenuUrl || "";
+
+  if (createModeEl) {
+  createModeEl.value = template.createMode || "single";
+}
+
+if (endDateEl) {
+  endDateEl.value = template.endDate || "";
+}
+
+if (weeklyMultiDayValuesEl) {
+  weeklyMultiDayValuesEl.value = template.weeklyMultiDayValues || "";
+}
+
+const selectedDays = String(template.weeklyMultiDayValues || "")
+  .split(",")
+  .map((v) => Number(v))
+  .filter((n) => Number.isInteger(n) && n >= 0 && n <= 6);
+
+if (weeklyMultiDayChipsRow) {
+  [...weeklyMultiDayChipsRow.querySelectorAll("[data-dow]")].forEach((btn) => {
+    const dow = Number(btn.dataset.dow);
+    btn.classList.toggle("isActive", selectedDays.includes(dow));
+  });
+}
+
+if (createModeEl) {
+  createModeEl.dispatchEvent(new Event("change", { bubbles: true }));
+} else {
+  const mode = template.createMode || "single";
+  const showEndDate =
+    mode === "dailyRange" ||
+    mode === "weeklyRange" ||
+    mode === "weeklyMultiDayRange";
+
+  const showWeeklyMultiDay = mode === "weeklyMultiDayRange";
+
+  if (endDateEl) endDateEl.hidden = !showEndDate;
+  if (endDateLabelEl) endDateLabelEl.hidden = !showEndDate;
+  if (weeklyMultiDayPickerEl) weeklyMultiDayPickerEl.hidden = !showWeeklyMultiDay;
+}
+
+    if (venueSearchInput) {
+      venueSearchInput.value = template.venueSearchQuery || template.placeName || "";
+    }
+    if (venueSuggestions) venueSuggestions.innerHTML = "";
+
+    if (App.venues?.clearSelectedVenueForAdmin) {
+      App.venues.clearSelectedVenueForAdmin();
+    }
+
+    if (template.selectedVenueId && App.venues?.selectVenueForAdmin) {
+      App.venues.selectVenueForAdmin(template.selectedVenueId);
+    }
+
+    const adminRow = document.getElementById("adminCategoryChips");
+    if (adminRow) {
+      const chips = [...adminRow.querySelectorAll(".chip[data-cat]")];
+      chips.forEach((b) =>
+        b.classList.toggle("isActive", b.dataset.cat === (template.category || "music"))
+      );
+    }
+
+    if (addBtn) addBtn.textContent = "Agregar evento";
+    if (cancelBtn) cancelBtn.hidden = true;
+
+    App.actions?.stopEditingEvent?.();
+    App.actions?.setEditingMode?.(null);
+    App.actions?.setEditingSeriesId?.(null);
+
+    if (App.map?.prepareEventCreation && Number.isFinite(safeLat) && Number.isFinite(safeLng)) {
+      App.map.prepareEventCreation(safeLat, safeLng);
+    }
+
+    if (startEl) {
+      startEl.scrollIntoView({ behavior: "smooth", block: "center" });
+      startEl.focus();
+    }
+  }
+
+  async function createEventFromAdminForm(options = {}) {
+    const keepTemplate = !!options.keepTemplate;
+
     const addBtn = document.getElementById("addEventBtn");
     const cancelBtn = document.getElementById("cancelEditBtn");
 
     const form = readAdminEventFormValues();
     const { els, values } = form;
-
     const { latEl, lngEl, placeEl } = els;
 
     if (!els.titleEl || !els.dateEl || !els.latEl || !els.lngEl) return;
@@ -244,21 +363,21 @@ if (weeklyMultiDayChipsRow) {
       return;
     }
 
-   let {
-  title,
-  date,
-  lat,
-  lng,
-  placeName,
-  startTime,
-  category,
-  link,
-  flyerUrl,
-  venueMenuUrl,
-  createMode,
-  endDate,
-  weeklyMultiDayValues
-} = values;
+    let {
+      title,
+      date,
+      lat,
+      lng,
+      placeName,
+      startTime,
+      category,
+      link,
+      flyerUrl,
+      venueMenuUrl,
+      createMode,
+      endDate,
+      weeklyMultiDayValues
+    } = values;
 
     const canonical = findCanonicalPlace(placeName, lat, lng);
     if (canonical) {
@@ -284,8 +403,9 @@ if (weeklyMultiDayChipsRow) {
     });
 
     const editingId = String(state.logic.editingEventId || "").trim() || null;
+    let recycleTemplate = null;
 
-        if (editingId) {
+    if (editingId) {
       const result = await App.events?.saveEditedEvent?.(
         {
           editingEventId: editingId,
@@ -304,78 +424,77 @@ if (weeklyMultiDayChipsRow) {
       App.actions?.setEditingMode?.(null);
       App.actions?.setEditingSeriesId?.(null);
     } else {
-            const baseEvent = { ...patch };
+      const baseEvent = { ...patch };
+      let eventsToCreate = [];
 
-let eventsToCreate = [];
+      if (createMode === "weeklyMultiDayRange") {
+        const weekdays = String(weeklyMultiDayValues || "")
+          .split(",")
+          .map((v) => Number(v))
+          .filter((n) => Number.isInteger(n) && n >= 0 && n <= 6);
 
-if (createMode === "weeklyMultiDayRange") {
-  const weekdays = String(weeklyMultiDayValues || "")
-    .split(",")
-    .map((v) => Number(v))
-    .filter((n) => Number.isInteger(n) && n >= 0 && n <= 6);
+        if (!endDate) {
+          alert("Completá fecha inicio y fecha fin.");
+          return;
+        }
 
-  if (!endDate) {
-    alert("Completá fecha inicio y fecha fin.");
-    return;
-  }
+        if (!weekdays.length) {
+          alert("Elegí al menos un día de la semana.");
+          return;
+        }
 
-  if (!weekdays.length) {
-    alert("Elegí al menos un día de la semana.");
-    return;
-  }
+        const start = new Date(`${date}T00:00:00`);
+        const end = new Date(`${endDate}T00:00:00`);
 
-  const start = new Date(`${date}T00:00:00`);
-  const end = new Date(`${endDate}T00:00:00`);
+        if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || start > end) {
+          alert("Revisá el rango de fechas.");
+          return;
+        }
 
-  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || start > end) {
-    alert("Revisá el rango de fechas.");
-    return;
-  }
+        const wantedSet = new Set(weekdays);
 
-  const wantedSet = new Set(weekdays);
+        const seriesId =
+          (typeof crypto !== "undefined" && crypto.randomUUID)
+            ? crypto.randomUUID()
+            : `series_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 
-  const seriesId =
-    (typeof crypto !== "undefined" && crypto.randomUUID)
-      ? crypto.randomUUID()
-      : `series_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+        const cur = new Date(start);
 
-  const cur = new Date(start);
+        while (cur <= end) {
+          const dow = cur.getDay();
 
-  while (cur <= end) {
-    const dow = cur.getDay();
+          if (wantedSet.has(dow)) {
+            const y = cur.getFullYear();
+            const m = String(cur.getMonth() + 1).padStart(2, "0");
+            const d = String(cur.getDate()).padStart(2, "0");
 
-    if (wantedSet.has(dow)) {
-      const y = cur.getFullYear();
-      const m = String(cur.getMonth() + 1).padStart(2, "0");
-      const d = String(cur.getDate()).padStart(2, "0");
+            eventsToCreate.push({
+              ...baseEvent,
+              date: `${y}-${m}-${d}`,
+              seriesId,
+              recurrenceType: "weekly_multi_day",
+              recurrenceUntil: endDate
+            });
+          }
 
-      eventsToCreate.push({
-        ...baseEvent,
-        date: `${y}-${m}-${d}`,
-        seriesId,
-        recurrenceType: "weekly_multi_day",
-        recurrenceUntil: endDate
-      });
-    }
+          cur.setDate(cur.getDate() + 1);
 
-    cur.setDate(cur.getDate() + 1);
+          if (eventsToCreate.length > 366) break;
+        }
+      } else {
+        const buildResult = App.events?.buildEventsFromCreateMode?.(baseEvent, {
+          mode: createMode,
+          startDate: date,
+          endDate
+        });
 
-    if (eventsToCreate.length > 366) break;
-  }
-} else {
-  const buildResult = App.events?.buildEventsFromCreateMode?.(baseEvent, {
-    mode: createMode,
-    startDate: date,
-    endDate
-  });
+        if (!buildResult?.ok) {
+          alert(buildResult?.message || "No se pudieron preparar los eventos.");
+          return;
+        }
 
-  if (!buildResult?.ok) {
-    alert(buildResult?.message || "No se pudieron preparar los eventos.");
-    return;
-  }
-
-  eventsToCreate = buildResult.events || [];
-}
+        eventsToCreate = buildResult.events || [];
+      }
 
       const saveResult = await App.events?.addEventsRemote?.(eventsToCreate);
 
@@ -384,40 +503,65 @@ if (createMode === "weeklyMultiDayRange") {
         return;
       }
 
-const ensuredVenueResult = await App.venues?.ensureVenueExistsFromEventData?.({
-  placeName,
-  lat,
-  lng
-});
+      const ensuredVenueResult = await App.venues?.ensureVenueExistsFromEventData?.({
+        placeName,
+        lat,
+        lng
+      });
 
-if (!ensuredVenueResult?.ok) {
-  console.warn("No se pudo asegurar el venue del evento.");
-} else if (venueMenuUrl) {
-  await App.venues?.updateVenueRemote?.(ensuredVenueResult.venue.id, {
-    menuUrl: venueMenuUrl
-  });
+      if (!ensuredVenueResult?.ok) {
+        console.warn("No se pudo asegurar el venue del evento.");
+      } else if (venueMenuUrl) {
+        await App.venues?.updateVenueRemote?.(ensuredVenueResult.venue.id, {
+          menuUrl: venueMenuUrl
+        });
+      }
+
+   const createdCount = Number(saveResult?.createdCount || 0);
+
+if (keepTemplate && createdCount >= 1) {
+  recycleTemplate = {
+    title,
+    date,
+    lat,
+    lng,
+    placeName,
+    category,
+    link,
+    flyerUrl,
+    venueMenuUrl,
+    createMode,
+    endDate,
+    weeklyMultiDayValues,
+    selectedVenueId: state.logic.selectedVenueId || null,
+    venueSearchQuery:
+      document.getElementById("venueSearchInput")?.value.trim() || ""
+  };
 }
 
-            if ((saveResult?.createdCount || 0) > 1) {
-        alert(`Se crearon ${saveResult.createdCount} eventos.`);
+      if (createdCount > 1) {
+        alert(`Se crearon ${createdCount} eventos.`);
       }
     }
 
-    resetAdminEventForm();
+    if (recycleTemplate) {
+      recycleAdminEventForm(recycleTemplate);
+    } else {
+      resetAdminEventForm();
 
-    if (addBtn) addBtn.textContent = "Agregar evento";
-    if (cancelBtn) cancelBtn.hidden = true;
+      if (addBtn) addBtn.textContent = "Agregar evento";
+      if (cancelBtn) cancelBtn.hidden = true;
+    }
 
-
-App.commit?.({
-  persist: false,
-  purgePast: false,
-  rebuildMarkers: true,
-  recomputeNearby: true
-});
+    App.commit?.({
+      persist: false,
+      purgePast: false,
+      rebuildMarkers: true,
+      recomputeNearby: true
+    });
   }
 
-    function applyEventToAdminForm(evData) {
+  function applyEventToAdminForm(evData) {
     if (!evData) return { ok: false, error: "MISSING_EVENT" };
 
     const titleEl = document.getElementById("eventTitle");
@@ -561,6 +705,7 @@ App.commit?.({
     focusAdminTitleInput,
     startEditingEventFromId,
     resetAdminEventForm,
+    recycleAdminEventForm,
     createEventFromAdminForm
   };
 })();

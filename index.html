@@ -255,16 +255,24 @@
 
 
             <div class="adminActions">
-              <button id="addEventBtn">Agregar evento</button>
-              <button id="cancelEditBtn" hidden>Cancelar edición</button>
+  <button id="addEventBtn">Agregar evento</button>
 
-              <button id="saveCandidateVenueBtn" style="background:#fff;color:#111;border:1px solid #ddd;">
-                Guardar venue para candidate
-              </button>
+  <button
+  id="addEventCloneBtn"
+  type="button"
+  onclick="window.App?.adminForm?.createEventFromAdminForm?.({ keepTemplate: true })">
+  Agregar + otra función
+</button>
 
-              <button id="approveCandidatesBtn" style="background:#fff;color:#111;border:1px solid #ddd;">
-                Aprobar pendientes
-              </button>
+  <button id="cancelEditBtn" hidden>Cancelar edición</button>
+
+  <button id="saveCandidateVenueBtn" style="background:#fff;color:#111;border:1px solid #ddd;">
+    Guardar venue para candidate
+  </button>
+
+  <button id="approveCandidatesBtn" style="background:#fff;color:#111;border:1px solid #ddd;">
+    Aprobar pendientes
+  </button>
 
               <div class="panelCard" id="skippedCandidatesPanel">
   <div class="panelHeader">

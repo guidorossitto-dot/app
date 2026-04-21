@@ -205,6 +205,19 @@ if (favoriteBtn) {
     });
   }
 
+    const deleteBtn = pop.querySelector(".calendarPopoverDeleteBtn[data-delete-eid]");
+  if (deleteBtn) {
+    deleteBtn.addEventListener("click", async (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+
+      const result = await App.actions?.deleteEventFlow?.({ button: deleteBtn });
+      if (!result?.ok) return;
+
+      removeCalendarPopover();
+    });
+  }
+
   requestAnimationFrame(() => {
     const onDocClick = (e) => {
       if (!pop.contains(e.target)) {
@@ -426,6 +439,18 @@ function showCalendarDayPopover(anchorEl, dateStr, events, opts = {}) {
 
       removeCalendarPopover();
       App.adminForm?.startEditingEventFromId?.(eventId);
+    });
+  });
+
+  pop.querySelectorAll(".calendarDayPopoverDeleteBtn[data-delete-eid]").forEach((btn) => {
+    btn.addEventListener("click", async (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+
+      const result = await App.actions?.deleteEventFlow?.({ button: btn });
+      if (!result?.ok) return;
+
+      removeCalendarPopover();
     });
   });
 
