@@ -133,10 +133,12 @@ pendingMapClickTimer: null,
   };
 
 
-  App.CFG = {
+App.CFG = {
   ...(App.CFG || {}),
 
-  BAFICI_MODE_ENABLED: true,
+  BAFICI_MODE_ENABLED: false,
+  BAFICI_HIDE_FROM_PUBLIC: false,
+
   BAFICI_MODE_START: "2026-04-01",
   BAFICI_MODE_END: "2026-04-26",
 

@@ -206,10 +206,30 @@ function getFeaturedRank(ev) {
   /* =========================
      FILTERED VIEWS
   ========================= */
+function shouldHideBaficiFromPublic(ev) {
+  if (!ev) return false;
+  if (!isBaficiEvent(ev)) return false;
+
+  if (App.CFG?.BAFICI_HIDE_FROM_PUBLIC === true) return true;
+
+  const end = String(App.CFG?.BAFICI_MODE_END || "").trim();
+  const today = util.todayStrYYYYMMDD();
+
+  if (end && today > end) return true;
+
+  return false;
+}
+
 function applyBaficiFilter(list = []) {
   const safe = Array.isArray(list) ? list : [];
-  if (!state.logic.baficiOnly) return safe;
-  return safe.filter(isBaficiEvent);
+
+  const withoutHiddenBafici = safe.filter((ev) => !shouldHideBaficiFromPublic(ev));
+
+  if (!state.logic.baficiOnly) return withoutHiddenBafici;
+
+  if (!isBaficiModeActive()) return withoutHiddenBafici;
+
+  return withoutHiddenBafici.filter(isBaficiEvent);
 }
   
 function getVisibleTodayEvents(list = state.logic.events) {
@@ -677,13 +697,13 @@ function getBaficiHeroData(list = state.logic.events) {
     getGroupedNearbyEvents,
 
     isMapPersistentCategory,
-isMapTimedCategory,
-isEventVisibleOnMap,
-getMapVisibleEvents,
+    isMapTimedCategory,
+    isEventVisibleOnMap,
+    getMapVisibleEvents,
 
     getTodayNearbyEvents,
-getFeaturedNearbyEvents,
-getFeaturedNearbyEvent,
+    getFeaturedNearbyEvents,
+    getFeaturedNearbyEvent,
     getTodayUrgencyRank,
     sortTodayEventsByUrgencyAndDistance,
     isStillRelevantForTodayAccordion,
@@ -695,8 +715,9 @@ getFeaturedNearbyEvent,
     buildDiscoveryReason,
     getDiscoverySuggestion,
 
-        isBaficiModeActive,
+    isBaficiModeActive,
     isBaficiEvent,
+    shouldHideBaficiFromPublic,
     getBaficiEvents,
     getVisibleBaficiEvents,
     getTodayBaficiEvents,
