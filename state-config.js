@@ -7,7 +7,7 @@
   /* =========================
      CONFIG
   ========================= */
-  App.CFG = {
+App.CFG = {
   SEARCH_RADIUS_KM: 5,
   PIN_PRECISION: 4, 
   DEFAULT_LAT: -34.6037,
@@ -43,7 +43,6 @@
       label: "Cine",
       emoji: "🎬"
     },
-
     literature: {
       label: "Literatura",
       emoji: "📚"
@@ -55,6 +54,10 @@
     games: {
       label: "Juegos",
       emoji: "🎯"
+    },
+    party: {
+      label: "Fiesta",
+      emoji: "🪩"
     }
   }
 };

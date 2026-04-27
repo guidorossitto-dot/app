@@ -187,15 +187,16 @@ function getFeaturedRank(ev) {
     : String(ev.category || "").trim();
 
   const maxStartedAgoByCategory = {
-    music: 120,
-    theatre: 120,
-    cinema: 120,
-    dance: 120,
-    literature: 120,
-    gastronomy: 120,
-    games: 120,
-    visual_arts: 240
-  };
+  music: 120,
+  theatre: 120,
+  cinema: 120,
+  dance: 120,
+  literature: 120,
+  gastronomy: 120,
+  games: 120,
+  visual_arts: 240,
+  party: 360
+};
 
   const maxAgo = maxStartedAgoByCategory[cat];
 
@@ -257,7 +258,7 @@ function getVisibleEventsOnDate(dateStr, list = state.logic.events) {
 
 function isMapTimedCategory(category) {
   const cat = util.normalizeCategory(category);
-  return cat === "music" || cat === "dance" || cat === "theatre" || cat === "cinema";
+  return cat === "music" || cat === "dance" || cat === "theatre" || cat === "cinema" || cat === "party";
 }
 
 function isEventVisibleOnMap(ev, now = new Date()) {
@@ -297,7 +298,7 @@ function isEventVisibleOnMap(ev, now = new Date()) {
   }
 
   if (cat === "theatre" || cat === "cinema" || cat === "dance") {
-    return diffHours <= 1;
+  return diffHours <= 1;
   }
 
   return true;
