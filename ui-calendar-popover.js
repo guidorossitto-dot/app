@@ -261,6 +261,11 @@ function showCalendarDayPopover(anchorEl, dateStr, events, opts = {}) {
               const place = util.shortPlaceName(ev.placeName) || "Lugar sin nombre";
               const status = util.getEventStatus(ev);
               const icon = util.categoryEmoji(ev.category) || "📍";
+              const displayDate = util.getEventDisplayDate
+                 ? util.getEventDisplayDate(ev)
+                 : String(dateStr || "").slice(0, 10);
+              const actualDateText = util.formatDateDisplay(ev.date);
+              const showRealDate = !!ev.date && String(ev.date).slice(0, 10) !== String(displayDate).slice(0, 10);
 
               return `
                 <div class="calendarDayPopover__item" data-eid="${encodeURIComponent(ev.id || "")}" style="cursor:pointer;">
@@ -272,6 +277,7 @@ function showCalendarDayPopover(anchorEl, dateStr, events, opts = {}) {
                   <div class="calendarDayPopover__itemMeta">
                     ${time ? `<div><strong>Hora:</strong> ${time}</div>` : ""}
                     <div><strong>Lugar:</strong> ${place}</div>
+                    ${showRealDate ? `<div><strong>Fecha real:</strong> ${actualDateText}</div>` : ""}
                     ${status ? `<div><strong>Estado:</strong> ${status}</div>` : ""}
                   </div>
 

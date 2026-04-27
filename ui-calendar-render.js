@@ -21,10 +21,14 @@ function eventsByDateMap() {
     : categoryFiltered;
 
   for (const ev of visible) {
-    if (!ev?.date) continue;
-    if (!mapObj[ev.date]) mapObj[ev.date] = [];
-    mapObj[ev.date].push(ev);
-  }
+    const bucketDate = util.getEventDisplayDate
+  ? util.getEventDisplayDate(ev)
+  : ev?.date;
+
+    if (!bucketDate) continue;
+    if (!mapObj[bucketDate]) mapObj[bucketDate] = [];
+    mapObj[bucketDate].push(ev);
+    }
 
   return mapObj;
 }

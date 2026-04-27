@@ -169,16 +169,15 @@ function getFeaturedRank(ev) {
   if (!ev || !ev.date) return false;
 
   const today = util.todayStrYYYYMMDD();
-  const evDate = String(ev.date || "").slice(0, 10);
+  const displayDate = util.getEventDisplayDate
+    ? util.getEventDisplayDate(ev)
+    : String(ev.date || "").slice(0, 10);
 
-  if (evDate !== today) return false;
+  if (displayDate !== today) return false;
 
   const mins = safeMinutesToStart(ev);
 
-  // si no hay hora, lo dejamos visible
   if (mins === null) return true;
-
-  // si todavía no empezó, sigue visible
   if (mins >= 0) return true;
 
   const startedAgo = Math.abs(mins);
@@ -187,20 +186,18 @@ function getFeaturedRank(ev) {
     : String(ev.category || "").trim();
 
   const maxStartedAgoByCategory = {
-  music: 120,
-  theatre: 120,
-  cinema: 120,
-  dance: 120,
-  literature: 120,
-  gastronomy: 120,
-  games: 120,
-  visual_arts: 240,
-  party: 360
-};
+    music: 120,
+    theatre: 120,
+    cinema: 120,
+    dance: 120,
+    literature: 120,
+    gastronomy: 120,
+    games: 120,
+    visual_arts: 240,
+    party: 360
+  };
 
   const maxAgo = maxStartedAgoByCategory[cat];
-
-  // si una categoría no está definida, por defecto la dejamos 120 min
   return startedAgo <= (Number.isFinite(maxAgo) ? maxAgo : 120);
 }
 
@@ -234,21 +231,49 @@ function applyBaficiFilter(list = []) {
 }
   
 function getVisibleTodayEvents(list = state.logic.events) {
-  const todayEvents = util.getTodayEvents(list);
-  const filtered = util.filterByActiveCategory(todayEvents);
+  const today = util.todayStrYYYYMMDD();
+  const safe = Array.isArray(list) ? list : [];
+
+  const filtered = util.filterByActiveCategory(safe);
   const baficiFiltered = applyBaficiFilter(filtered);
 
-  return baficiFiltered.filter(isStillRelevantForTodayAccordion);
+  return baficiFiltered.filter((ev) => {
+    const isTodayDisplay = util.isEventDisplayedOnDate
+      ? util.isEventDisplayedOnDate(ev, today)
+      : String(ev?.date || "").slice(0, 10) === today;
+
+    return isTodayDisplay && isStillRelevantForTodayAccordion(ev);
+  });
 }
 
 function getVisibleFutureEvents(list = state.logic.events) {
-  const filtered = util.filterByActiveCategory(util.getFutureEvents(list));
-  return applyBaficiFilter(filtered);
+  const today = util.todayStrYYYYMMDD();
+  const safe = Array.isArray(list) ? list : [];
+
+  const filtered = util.filterByActiveCategory(safe);
+  const baficiFiltered = applyBaficiFilter(filtered);
+
+  return baficiFiltered.filter((ev) => {
+    const displayDate = util.getEventDisplayDate
+      ? util.getEventDisplayDate(ev)
+      : String(ev?.date || "").slice(0, 10);
+
+    return !!displayDate && displayDate > today;
+  });
 }
 
 function getVisibleEventsOnDate(dateStr, list = state.logic.events) {
-  const filtered = util.filterByActiveCategory(util.getEventsOnDate(dateStr, list));
-  return applyBaficiFilter(filtered);
+  const safeDate = String(dateStr || "").slice(0, 10);
+  const safe = Array.isArray(list) ? list : [];
+
+  const filtered = util.filterByActiveCategory(safe);
+  const baficiFiltered = applyBaficiFilter(filtered);
+
+  return baficiFiltered.filter((ev) => {
+    return util.isEventDisplayedOnDate
+      ? util.isEventDisplayedOnDate(ev, safeDate)
+      : String(ev?.date || "").slice(0, 10) === safeDate;
+  });
 }
 
   function isMapPersistentCategory(category) {

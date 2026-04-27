@@ -15,6 +15,8 @@ App.CFG = {
   REFRESH_MS: 60000,
   NIGHT_ROLLOVER_START_HOUR: 23,
   NIGHT_ROLLOVER_END_HOUR: 4,
+  LATE_NIGHT_DISPLAY_END_HOUR: 6,
+  LATE_NIGHT_DISPLAY_CATEGORIES: ["party", "music", "dance", "theatre", "cinema"],
 
   FEATURED_SOON_MIN: 90,
   FEATURED_RECENT_MIN: 15,
@@ -382,6 +384,45 @@ function categoryLabel(cat) {
   return emoji && name ? `${emoji} ${name}` : "";
 }
 
+function isLateNightDisplayCategory(category) {
+  const cat = normalizeCategory(category);
+  const allowed = Array.isArray(App.CFG.LATE_NIGHT_DISPLAY_CATEGORIES)
+    ? App.CFG.LATE_NIGHT_DISPLAY_CATEGORIES.map((x) => String(x || "").trim())
+    : [];
+
+  return allowed.includes(cat);
+}
+
+function getEventDisplayDate(ev) {
+  if (!ev?.date) return "";
+
+  const realDate = String(ev.date || "").slice(0, 10);
+  if (!realDate) return "";
+
+  const startTime = String(ev.startTime || "").trim();
+  if (!startTime) return realDate;
+
+  const [hh] = startTime.split(":").map(Number);
+  const endHour = Number(App.CFG.LATE_NIGHT_DISPLAY_END_HOUR ?? 6);
+
+  if (
+    isLateNightDisplayCategory(ev.category) &&
+    Number.isFinite(hh) &&
+    hh >= 0 &&
+    hh < endHour
+  ) {
+    return addDaysYYYYMMDD(realDate, -1);
+  }
+
+  return realDate;
+}
+
+function isEventDisplayedOnDate(ev, dateStr) {
+  const target = String(dateStr || "").slice(0, 10);
+  if (!target) return false;
+  return getEventDisplayDate(ev) === target;
+}
+
   /* =========================
      EVENT MODEL
   ========================= */
@@ -578,6 +619,10 @@ function getTodayEvents(list = getAllEvents()) {
 
     findPlaceAnchor,
     smartLocationKey,
+
+    isLateNightDisplayCategory,
+    getEventDisplayDate,
+    isEventDisplayedOnDate,
 
     distanceKm
   };
