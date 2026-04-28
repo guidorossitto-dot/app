@@ -3521,12 +3521,12 @@ header button {
 }
 
 .calendarDayPopover__item--partner {
-  background: linear-gradient(180deg, #fffaf0 0%, #ffffff 100%);
-  border: 1px solid rgba(255, 176, 0, 0.24);
-  padding: 9px 8px;
-  margin: 4px 0 8px;
+  background: transparent;
+  border: 0;
+  padding: 8px 6px;
+  margin: 0;
 }
 
 .calendarDayPopover__item--partner:first-child {
-  border-top: 1px solid rgba(255, 176, 0, 0.24);
+  border-top: 0;
 }
