@@ -52,6 +52,7 @@
   const mapsUrl = safeString(raw.mapsUrl);
   const menuUrl = safeString(raw.menuUrl ?? raw.menu_url);
   const menuType = safeString(raw.menuType ?? raw.menu_type);
+  const guideGroup = safeString(raw.guideGroup ?? raw.guide_group);
   const notes = safeString(raw.notes);
 
   const lat = toNumberOrNull(raw.lat);
@@ -69,6 +70,7 @@
     mapsUrl,
     menuUrl,
     menuType,
+    guideGroup,
     notes,
     createdAt: safeString(raw.createdAt) || new Date().toISOString(),
     updatedAt: safeString(raw.updatedAt) || new Date().toISOString()
@@ -213,32 +215,66 @@ function findExistingVenueFromEventData({ name, lat, lng }) {
   }) || null;
 }
 
-async function ensureVenueExistsFromEventData(eventLike = {}) {
-  const name = safeString(eventLike.placeName || eventLike.name);
-  const lat = toNumberOrNull(eventLike.lat);
-  const lng = toNumberOrNull(eventLike.lng);
+  async function ensureVenueExistsFromEventData(eventLike = {}) {
+    ensureVenueState();
 
-  if (!name || lat === null || lng === null) {
-    return { ok: false, error: "INVALID_EVENT_VENUE_DATA" };
+    const name = safeString(eventLike.placeName || eventLike.name);
+    const lat = toNumberOrNull(eventLike.lat);
+    const lng = toNumberOrNull(eventLike.lng);
+    const guideGroup = safeString(eventLike.guideGroup ?? eventLike.guide_group);
+
+    if (!name || lat === null || lng === null) {
+      return { ok: false, error: "INVALID_EVENT_VENUE_DATA" };
+    }
+
+    const existingVenue = state.logic.venues.find((v) => {
+      const sameName = safeLower(v?.name) === safeLower(name);
+
+      const vLat = toNumberOrNull(v?.lat);
+      const vLng = toNumberOrNull(v?.lng);
+
+      if (!sameName || vLat === null || vLng === null) return false;
+
+      if (typeof App.util?.distanceKm === "function") {
+        return App.util.distanceKm(lat, lng, vLat, vLng) <= 0.12;
+      }
+
+      return vLat === lat && vLng === lng;
+    });
+
+    if (existingVenue) {
+      const currentGuideGroup = safeString(existingVenue.guideGroup);
+
+      if (guideGroup && !currentGuideGroup && App.venues?.updateVenueRemote) {
+        const updated = await App.venues.updateVenueRemote(existingVenue.id, {
+          guideGroup
+        });
+
+        if (updated?.ok) {
+          return {
+            ok: true,
+            venue: cloneVenue(updated.venue),
+            duplicate: true,
+            updatedGuideGroup: true
+          };
+        }
+      }
+
+      return {
+        ok: true,
+        venue: cloneVenue(existingVenue),
+        duplicate: true
+      };
+    }
+
+    return await addVenueRemote({
+      name,
+      address: name,
+      lat,
+      lng,
+      guideGroup: guideGroup || "otros"
+    });
   }
-
-  const existingVenue = findExistingVenueFromEventData({ name, lat, lng });
-
-  if (existingVenue) {
-    return {
-      ok: true,
-      venue: cloneVenue(existingVenue),
-      duplicate: true
-    };
-  }
-
-  return await addVenueRemote({
-    name,
-    address: name,
-    lat,
-    lng
-  });
-}
 
   function updateVenue(venueId, patch = {}, options = {}) {
     ensureVenueState();

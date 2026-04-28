@@ -60,6 +60,7 @@
     const linkEl = document.getElementById("eventLink");
     const flyerEl = document.getElementById("eventFlyerUrl");
     const venueMenuUrlEl = document.getElementById("venueMenuUrl");
+    const venueGuideGroupEl = document.getElementById("venueGuideGroup");
     const createModeEl = document.getElementById("eventCreateMode");
     const endDateEl = document.getElementById("eventEndDate");
 
@@ -75,6 +76,7 @@
         linkEl,
         flyerEl,
         venueMenuUrlEl,
+        venueGuideGroupEl,
         weeklyMultiDayValuesEl,
         createModeEl,
         endDateEl
@@ -91,7 +93,8 @@
         link: linkEl?.value.trim() || "",
         flyerUrl: flyerEl?.value.trim() || "",
         venueMenuUrl: venueMenuUrlEl?.value.trim() || "",
-        weeklyMultiDayValues: weeklyMultiDayValuesEl?.value.trim() || "", 
+        venueGuideGroup: venueGuideGroupEl?.value.trim() || "",
+        weeklyMultiDayValues: weeklyMultiDayValuesEl?.value.trim() || "",
         createMode: createModeEl?.value || "single",
         endDate: endDateEl?.value?.trim() || ""
       }
@@ -166,6 +169,7 @@ if (v.createMode === "weeklyMultiDayRange" && !v.weeklyMultiDayValues) {
     const linkEl = document.getElementById("eventLink");
     const flyerEl = document.getElementById("eventFlyerUrl");
     const venueMenuUrlEl = document.getElementById("venueMenuUrl");
+    const venueGuideGroupEl = document.getElementById("venueGuideGroup");
     const addBtn = document.getElementById("addEventBtn");
     const cancelBtn = document.getElementById("cancelEditBtn");
     const createModeEl = document.getElementById("eventCreateMode");
@@ -195,6 +199,7 @@ if (v.createMode === "weeklyMultiDayRange" && !v.weeklyMultiDayValues) {
     if (catEl) catEl.value = "music";
     if (linkEl) linkEl.value = "";
     if (venueMenuUrlEl) venueMenuUrlEl.value = "";
+    if (venueGuideGroupEl) venueGuideGroupEl.value = template.venueGuideGroup || "";
     if (flyerEl) flyerEl.value = "";
    if (createModeEl) {
   createModeEl.value = template.createMode || "single";
@@ -236,6 +241,7 @@ if (endDateLabelEl) {
     const linkEl = document.getElementById("eventLink");
     const flyerEl = document.getElementById("eventFlyerUrl");
     const venueMenuUrlEl = document.getElementById("venueMenuUrl");
+    const venueGuideGroupEl = document.getElementById("venueGuideGroup");
 
     const addBtn = document.getElementById("addEventBtn");
     const cancelBtn = document.getElementById("cancelEditBtn");
@@ -266,6 +272,7 @@ if (endDateLabelEl) {
     if (linkEl) linkEl.value = template.link || "";
     if (flyerEl) flyerEl.value = template.flyerUrl || "";
     if (venueMenuUrlEl) venueMenuUrlEl.value = template.venueMenuUrl || "";
+    if (venueGuideGroupEl) venueGuideGroupEl.value = template.venueGuideGroup || "";
 
   if (createModeEl) {
   createModeEl.value = template.createMode || "single";
@@ -364,20 +371,21 @@ if (createModeEl) {
     }
 
     let {
-      title,
-      date,
-      lat,
-      lng,
-      placeName,
-      startTime,
-      category,
-      link,
-      flyerUrl,
-      venueMenuUrl,
-      createMode,
-      endDate,
-      weeklyMultiDayValues
-    } = values;
+    title,
+    date,
+    lat,
+    lng,
+    placeName,
+    startTime,
+    category,
+    link,
+    flyerUrl,
+    venueMenuUrl,
+    venueGuideGroup,
+    createMode,
+    endDate,
+    weeklyMultiDayValues
+  } = values;
 
     const canonical = findCanonicalPlace(placeName, lat, lng);
     if (canonical) {
@@ -506,7 +514,8 @@ if (createModeEl) {
       const ensuredVenueResult = await App.venues?.ensureVenueExistsFromEventData?.({
         placeName,
         lat,
-        lng
+        lng,
+        guideGroup: venueGuideGroup
       });
 
       if (!ensuredVenueResult?.ok) {
@@ -530,6 +539,7 @@ if (keepTemplate && createdCount >= 1) {
     link,
     flyerUrl,
     venueMenuUrl,
+    venueGuideGroup,
     createMode,
     endDate,
     weeklyMultiDayValues,

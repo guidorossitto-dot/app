@@ -5,16 +5,39 @@
   const App = window.App;
 const { util, state, events, selectors } = App;
 
-const VENUE_GUIDE_CATEGORY_ORDER = [
-  "music",
-  "theatre",
-  "dance",
-  "cinema",
-  "visual_arts",
-  "literature",
-  "gastronomy",
-  "games",
-  "party"
+const VENUE_GUIDE_GROUPS = [
+  {
+    key: "bar_cultural",
+    title: "🍸 Bar cultural"
+  },
+  {
+    key: "centro_cultural",
+    title: "🏛 Centro cultural"
+  },
+  {
+    key: "juegos",
+    title: "🎯 Juegos"
+  },
+  {
+    key: "gastronomia",
+    title: "🍷 Gastronomía"
+  },
+  {
+    key: "teatro",
+    title: "🎭 Teatro"
+  },
+  {
+    key: "cine",
+    title: "🎬 Cine"
+  },
+  {
+    key: "galeria",
+    title: "🖼️ Galería / Museo"
+  },
+  {
+    key: "otros",
+    title: "📍 Otros"
+  }
 ];
 
 function normalizeVenueGuideText(value) {
@@ -38,90 +61,26 @@ function escapeAttr(value) {
   return escapeHTML(value);
 }
 
-function getVenueGuideGroups() {
-  const cats = App.CFG?.CATEGORIES || {};
+function isUsefulVenueUrl(value) {
+  const url = String(value || "").trim();
 
-  const categoryGroups = VENUE_GUIDE_CATEGORY_ORDER
-    .filter((key) => cats[key])
-    .map((key) => ({
-      key,
-      title: `${cats[key].emoji || "📍"} ${cats[key].label || key}`
-    }));
+  if (!url) return false;
+  if (url.includes("PEGAR_")) return false;
+  if (url.includes("DEJAR_VACIO")) return false;
 
-  return [
-    ...categoryGroups,
-    {
-      key: "other",
-      title: "📍 Otros"
-    }
-  ];
-}
-
-function getVenueEventsForGuide(venue) {
-  const list = Array.isArray(state.logic?.events) ? state.logic.events : [];
-
-  const lat = Number(venue?.lat);
-  const lng = Number(venue?.lng);
-
-  if (!venue?.name || !Number.isFinite(lat) || !Number.isFinite(lng)) {
-    return [];
-  }
-
-  const venueKey = util.smartLocationKey(
-    {
-      placeName: venue.name,
-      lat,
-      lng
-    },
-    list
-  );
-
-  if (!venueKey) return [];
-
-  return list.filter((ev) => {
-    if (!ev || !Number.isFinite(Number(ev.lat)) || !Number.isFinite(Number(ev.lng))) {
-      return false;
-    }
-
-    const eventKey = util.smartLocationKey(ev, list);
-    return eventKey === venueKey;
-  });
-}
-
-function sortVenueEventsForGuide(a, b) {
-  const da = App.util?.getEventDisplayDate?.(a) || a?.date || "";
-  const db = App.util?.getEventDisplayDate?.(b) || b?.date || "";
-
-  const dateCompare = da.localeCompare(db);
-  if (dateCompare !== 0) return dateCompare;
-
-  const ta = String(a?.startTime || "99:99");
-  const tb = String(b?.startTime || "99:99");
-
-  return ta.localeCompare(tb);
+  return /^https?:\/\//i.test(url);
 }
 
 function getVenueGuideGroupKey(venue) {
-  const explicit =
-    String(venue?.guideGroup || venue?.guideCategory || venue?.category || "")
-      .trim();
+  const raw = String(venue?.guideGroup || "").trim();
 
-  if (explicit && App.CFG?.CATEGORIES?.[explicit]) {
-    return explicit;
-  }
+  // Si no está clasificado, NO entra en la guía.
+  if (!raw) return "";
 
-  const venueEvents = getVenueEventsForGuide(venue)
-    .slice()
-    .sort(sortVenueEventsForGuide);
+  const exists = VENUE_GUIDE_GROUPS.some((group) => group.key === raw);
 
-  const firstEvent = venueEvents[0] || null;
-  const eventCategory = String(firstEvent?.category || "").trim();
-
-  if (eventCategory && App.CFG?.CATEGORIES?.[eventCategory]) {
-    return eventCategory;
-  }
-
-  return "other";
+  // Si tiene un valor raro, lo mandamos a Otros.
+  return exists ? raw : "otros";
 }
 
 function buildVenueGuideItemHTML(venue) {
@@ -156,7 +115,7 @@ function buildVenueGuideItemHTML(venue) {
     safeAddress
   ].filter(Boolean).join(" · ");
 
-  const instagramBtn = venue.instagramUrl
+  const instagramBtn = isUsefulVenueUrl(venue.instagramUrl)
     ? `
       <a
         class="linkBtn"
@@ -168,7 +127,7 @@ function buildVenueGuideItemHTML(venue) {
     `
     : "";
 
-  const websiteBtn = venue.websiteUrl
+  const websiteBtn = isUsefulVenueUrl(venue.websiteUrl)
     ? `
       <a
         class="linkBtn"
@@ -180,7 +139,7 @@ function buildVenueGuideItemHTML(venue) {
     `
     : "";
 
-  const menuBtn = venue.menuUrl
+  const menuBtn = isUsefulVenueUrl(venue.menuUrl)
     ? `
       <a
         class="linkBtn"
@@ -220,32 +179,34 @@ function buildVenueGuideItemHTML(venue) {
 }
 
 function buildVenueGuideHTML() {
-  const venues = Array.isArray(state.logic?.venues)
-    ? state.logic.venues
-        .filter((venue) => {
-          return (
-            venue &&
-            venue.name &&
-            Number.isFinite(Number(venue.lat)) &&
-            Number.isFinite(Number(venue.lng))
-          );
-        })
-        .slice()
-        .sort((a, b) => String(a.name || "").localeCompare(String(b.name || "")))
-    : [];
+ const venues = Array.isArray(state.logic?.venues)
+  ? state.logic.venues
+      .filter((venue) => {
+        const groupKey = getVenueGuideGroupKey(venue);
+
+        return (
+          groupKey &&
+          venue &&
+          venue.name &&
+          Number.isFinite(Number(venue.lat)) &&
+          Number.isFinite(Number(venue.lng))
+        );
+      })
+      .slice()
+      .sort((a, b) => String(a.name || "").localeCompare(String(b.name || "")))
+  : [];
 
   if (!venues.length) {
     return `
       <div class="nearbySmall">
-        Todavía no hay lugares listos para mostrar en esta guía.
+        Todavía no hay lugares clasificados para mostrar en esta guía.
       </div>
     `;
   }
 
-  const groupDefs = getVenueGuideGroups();
   const grouped = new Map();
 
-  groupDefs.forEach((group) => {
+  VENUE_GUIDE_GROUPS.forEach((group) => {
     grouped.set(group.key, {
       ...group,
       venues: []
@@ -254,9 +215,11 @@ function buildVenueGuideHTML() {
 
   venues.forEach((venue) => {
     const groupKey = getVenueGuideGroupKey(venue);
-    const safeGroupKey = grouped.has(groupKey) ? groupKey : "other";
+    const targetGroup = grouped.get(groupKey) || grouped.get("otros");
 
-    grouped.get(safeGroupKey).venues.push(venue);
+    if (targetGroup) {
+      targetGroup.venues.push(venue);
+    }
   });
 
   const groupsHTML = [...grouped.values()]

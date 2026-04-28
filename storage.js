@@ -104,6 +104,7 @@ function loadVenuesCache() {
     mapsUrl: String(row.maps_url || "").trim(),
     menuUrl: String(row.menu_url || "").trim(),
     menuType: String(row.menu_type || "").trim(),
+    guideGroup: String(row.guide_group || "").trim(),
     notes: String(row.notes || "").trim(),
     createdAt: String(row.created_at || "").trim(),
     updatedAt: String(row.updated_at || "").trim()
@@ -123,6 +124,7 @@ function mapVenueToRow(venue) {
     maps_url: venue.mapsUrl || "",
     menu_url: venue.menuUrl || "",
     menu_type: venue.menuType || "",
+    guide_group: venue.guideGroup || "",
     notes: venue.notes || "",
     created_at: venue.createdAt || new Date().toISOString(),
     updated_at: new Date().toISOString()
