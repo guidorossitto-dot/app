@@ -90,12 +90,14 @@ function eventsByDateMap() {
       ? App.selectors.sortPartnerEventsFirst(byDate[dateStr] || [])
       : (byDate[dateStr] || []);
       
-      const hasFavorite = evs.some((ev) => App.events?.isFavorite?.(ev.id));
-      if (hasFavorite) {
-      cell.classList.add("day--hasFavorite");
-    }
+  const hasFavorite = evs.some((ev) => App.events?.isFavorite?.(ev.id));
+if (hasFavorite) {
+  cell.classList.add("day--hasFavorite");
+}
 
-     const isMobile = window.innerWidth <= 768;
+const hasPartner = evs.some((ev) => App.selectors?.isPartnerEvent?.(ev));
+
+const isMobile = window.innerWidth <= 768;
 
 if (isMobile) {
   if (evs.length > 0) {
