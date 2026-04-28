@@ -201,8 +201,8 @@ if (v.createMode === "weeklyMultiDayRange" && !v.weeklyMultiDayValues) {
     if (venueMenuUrlEl) venueMenuUrlEl.value = "";
     if (venueGuideGroupEl) venueGuideGroupEl.value = template.venueGuideGroup || "";
     if (flyerEl) flyerEl.value = "";
-   if (createModeEl) {
-  createModeEl.value = template.createMode || "single";
+    if (createModeEl) {
+    createModeEl.value = template.createMode || "single";
 }
 
 if (endDateEl) {
