@@ -704,6 +704,189 @@ if (keepTemplate && createdCount >= 1) {
     };
   }
 
+    function readAdminVenueFormValues() {
+    const nameEl = document.getElementById("adminVenueName");
+    const addressEl = document.getElementById("adminVenueAddress");
+    const neighborhoodEl = document.getElementById("adminVenueNeighborhood");
+    const latEl = document.getElementById("adminVenueLat");
+    const lngEl = document.getElementById("adminVenueLng");
+    const guideGroupEl = document.getElementById("adminVenueGuideGroup");
+    const instagramUrlEl = document.getElementById("adminVenueInstagramUrl");
+    const websiteUrlEl = document.getElementById("adminVenueWebsiteUrl");
+    const menuUrlEl = document.getElementById("adminVenueMenuUrl");
+
+    return {
+      els: {
+        nameEl,
+        addressEl,
+        neighborhoodEl,
+        latEl,
+        lngEl,
+        guideGroupEl,
+        instagramUrlEl,
+        websiteUrlEl,
+        menuUrlEl
+      },
+
+      values: {
+        name: nameEl?.value.trim() || "",
+        address: addressEl?.value.trim() || "",
+        neighborhood: neighborhoodEl?.value.trim() || "",
+        lat: Number(latEl?.value),
+        lng: Number(lngEl?.value),
+        guideGroup: guideGroupEl?.value.trim() || "",
+        instagramUrl: instagramUrlEl?.value.trim() || "",
+        websiteUrl: websiteUrlEl?.value.trim() || "",
+        menuUrl: menuUrlEl?.value.trim() || ""
+      }
+    };
+  }
+
+  function setAdminVenueStatus(message = "", type = "") {
+    const statusEl = document.getElementById("adminVenueStatus");
+    if (!statusEl) return;
+
+    statusEl.textContent = message;
+    statusEl.dataset.status = type || "";
+  }
+
+  function validateAdminVenueFormValues(form) {
+    const v = form?.values || {};
+
+    if (!v.name) {
+      return {
+        ok: false,
+        message: "Completá el nombre del lugar."
+      };
+    }
+
+    if (!Number.isFinite(v.lat) || !Number.isFinite(v.lng)) {
+      return {
+        ok: false,
+        message: "Completá latitud y longitud válidas."
+      };
+    }
+
+    if (!v.guideGroup) {
+      return {
+        ok: false,
+        message: "Elegí un tipo de lugar para que aparezca en la guía."
+      };
+    }
+
+    return { ok: true };
+  }
+
+  function resetAdminVenueForm() {
+    const form = readAdminVenueFormValues();
+    const { els } = form;
+
+    Object.values(els).forEach((el) => {
+      if (!el) return;
+      el.value = "";
+    });
+
+    setAdminVenueStatus("");
+  }
+
+  async function saveVenueFromAdminForm() {
+    if (!util.canManageUI()) {
+      alert("No tenés permisos para guardar lugares.");
+      return;
+    }
+
+    const saveBtn = document.getElementById("saveVenueBtn");
+    const form = readAdminVenueFormValues();
+    const validation = validateAdminVenueFormValues(form);
+
+    if (!validation.ok) {
+      setAdminVenueStatus(validation.message || "Revisá los datos del lugar.", "error");
+      alert(validation.message || "Revisá los datos del lugar.");
+      return;
+    }
+
+    const v = form.values;
+
+    if (saveBtn) {
+      saveBtn.disabled = true;
+      saveBtn.textContent = "Guardando...";
+    }
+
+    setAdminVenueStatus("Guardando lugar...", "loading");
+
+    try {
+      const result = await App.venues?.addVenueRemote?.({
+        name: v.name,
+        address: v.address,
+        neighborhood: v.neighborhood,
+        lat: v.lat,
+        lng: v.lng,
+        guideGroup: v.guideGroup,
+        instagramUrl: v.instagramUrl,
+        websiteUrl: v.websiteUrl,
+        menuUrl: v.menuUrl
+      });
+
+      if (!result?.ok) {
+        console.error("No se pudo guardar el lugar.", result?.error);
+        setAdminVenueStatus("No se pudo guardar el lugar.", "error");
+        alert("No se pudo guardar el lugar.");
+        return;
+      }
+
+      if (result.duplicate) {
+        setAdminVenueStatus("Ese lugar ya existía. No se creó un duplicado.", "warning");
+        alert("Ese lugar ya existía. No se creó un duplicado.");
+        return;
+      }
+
+      setAdminVenueStatus("Lugar guardado correctamente.", "success");
+
+      resetAdminVenueForm();
+
+      App.commit?.({
+        persist: false,
+        purgePast: false,
+        rebuildMarkers: false,
+        recomputeNearby: false
+      });
+    } catch (err) {
+      console.error("Error guardando lugar desde admin.", err);
+      setAdminVenueStatus("Error inesperado al guardar el lugar.", "error");
+      alert("Error inesperado al guardar el lugar.");
+    } finally {
+      if (saveBtn) {
+        saveBtn.disabled = false;
+        saveBtn.textContent = "Guardar lugar";
+      }
+    }
+  }
+
+  function bindAdminVenueForm() {
+    const saveBtn = document.getElementById("saveVenueBtn");
+    const resetBtn = document.getElementById("resetVenueBtn");
+
+    if (saveBtn && saveBtn.dataset.bound !== "true") {
+      saveBtn.dataset.bound = "true";
+      saveBtn.addEventListener("click", saveVenueFromAdminForm);
+    }
+
+    if (resetBtn && resetBtn.dataset.bound !== "true") {
+      resetBtn.dataset.bound = "true";
+      resetBtn.addEventListener("click", resetAdminVenueForm);
+    }
+  }
+
+  function initAdminVenueFormBinding() {
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", bindAdminVenueForm);
+    } else {
+      bindAdminVenueForm();
+    }
+  }
+
+  initAdminVenueFormBinding();
+
   App.adminForm = {
     ...(App.adminForm || {}),
     findCanonicalPlace,
@@ -716,6 +899,13 @@ if (keepTemplate && createdCount >= 1) {
     startEditingEventFromId,
     resetAdminEventForm,
     recycleAdminEventForm,
-    createEventFromAdminForm
+    createEventFromAdminForm,
+
+        readAdminVenueFormValues,
+    validateAdminVenueFormValues,
+    resetAdminVenueForm,
+    saveVenueFromAdminForm,
+    bindAdminVenueForm
+    
   };
 })();

@@ -13,17 +13,27 @@
     const isAdmin = App.util.isAdminMode();
     const isLoggedIn = !!App.state.logic.isLoggedIn;
 
-if (!isAdmin) {
-  loginBtn.hidden = true;
-  logoutBtn.hidden = true;
-  return;
-}
- 
+    if (!isAdmin) {
+      loginBtn.hidden = true;
+      logoutBtn.hidden = true;
+
+      const placeSearchCard = document.getElementById("placeSearchCard");
+      if (placeSearchCard) {
+        placeSearchCard.hidden = true;
+      }
+
+      return;
+    }
 
       const canManage = App.util.canManageUI();
 
       loginBtn.hidden = !isAdmin || isLoggedIn;
       logoutBtn.hidden = !canManage;
+
+      const placeSearchCard = document.getElementById("placeSearchCard");
+if (placeSearchCard) {
+  placeSearchCard.hidden = !canManage;
+}
   }
 
 function bindLoginUI() {

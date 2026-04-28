@@ -151,14 +151,14 @@
 </section>
 
  
-          <section class="panelCard placeSearchCard">
+         <section class="panelCard placeSearchCard" id="placeSearchCard" hidden>
   <details class="accordion placeSearchAccordion">
     <summary>🔎 Buscar lugar</summary>
 
     <div class="placeSearchBody">
       <div class="placeSearchRow">
         <input id="placeQuery" placeholder="Ej: Teatro Colón">
-        <button id="searchPlaceBtn">Buscar</button>
+        <button type="button" id="searchPlaceBtn">Buscar</button>
       </div>
 
       <ul id="placeResults"></ul>
@@ -176,6 +176,79 @@
               Tip: hacé click en el mapa para fijar tu ubicación.
               Para cargar un evento, usá el pin de creación (se activa al estar logueado).
             </p>
+
+            <details class="accordion adminVenueAccordion">
+  <summary>📍 Gestión de lugares</summary>
+
+  <div class="placeSearchBody">
+    <p class="nearbySmall">
+      Cargá un lugar en la guía sin crear un evento.
+    </p>
+
+    <div class="adminGrid">
+      <input id="adminVenueName" placeholder="Nombre del lugar">
+      <input id="adminVenueAddress" placeholder="Dirección">
+      <input id="adminVenueNeighborhood" placeholder="Barrio / zona">
+
+      <input
+        id="adminVenueLat"
+        type="number"
+        step="0.000001"
+        placeholder="Latitud">
+
+      <input
+        id="adminVenueLng"
+        type="number"
+        step="0.000001"
+        placeholder="Longitud">
+
+      <label for="adminVenueGuideGroup">Tipo de lugar</label>
+      <select id="adminVenueGuideGroup">
+        <option value="">Sin clasificar</option>
+        <option value="bar_cultural">Bar cultural</option>
+        <option value="centro_cultural">Centro cultural</option>
+        <option value="juegos">Juegos</option>
+        <option value="gastronomia">Gastronomía</option>
+        <option value="teatro">Teatro</option>
+        <option value="cine">Cine</option>
+        <option value="galeria">Galería / Museo</option>
+        <option value="otros">Otros</option>
+      </select>
+
+      <input
+        id="adminVenueInstagramUrl"
+        type="url"
+        placeholder="Instagram del lugar">
+
+      <input
+        id="adminVenueWebsiteUrl"
+        type="url"
+        placeholder="Web del lugar">
+
+      <input
+        id="adminVenueMenuUrl"
+        type="url"
+        placeholder="Carta / menú del lugar">
+    </div>
+
+    <div class="discoveryActions">
+      <button
+        type="button"
+        id="saveVenueBtn"
+        class="primaryMapActionBtn">
+        Guardar lugar
+      </button>
+
+      <button
+        type="button"
+        id="resetVenueBtn">
+        Limpiar lugar
+      </button>
+    </div>
+
+    <div id="adminVenueStatus" class="nearbySmall"></div>
+  </div>
+</details>
 
             <div class="adminGrid">
               <input id="eventPlace" placeholder="Lugar (ej: Teatro Solís)">
@@ -386,10 +459,10 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script src="state-config.js"></script>
-<script src="venue-service.js"></script>
+<script src="venue-service.js?v=92"></script>
 <script src="supabase-client.js"></script>
 <script src="auth-service.js"></script>
-<script src="storage.js"></script>
+<script src="storage.js?v=92"></script>
 <script src="event-selectors.js"></script>
 <script src="store.js"></script>
 <script src="event-service.js"></script>
@@ -397,7 +470,7 @@
 <script src="candidate-dedupe.js"></script>
 <script src="candidate-service.js"></script>
 <script src="actions.js"></script>
-<script src="admin-event-form.js"></script>
+<script src="admin-event-form.js?v=92"></script>
 <script src="ui-calendar-popover.js"></script>
 <script src="ui-calendar.js"></script>
 <script src="ui-calendar-render.js"></script>
@@ -405,8 +478,8 @@
 <script src="./libs/leaflet/leaflet.js"></script>
 <script src="./libs/leaflet-markercluster/leaflet.markercluster.js"></script>
 <script src="map-popups.js"></script>
-<script src="map-places.js"></script>
-<script src="ui-render.js"></script>
+<script src="map-places.js?v=92"></script>
+<script src="ui-render.js?v=92"></script>
 <script src="app-init.js"></script>
 
 <script>
