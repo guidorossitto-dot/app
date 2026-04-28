@@ -345,10 +345,10 @@ function formatTimeStart(ev) {
   const rb = rank(sb);
   if (ra !== rb) return ra - rb;
 
-  const ta = a?.startTime || "99:99";
-  const tb = b?.startTime || "99:99";
-  const c = ta.localeCompare(tb);
-  if (c !== 0) return c;
+    const ta = getEventSortTimeValue(a);
+  const tb = getEventSortTimeValue(b);
+
+  if (ta !== tb) return ta - tb;
 
   return (a?.title || "").localeCompare(b?.title || "");
 }
@@ -425,6 +425,29 @@ function getEventDisplayDate(ev) {
   }
 
   return realDate;
+}
+
+function getEventSortTimeValue(ev) {
+  const startTime = String(ev?.startTime || "").trim().slice(0, 5);
+  const [hhRaw, mmRaw] = startTime.split(":").map(Number);
+
+  if (!Number.isFinite(hhRaw)) return 999999;
+
+  const hh = Math.max(0, Math.min(23, hhRaw));
+  const mm = Number.isFinite(mmRaw) ? Math.max(0, Math.min(59, mmRaw)) : 0;
+
+  let value = hh * 60 + mm;
+
+  const realDate = String(ev?.date || "").slice(0, 10);
+  const displayDate = getEventDisplayDate(ev);
+
+  // Si el evento real es del día siguiente pero se muestra el día anterior,
+  // entonces 01:00 se ordena como 25:00.
+  if (realDate && displayDate && realDate > displayDate) {
+    value += 24 * 60;
+  }
+
+  return value;
 }
 
 function isEventDisplayedOnDate(ev, dateStr) {
@@ -632,6 +655,7 @@ function getTodayEvents(list = getAllEvents()) {
 
     isLateNightDisplayCategory,
     getEventDisplayDate,
+    getEventSortTimeValue,
     isEventDisplayedOnDate,
 
     distanceKm
