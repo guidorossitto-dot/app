@@ -103,7 +103,7 @@ if (isMobile) {
   if (evs.length > 0) {
     const more = document.createElement("div");
     more.className = `event event-more event-more--mobile${hasPartner ? " event-more--partner" : ""}`;
-    more.textContent = hasPartner ? `⭐ +${evs.length}` : `+${evs.length}`; 
+    more.textContent = hasPartner ? `⭐ +${evs.length}` : `+${evs.length}`;
     more.title = evs.length === 1
       ? "1 evento"
       : `${evs.length} eventos`;
