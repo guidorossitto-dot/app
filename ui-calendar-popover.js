@@ -41,14 +41,16 @@ function goToEventOnMap(ev) {
   return true;
 }
 
-  function showCalendarEventPopover(anchorEl, ev) {
+function showCalendarEventPopover(anchorEl, ev) {
   if (!anchorEl || !ev) return;
 
   removeCalendarPopover();
 
+  const partner = App.selectors?.getEventPartner?.(ev) || null;
+
   const pop = document.createElement("div");
   pop.id = "calendarEventPopover";
-  pop.className = "calendarEventPopover";
+  pop.className = `calendarEventPopover${partner ? " calendarEventPopover--partner" : ""}`;
 
   const time = util.formatTimeStart(ev);
   const place = util.shortPlaceName(ev.placeName) || "Lugar sin nombre";
@@ -68,6 +70,12 @@ function goToEventOnMap(ev) {
         ×
       </button>
     </div>
+
+        ${
+      partner
+        ? `<div class="partnerBadge calendarPartnerBadge">${partner.icon || "⭐"} ${partner.label || "Colaboradores"}</div>`
+        : ""
+    }
 
     <div class="calendarEventPopover__meta">
       ${time ? `<div><strong>Hora:</strong> ${time}</div>` : ""}
@@ -235,11 +243,16 @@ function showCalendarDayPopover(anchorEl, dateStr, events, opts = {}) {
 
   removeCalendarPopover();
 
+  
+
   const pop = document.createElement("div");
   pop.id = "calendarEventPopover";
   pop.className = "calendarEventPopover calendarEventPopover--dayList";
 
-  const safeEvents = [...(events || [])].sort(util.sortEventsByStatusThenTime);
+  const safeEvents = App.selectors?.sortPartnerEventsFirst
+  ? App.selectors.sortPartnerEventsFirst(events || [])
+  : [...(events || [])].sort(util.sortEventsByStatusThenTime);
+
   const dateText = util.formatDateDisplay(dateStr);
 
   pop.innerHTML = `
@@ -261,15 +274,22 @@ function showCalendarDayPopover(anchorEl, dateStr, events, opts = {}) {
               const place = util.shortPlaceName(ev.placeName) || "Lugar sin nombre";
               const status = util.getEventStatus(ev);
               const icon = util.categoryEmoji(ev.category) || "📍";
-              const displayDate = util.getEventDisplayDate
-                 ? util.getEventDisplayDate(ev)
-                 : String(dateStr || "").slice(0, 10);
+              const partner = App.selectors?.getEventPartner?.(ev) || null;
+
+            const displayDate = util.getEventDisplayDate
+            ? util.getEventDisplayDate(ev)
+            : String(dateStr || "").slice(0, 10);
               const actualDateText = util.formatDateDisplay(ev.date);
               const showRealDate = !!ev.date && String(ev.date).slice(0, 10) !== String(displayDate).slice(0, 10);
 
               return `
-                <div class="calendarDayPopover__item" data-eid="${encodeURIComponent(ev.id || "")}" style="cursor:pointer;">
-                  <div class="calendarDayPopover__itemTitle">
+                <div class="calendarDayPopover__item${partner ? " calendarDayPopover__item--partner" : ""}" data-eid="${encodeURIComponent(ev.id || "")}" style="cursor:pointer;">
+                                    ${
+                    partner
+                      ? `<div class="partnerBadge">${partner.icon || "⭐"} ${partner.label || "Colaboradores"}</div>`
+                      : ""
+                  }
+                    <div class="calendarDayPopover__itemTitle">
                     <span class="calendarEventIcon">${icon}</span>
                     <span class="calendarEventTitleText">${ev.title || "Evento"}</span>
                   </div>

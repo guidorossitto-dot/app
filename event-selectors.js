@@ -13,6 +13,98 @@
     return Number.isFinite(m) ? m : null;
   }
 
+  function normalizePartnerText(value) {
+  return String(value || "")
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+}
+
+function getPartnerConfigs() {
+  const configured = Array.isArray(App.CFG?.PARTNER_VENUES)
+    ? App.CFG.PARTNER_VENUES
+    : [];
+
+  // fallback seguro por si todavía no agregaste PARTNER_VENUES en state-config.js
+  return configured.length
+    ? configured
+    : [
+        {
+          match: "la carbonera",
+          label: "Colaboradores",
+          icon: "⭐",
+          priority: 1
+        }
+      ];
+}
+
+function getEventPartner(ev) {
+  if (!ev) return null;
+
+  const place = normalizePartnerText(
+    ev.placeName ||
+    ev.place_name ||
+    ev.raw_place_text ||
+    ""
+  );
+
+  const configs = getPartnerConfigs();
+
+  const found = configs.find((cfg) => {
+    const match = normalizePartnerText(cfg.match || cfg.name || "");
+    return match && place.includes(match);
+  });
+
+  if (!found) return null;
+
+  return {
+    label: found.label || "Colaboradores",
+    icon: found.icon || "⭐",
+    priority: Number.isFinite(Number(found.priority))
+      ? Number(found.priority)
+      : 999
+  };
+}
+
+function isPartnerEvent(ev) {
+  return !!getEventPartner(ev);
+}
+
+function getPartnerPriority(ev) {
+  const partner = getEventPartner(ev);
+  return partner ? partner.priority : 999999;
+}
+
+function comparePartnerEventsFirst(a, b) {
+  const pa = getPartnerPriority(a);
+  const pb = getPartnerPriority(b);
+
+  if (pa !== pb) return pa - pb;
+
+  return 0;
+}
+
+function sortPartnerEventsFirst(list = [], fallbackCompare = util.sortEventsByStatusThenTime) {
+  const safe = Array.isArray(list) ? [...list] : [];
+
+  return safe.sort((a, b) => {
+    const byPartner = comparePartnerEventsFirst(a, b);
+    if (byPartner !== 0) return byPartner;
+
+    if (typeof fallbackCompare === "function") {
+      return fallbackCompare(a, b);
+    }
+
+    const timeA = String(a?.startTime || "99:99").slice(0, 5);
+    const timeB = String(b?.startTime || "99:99").slice(0, 5);
+    const byTime = timeA.localeCompare(timeB);
+    if (byTime !== 0) return byTime;
+
+    return String(a?.title || "").localeCompare(String(b?.title || ""));
+  });
+}
+
  function passesDiscoveryLeadTime(ev) {
   const mins = safeMinutesToStart(ev);
   const nearbyCenter = state.logic.nearbyCenter;
@@ -122,6 +214,11 @@ function getFeaturedRank(ev) {
 
   function sortGroupedEventsByPriority(groups = []) {
     return [...groups].sort((ga, gb) => {
+      const aPartner = Math.min(...ga.events.map(getPartnerPriority));
+      const bPartner = Math.min(...gb.events.map(getPartnerPriority));
+      
+      if (aPartner !== bPartner) return aPartner - bPartner;
+      
       const aBadge = getPlaceBadge(ga.events);
       const bBadge = getPlaceBadge(gb.events);
 
@@ -153,7 +250,7 @@ function getFeaturedRank(ev) {
     const groups = groupEventsByPlace(list);
 
     return sortGroupedEventsByPriority(groups).map((g) => {
-      const sortedEvents = [...g.events].sort(util.sortEventsByStatusThenTime);
+      const sortedEvents = sortPartnerEventsFirst(g.events);
 
       return {
         ...g,
@@ -421,7 +518,8 @@ function sortTodayEventsByUrgencyAndDistance(list = [], nearbyCenter = state.log
 
 function getSortedVisibleTodayEvents(list = state.logic.events, nearbyCenter = state.logic.nearbyCenter) {
   const today = getVisibleTodayEvents(list);
-  return sortTodayEventsByUrgencyAndDistance(today, nearbyCenter);
+  const sorted = sortTodayEventsByUrgencyAndDistance(today, nearbyCenter);
+  return sortPartnerEventsFirst(sorted, () => 0);
 }
 
 function getDiscoveryBaseCandidates(list = state.logic.events) {
@@ -709,6 +807,12 @@ function getBaficiHeroData(list = state.logic.events) {
     isFeaturedEvent,
     getPlaceBadge,
     getFeaturedRank,
+
+    getEventPartner,
+    isPartnerEvent,
+    getPartnerPriority,
+    comparePartnerEventsFirst,
+    sortPartnerEventsFirst,
 
     groupEventsByPlace,
     sortGroupedEventsByPriority,

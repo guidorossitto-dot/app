@@ -23,6 +23,17 @@
     return t ? `<span class="catTag">${t}</span>` : "";
   }
 
+    function partnerBadgeHTML(ev) {
+    const partner = selectors.getEventPartner?.(ev);
+    if (!partner) return "";
+
+    return `
+      <span class="partnerBadge eventMiniCard__partnerBadge">
+        ${partner.icon || "⭐"} ${partner.label || "Colaboradores"}
+      </span>
+    `;
+  }
+
   /* =========================
      GROUP BY PLACE + RENDER
   ========================= */
@@ -117,183 +128,238 @@
 }
 
   function renderGroupedList(ul, list) {
-    if (!ul) return;
-    ul.innerHTML = "";
+  if (!ul) return;
+  ul.innerHTML = "";
 
-    if (!list || list.length === 0) {
-      ul.innerHTML = "<li>No hay eventos</li>";
-      return;
+  if (!list || list.length === 0) {
+    ul.innerHTML = "<li>No hay eventos</li>";
+    return;
+  }
+
+  const sortedInput = Array.isArray(list) ? [...list] : [];
+  const groups = groupByPlace(sortedInput);
+
+  const getPartner = (ev) => {
+    return selectors.getEventPartner?.(ev) || null;
+  };
+
+  const isPartner = (ev) => {
+    return !!getPartner(ev);
+  };
+
+  const renderPartnerBadge = (ev) => {
+    const partner = getPartner(ev);
+    if (!partner) return "";
+
+    return `
+      <span class="partnerBadge eventMiniCard__partnerBadge">
+        ${partner.icon || "⭐"} ${partner.label || "Colaboradores"}
+      </span>
+    `;
+  };
+
+  const renderEv = (ev) => {
+    if (!ev) return "";
+
+    const time = util.formatTimeStart(ev);
+    const status = util.getEventStatus(ev);
+    const mins = util.minutesToStart(ev);
+
+    let soonBadge = "";
+
+    if (status) {
+      if (mins !== null && mins >= 0 && mins <= 60) {
+        soonBadge = `🔥 ${status}`;
+      } else if (mins !== null && mins < 0 && Math.abs(mins) <= 20) {
+        soonBadge = `🔴 ${status}`;
+      } else {
+        soonBadge = status;
+      }
     }
 
-    const sortedInput = Array.isArray(list) ? [...list] : [];
-const groups = groupByPlace(sortedInput);
+    const icon = util.categoryEmoji(ev.category) || "📍";
+    const partner = getPartner(ev);
 
-    const renderEv = (ev) => {
-      const time = util.formatTimeStart(ev);
-const status = util.getEventStatus(ev);
-const mins = util.minutesToStart(ev);
+    return `
+      <article class="eventMiniCard eventMiniCard--${ev.category || "default"}${partner ? " eventMiniCard--partner" : ""}">
+        <div class="eventMiniCard__top">
+          <div class="eventMiniCard__icon eventMiniCard__icon--${ev.category || "default"}" aria-hidden="true">${icon}</div>
 
-let soonBadge = "";
+          <div class="eventMiniCard__main">
+            <div class="eventMiniCard__titleRow">
+              ${
+                time
+                  ? `<span class="eventMiniCard__time">${time}</span>`
+                  : ""
+              }
 
-if (status) {
-  if (mins !== null && mins >= 0 && mins <= 60) {
-    soonBadge = `🔥 ${status}`;
-  } else if (mins !== null && mins < 0 && Math.abs(mins) <= 20) {
-    soonBadge = `🔴 ${status}`;
-  } else {
-    soonBadge = status;
-  }
-}
+              ${renderPartnerBadge(ev)}
 
-const icon = util.categoryEmoji(ev.category) || "📍";
+              <span class="eventMiniCard__title">${ev.title || "Evento"}</span>
 
-      return `
-        <article class="eventMiniCard eventMiniCard--${ev.category || "default"}">
-          <div class="eventMiniCard__top">
-            <div class="eventMiniCard__icon eventMiniCard__icon--${ev.category || "default"}" aria-hidden="true">${icon}</div>
+              ${
+                soonBadge
+                  ? `<span class="eventMiniCard__status">${soonBadge}</span>`
+                  : ""
+              }
+            </div>
 
-            <div class="eventMiniCard__main">
-              <div class="eventMiniCard__titleRow">
-                ${
-                  time
-                    ? `<span class="eventMiniCard__time">${time}</span>`
-                    : ""
-                }
-
-                <span class="eventMiniCard__title">${ev.title || "Evento"}</span>
-
-                
-                ${
-                  soonBadge
-                    ? `<span class="eventMiniCard__status">${soonBadge}</span>`
-                    : ""
-                }
-              </div>
-
-              <div class="eventMiniCard__meta">
-                ${util.formatDateDisplay(ev.date)}
-                ${formatDistance(ev)}
-              </div>
+            <div class="eventMiniCard__meta">
+              ${util.formatDateDisplay(ev.date)}
+              ${formatDistance(ev)}
             </div>
           </div>
+        </div>
 
-          <div class="eventMiniCard__actions">
-  ${
-    ev.link
-      ? `<a class="linkBtn" href="${ev.link}" target="_blank" rel="noopener noreferrer">
-          Ver info
-        </a>`
-      : ""
-  }
+        <div class="eventMiniCard__actions">
+          ${
+            ev.link
+              ? `<a class="linkBtn" href="${ev.link}" target="_blank" rel="noopener noreferrer">
+                  Ver info
+                </a>`
+              : ""
+          }
 
-  <button class="linkBtn favoriteBtn"
-  data-eid="${encodeURIComponent(ev.id || "")}"
-  aria-pressed="${App.events?.isFavorite?.(ev.id) ? "true" : "false"}">
-  ${App.events?.isFavorite?.(ev.id) ? "❤️ Guardado" : "🤍 Guardar"}
-</button>
+          <button class="linkBtn favoriteBtn"
+            data-eid="${encodeURIComponent(ev.id || "")}"
+            aria-pressed="${App.events?.isFavorite?.(ev.id) ? "true" : "false"}">
+            ${App.events?.isFavorite?.(ev.id) ? "❤️ Guardado" : "🤍 Guardar"}
+          </button>
 
-  <button class="linkBtn routeBtn"
-    data-lat="${ev.lat}"
-    data-lng="${ev.lng}"
-    data-place="${encodeURIComponent(ev.title || ev.placeName || "")}">
-    Cómo llegar
-  </button>
+          <button class="linkBtn routeBtn"
+            data-lat="${ev.lat}"
+            data-lng="${ev.lng}"
+            data-place="${encodeURIComponent(ev.title || ev.placeName || "")}">
+            Cómo llegar
+          </button>
 
-  <button class="linkBtn shareBtn"
-  data-eid="${encodeURIComponent(ev.id)}"
-  data-title="${encodeURIComponent(ev.title || "")}"
-  data-place="${encodeURIComponent(util.shortPlaceName(ev.placeName) || "")}"
-  data-date="${encodeURIComponent(ev.date || "")}"
-  data-time="${encodeURIComponent(util.formatTimeStart(ev) || "")}"
-  data-url="${
-    (ev?.date || "").slice(0, 10) === util.todayStrYYYYMMDD()
-      ? `${location.origin}${location.pathname}#e=${encodeURIComponent(ev.id || "")}`
-      : `${location.origin}${location.pathname}#d=${encodeURIComponent(ev.date || "")}&e=${encodeURIComponent(ev.id || "")}`
-  }">
-  Compartir
-</button>
+          <button class="linkBtn shareBtn"
+            data-eid="${encodeURIComponent(ev.id || "")}"
+            data-title="${encodeURIComponent(ev.title || "")}"
+            data-place="${encodeURIComponent(util.shortPlaceName(ev.placeName) || "")}"
+            data-date="${encodeURIComponent(ev.date || "")}"
+            data-time="${encodeURIComponent(util.formatTimeStart(ev) || "")}"
+            data-url="${
+              (ev?.date || "").slice(0, 10) === util.todayStrYYYYMMDD()
+                ? `${location.origin}${location.pathname}#e=${encodeURIComponent(ev.id || "")}`
+                : `${location.origin}${location.pathname}#d=${encodeURIComponent(ev.date || "")}&e=${encodeURIComponent(ev.id || "")}`
+            }">
+            Compartir
+          </button>
 
-  ${
-    util.canManageUI()
-      ? `<button class="linkBtn deleteEventBtn"
-          data-delete-eid="${encodeURIComponent(ev.id)}"
-          data-delete-title="${encodeURIComponent(ev.title || "")}">
-          Borrar
-        </button>`
-      : ""
-  }
-</div>
-        </article>
-      `;
-    };
+          ${
+            util.canManageUI()
+              ? `<button class="linkBtn deleteEventBtn"
+                  data-delete-eid="${encodeURIComponent(ev.id || "")}"
+                  data-delete-title="${encodeURIComponent(ev.title || "")}">
+                  Borrar
+                </button>`
+              : ""
+          }
+        </div>
+      </article>
+    `;
+  };
 
-    for (const g of groups) {
-      const placeTitle = g.placeTitle;
-      const count = g.count;
-      const evs = selectors.sortTodayEventsByUrgencyAndDistance
-  ? selectors.sortTodayEventsByUrgencyAndDistance(g.events, state.logic.nearbyCenter)
-  : g.events;
-      const badge = g.badge;
+  const sortedGroups = [...groups].sort((a, b) => {
+    const aPartner = (a.events || []).some(isPartner);
+    const bPartner = (b.events || []).some(isPartner);
 
-      const li = document.createElement("li");
+    if (aPartner !== bPartner) return aPartner ? -1 : 1;
 
-      if (count === 1) {
-        li.innerHTML = `
-          <div style="padding:8px 0;border-top:1px solid #eee">
-            <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
-              <div>
-                <div style="font-weight:500" data-place-title>${placeTitle}</div>
-                ${badge ? `<div style="opacity:.7;font-size:.9em;margin-top:2px">${badge}</div>` : ""}
-              </div>
+    return 0;
+  });
 
-              <button class="linkBtn mapPlaceBtn"
-                data-lat="${g.lat}"
-                data-lng="${g.lng}"
-                data-key="${g.key}"
-                type="button">
-                Ver en mapa
-              </button>
-            </div>
+  for (const g of sortedGroups) {
+    const placeTitle = g.placeTitle || util.shortPlaceName(g.placeName) || "Lugar sin nombre";
 
-            <div style="margin-top:6px">
-              ${renderEv(evs[0])}
-            </div>
-          </div>
-        `;
+    const baseEvs = selectors.sortTodayEventsByUrgencyAndDistance
+      ? selectors.sortTodayEventsByUrgencyAndDistance(g.events || [], state.logic.nearbyCenter)
+      : (g.events || []);
 
-        ul.appendChild(li);
-        continue;
-      }
+    const evs = selectors.sortPartnerEventsFirst
+      ? selectors.sortPartnerEventsFirst(baseEvs, () => 0)
+      : baseEvs;
 
+    const count = Number.isFinite(Number(g.count))
+      ? Number(g.count)
+      : evs.length;
+
+    if (!count) continue;
+
+    const badge = g.badge || "";
+
+    const groupPartner = evs.some(isPartner);
+
+    const groupPartnerBadge = groupPartner
+      ? `<span class="partnerBadge partnerBadge--group">⭐ Colaboradores</span>`
+      : "";
+
+    const li = document.createElement("li");
+
+    if (count === 1) {
       li.innerHTML = `
-        <details class="accordion" style="margin:6px 0">
-          <summary style="display:flex;align-items:center;justify-content:space-between;gap:10px;cursor:pointer;font-weight:600;padding:10px 0;line-height:1.3">
-            📍 ${placeTitle}
-            <span style="opacity:.65;margin-left:4px">
-              ${count} ${count === 1 ? "evento" : "eventos"}
-            </span>
-            ${badge ? `<span style="opacity:.7;font-size:.9em;margin-left:8px">${badge}</span>` : ""}
-            </span>
+        <div style="padding:8px 0;border-top:1px solid #eee">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+            <div>
+              <div style="font-weight:500" data-place-title>${groupPartner ? "⭐ " : ""}${placeTitle}</div>
+              ${groupPartnerBadge}
+              ${badge ? `<div style="opacity:.7;font-size:.9em;margin-top:2px">${badge}</div>` : ""}
+            </div>
 
-<button class="linkBtn mapPlaceBtn"
-  data-lat="${g.lat}"
-  data-lng="${g.lng}"
-  data-key="${g.key}"
-  data-event-ids="${encodeURIComponent(JSON.stringify(evs.map(ev => ev.id).filter(Boolean)))}"
-  type="button">
-  Ver en mapa
-</button>
-          </summary>
-
-          <div style="padding:6px 8px">
-            ${evs.map(renderEv).join("")}
+            <button class="linkBtn mapPlaceBtn"
+              data-lat="${g.lat}"
+              data-lng="${g.lng}"
+              data-key="${g.key}"
+              data-event-ids="${encodeURIComponent(JSON.stringify(evs.map(ev => ev.id).filter(Boolean)))}"
+              type="button">
+              Ver en mapa
+            </button>
           </div>
-        </details>
+
+          <div style="margin-top:6px">
+            ${renderEv(evs[0])}
+          </div>
+        </div>
       `;
 
       ul.appendChild(li);
+      continue;
     }
+
+    li.innerHTML = `
+      <details class="accordion" style="margin:6px 0">
+        <summary style="display:flex;align-items:center;justify-content:space-between;gap:10px;cursor:pointer;font-weight:600;padding:10px 0;line-height:1.3">
+          <span>
+            ${groupPartner ? "⭐" : "📍"} ${placeTitle}
+          </span>
+
+          <span style="opacity:.65;margin-left:4px">
+            ${count} ${count === 1 ? "evento" : "eventos"}
+          </span>
+
+          ${badge ? `<span style="opacity:.7;font-size:.9em;margin-left:8px">${badge}</span>` : ""}
+          ${groupPartnerBadge}
+
+          <button class="linkBtn mapPlaceBtn"
+            data-lat="${g.lat}"
+            data-lng="${g.lng}"
+            data-key="${g.key}"
+            data-event-ids="${encodeURIComponent(JSON.stringify(evs.map(ev => ev.id).filter(Boolean)))}"
+            type="button">
+            Ver en mapa
+          </button>
+        </summary>
+
+        <div style="padding:6px 8px">
+          ${evs.map(renderEv).join("")}
+        </div>
+      </details>
+    `;
+
+    ul.appendChild(li);
   }
+}
 
   /* =========================
      APP SHELL

@@ -24,6 +24,16 @@ App.CFG = {
   CATEGORY_ALL: "all",
   DEFAULT_CATEGORY: "music",
 
+    PARTNER_VENUES: [
+    {
+      match: "la carbonera",
+      label: "Colaboradores",
+      icon: "⭐",
+      priority: 1
+    }
+  ],
+
+
   CATEGORIES: {
     music: {
       label: "Música",

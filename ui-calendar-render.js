@@ -86,7 +86,9 @@ function eventsByDateMap() {
       dn.textContent = dayNum;
       cell.appendChild(dn);
 
-      const evs = byDate[dateStr] || [];
+      const evs = App.selectors?.sortPartnerEventsFirst
+      ? App.selectors.sortPartnerEventsFirst(byDate[dateStr] || [])
+      : (byDate[dateStr] || []);
       
       const hasFavorite = evs.some((ev) => App.events?.isFavorite?.(ev.id));
       if (hasFavorite) {
@@ -98,8 +100,8 @@ function eventsByDateMap() {
 if (isMobile) {
   if (evs.length > 0) {
     const more = document.createElement("div");
-    more.className = "event event-more event-more--mobile";
-    more.textContent = `+${evs.length}`;
+    more.className = `event event-more event-more--mobile${hasPartner ? " event-more--partner" : ""}`;
+    more.textContent = hasPartner ? `⭐ +${evs.length}` : `+${evs.length}`; 
     more.title = evs.length === 1
       ? "1 evento"
       : `${evs.length} eventos`;
@@ -119,12 +121,15 @@ if (isMobile) {
     const b = document.createElement("div");
     const isFav = !!App.events?.isFavorite?.(ev.id);
 
-    b.className = `event${isFav ? " event--favorite" : ""}`;
+    const partner = App.selectors?.getEventPartner?.(ev);
+
+    b.className = `event${isFav ? " event--favorite" : ""}${partner ? " event--partner" : ""}`;
 
     const icon = util.categoryEmoji(ev.category) || "📍";
     const favMark = isFav ? "❤️ " : "";
+    const partnerMark = partner ? `${partner.icon || "⭐"} ` : "";
 
-    b.textContent = `${favMark}${icon}${ev.title}`;
+    b.textContent = `${partnerMark}${favMark}${icon}${ev.title}`;
     b.dataset.eid = ev.id || "";
 
     b.addEventListener("click", (e) => {
