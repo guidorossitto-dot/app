@@ -5,57 +5,16 @@
   const App = window.App;
 const { util, state, events, selectors } = App;
 
-const VENUE_GUIDE_GROUPS = [
-  {
-    title: "🎯 Juegos",
-    venues: [
-      "DODA",
-      "Geek out!"
-    ]
-  },
-  {
-    title: "🏛 Centro cultural",
-    venues: [
-      "Cultural Thames",
-      "Centro Cultural Matienzo"
-    ]
-  },
-  {
-    title: "🖼️ Galería",
-    venues: [
-      "Museo de Arte Contemporáneo de Buenos Aires",
-      "Museo de Arte Decorativo"
-    ]
-  },
-  {
-    title: "🍷 Gastronomía",
-    venues: [
-      "Josefina Wine House"
-    ]
-  },
-  {
-    title: "🍸 Bar cultural",
-    venues: [
-    
-      "La Carbonera",
-      "Virasoro Bar"
-      
-    ]
-  },
-  {
-    title: "🎭 Teatro",
-    venues: [
-      "Teatro Payró",
-      "Teatro el extranjero"
-    ]
-  },
-  {
-    title: "🎬 Cine",
-    venues: [
-      "Cine Teatro Alvear",
-      "Cine Gaumont"
-    ]
-  }
+const VENUE_GUIDE_CATEGORY_ORDER = [
+  "music",
+  "theatre",
+  "dance",
+  "cinema",
+  "visual_arts",
+  "literature",
+  "gastronomy",
+  "games",
+  "party"
 ];
 
 function normalizeVenueGuideText(value) {
@@ -66,98 +25,263 @@ function normalizeVenueGuideText(value) {
     .replace(/[\u0300-\u036f]/g, "");
 }
 
-function findVenueForGuide(name) {
-  const venues = Array.isArray(state.logic?.venues) ? state.logic.venues : [];
-  const wanted = normalizeVenueGuideText(name);
+function escapeHTML(value) {
+  return String(value || "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
 
-  return venues.find((venue) => {
-    const venueName = normalizeVenueGuideText(venue?.name);
-    const shortName = normalizeVenueGuideText(util.shortPlaceName(venue?.name || ""));
-    return venueName === wanted || shortName === wanted;
-  }) || null;
+function escapeAttr(value) {
+  return escapeHTML(value);
+}
+
+function getVenueGuideGroups() {
+  const cats = App.CFG?.CATEGORIES || {};
+
+  const categoryGroups = VENUE_GUIDE_CATEGORY_ORDER
+    .filter((key) => cats[key])
+    .map((key) => ({
+      key,
+      title: `${cats[key].emoji || "📍"} ${cats[key].label || key}`
+    }));
+
+  return [
+    ...categoryGroups,
+    {
+      key: "other",
+      title: "📍 Otros"
+    }
+  ];
+}
+
+function getVenueEventsForGuide(venue) {
+  const list = Array.isArray(state.logic?.events) ? state.logic.events : [];
+
+  const lat = Number(venue?.lat);
+  const lng = Number(venue?.lng);
+
+  if (!venue?.name || !Number.isFinite(lat) || !Number.isFinite(lng)) {
+    return [];
+  }
+
+  const venueKey = util.smartLocationKey(
+    {
+      placeName: venue.name,
+      lat,
+      lng
+    },
+    list
+  );
+
+  if (!venueKey) return [];
+
+  return list.filter((ev) => {
+    if (!ev || !Number.isFinite(Number(ev.lat)) || !Number.isFinite(Number(ev.lng))) {
+      return false;
+    }
+
+    const eventKey = util.smartLocationKey(ev, list);
+    return eventKey === venueKey;
+  });
+}
+
+function sortVenueEventsForGuide(a, b) {
+  const da = App.util?.getEventDisplayDate?.(a) || a?.date || "";
+  const db = App.util?.getEventDisplayDate?.(b) || b?.date || "";
+
+  const dateCompare = da.localeCompare(db);
+  if (dateCompare !== 0) return dateCompare;
+
+  const ta = String(a?.startTime || "99:99");
+  const tb = String(b?.startTime || "99:99");
+
+  return ta.localeCompare(tb);
+}
+
+function getVenueGuideGroupKey(venue) {
+  const explicit =
+    String(venue?.guideGroup || venue?.guideCategory || venue?.category || "")
+      .trim();
+
+  if (explicit && App.CFG?.CATEGORIES?.[explicit]) {
+    return explicit;
+  }
+
+  const venueEvents = getVenueEventsForGuide(venue)
+    .slice()
+    .sort(sortVenueEventsForGuide);
+
+  const firstEvent = venueEvents[0] || null;
+  const eventCategory = String(firstEvent?.category || "").trim();
+
+  if (eventCategory && App.CFG?.CATEGORIES?.[eventCategory]) {
+    return eventCategory;
+  }
+
+  return "other";
+}
+
+function buildVenueGuideItemHTML(venue) {
+  const lat = Number(venue?.lat);
+  const lng = Number(venue?.lng);
+
+  if (!venue || !venue.name || !Number.isFinite(lat) || !Number.isFinite(lng)) {
+    return "";
+  }
+
+  const list = Array.isArray(state.logic?.events) ? state.logic.events : [];
+
+  const key = util.smartLocationKey(
+    {
+      placeName: venue.name,
+      lat,
+      lng
+    },
+    list
+  );
+
+  const venueNameNorm = normalizeVenueGuideText(venue.name || "");
+  const venueAddressNorm = normalizeVenueGuideText(venue.address || "");
+
+  const safeAddress =
+    venueAddressNorm && venueAddressNorm !== venueNameNorm
+      ? venue.address
+      : "";
+
+  const meta = [
+    venue.neighborhood || "",
+    safeAddress
+  ].filter(Boolean).join(" · ");
+
+  const instagramBtn = venue.instagramUrl
+    ? `
+      <a
+        class="linkBtn"
+        href="${escapeAttr(venue.instagramUrl)}"
+        target="_blank"
+        rel="noopener noreferrer">
+        Instagram
+      </a>
+    `
+    : "";
+
+  const websiteBtn = venue.websiteUrl
+    ? `
+      <a
+        class="linkBtn"
+        href="${escapeAttr(venue.websiteUrl)}"
+        target="_blank"
+        rel="noopener noreferrer">
+        Web
+      </a>
+    `
+    : "";
+
+  const menuBtn = venue.menuUrl
+    ? `
+      <a
+        class="linkBtn"
+        href="${escapeAttr(venue.menuUrl)}"
+        target="_blank"
+        rel="noopener noreferrer">
+        Carta
+      </a>
+    `
+    : "";
+
+  return `
+    <li class="venuesGuideItem">
+      <div class="venuesGuideMain">
+        <div class="venuesGuidePlace" data-place-title>${escapeHTML(venue.name)}</div>
+        ${meta ? `<div class="venuesGuideMeta">${escapeHTML(meta)}</div>` : ""}
+      </div>
+
+      <div class="venuesGuideActions">
+        ${instagramBtn}
+        ${websiteBtn}
+        ${menuBtn}
+
+        <button
+          type="button"
+          class="linkBtn venuesGuideMapBtn"
+          data-lat="${lat}"
+          data-lng="${lng}"
+          data-key="${escapeAttr(key)}"
+          data-venue-id="${escapeAttr(encodeURIComponent(venue.id || ""))}"
+          data-place-title="${escapeAttr(encodeURIComponent(venue.name || ""))}">
+          Ver en mapa
+        </button>
+      </div>
+    </li>
+  `;
 }
 
 function buildVenueGuideHTML() {
-  const groupsHTML = VENUE_GUIDE_GROUPS.map((group) => {
-    const itemsHTML = (group.venues || []).map((venueName) => {
-      const venue = findVenueForGuide(venueName);
-      if (!venue || !Number.isFinite(Number(venue.lat)) || !Number.isFinite(Number(venue.lng))) {
-        return "";
-      }
+  const venues = Array.isArray(state.logic?.venues)
+    ? state.logic.venues
+        .filter((venue) => {
+          return (
+            venue &&
+            venue.name &&
+            Number.isFinite(Number(venue.lat)) &&
+            Number.isFinite(Number(venue.lng))
+          );
+        })
+        .slice()
+        .sort((a, b) => String(a.name || "").localeCompare(String(b.name || "")))
+    : [];
 
-      const key = util.smartLocationKey(
-        {
-          placeName: venue.name,
-          lat: Number(venue.lat),
-          lng: Number(venue.lng)
-        },
-        state.logic.events || []
-      );
+  if (!venues.length) {
+    return `
+      <div class="nearbySmall">
+        Todavía no hay lugares listos para mostrar en esta guía.
+      </div>
+    `;
+  }
 
-      const venueNameNorm = normalizeVenueGuideText(venue.name || "");
-      const venueAddressNorm = normalizeVenueGuideText(venue.address || "");
+  const groupDefs = getVenueGuideGroups();
+  const grouped = new Map();
 
-      const safeAddress =
-        venueAddressNorm && venueAddressNorm !== venueNameNorm
-          ? venue.address
-          : "";
+  groupDefs.forEach((group) => {
+    grouped.set(group.key, {
+      ...group,
+      venues: []
+    });
+  });
 
-      const meta = [
-        venue.neighborhood || "",
-        safeAddress
-      ].filter(Boolean).join(" · ");
+  venues.forEach((venue) => {
+    const groupKey = getVenueGuideGroupKey(venue);
+    const safeGroupKey = grouped.has(groupKey) ? groupKey : "other";
 
-      const instagramBtn = venue.instagramUrl
-        ? `
-          <a
-            class="linkBtn"
-            href="${venue.instagramUrl}"
-            target="_blank"
-            rel="noopener noreferrer">
-            Instagram
-          </a>
-        `
-        : "";
+    grouped.get(safeGroupKey).venues.push(venue);
+  });
+
+  const groupsHTML = [...grouped.values()]
+    .map((group) => {
+      const itemsHTML = group.venues
+        .map(buildVenueGuideItemHTML)
+        .filter(Boolean)
+        .join("");
+
+      if (!itemsHTML) return "";
 
       return `
-        <li class="venuesGuideItem">
-          <div class="venuesGuideMain">
-            <div class="venuesGuidePlace" data-place-title>${venue.name}</div>
-            ${meta ? `<div class="venuesGuideMeta">${meta}</div>` : ""}
-          </div>
+        <details class="venuesGuideCategory">
+          <summary class="venuesGuideCategorySummary">
+            <span>${escapeHTML(group.title)}</span>
+          </summary>
 
-          <div class="venuesGuideActions">
-            ${instagramBtn}
-
-         <button
-            type="button"
-            class="linkBtn venuesGuideMapBtn"
-               data-lat="${Number(venue.lat)}"
-                data-lng="${Number(venue.lng)}"
-              data-key="${key}"
-            data-venue-id="${encodeURIComponent(venue.id || "")}"
-        data-place-title="${encodeURIComponent(venue.name || "")}">
-       Ver en mapa
-      </button>
-          </div>
-        </li>
+          <ul class="venuesGuideList">
+            ${itemsHTML}
+          </ul>
+        </details>
       `;
-    }).filter(Boolean).join("");
-
-    if (!itemsHTML) return "";
-
-    return `
-  <details class="venuesGuideCategory">
-    <summary class="venuesGuideCategorySummary">
-      <span>${group.title}</span>
-    </summary>
-
-    <ul class="venuesGuideList">
-      ${itemsHTML}
-    </ul>
-  </details>
-`;
-  }).filter(Boolean).join("");
+    })
+    .filter(Boolean)
+    .join("");
 
   return groupsHTML || `
     <div class="nearbySmall">

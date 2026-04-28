@@ -155,7 +155,7 @@ if (v.createMode === "weeklyMultiDayRange" && !v.weeklyMultiDayValues) {
     };
   }
 
-    function resetAdminEventForm() {
+    function resetAdminEventForm(template = {}) {
     const titleEl = document.getElementById("eventTitle");
     const dateEl = document.getElementById("eventDate");
     const latEl = document.getElementById("eventLat");

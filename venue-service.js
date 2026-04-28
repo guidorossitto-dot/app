@@ -190,6 +190,29 @@
     };
   }
 
+function findExistingVenueFromEventData({ name, lat, lng }) {
+  ensureVenueState();
+
+  const targetName = safeLower(name);
+  if (!targetName || lat === null || lng === null) return null;
+
+  return state.logic.venues.find((v) => {
+    const venueName = safeLower(v?.name);
+    const sameName = venueName === targetName;
+
+    const vLat = toNumberOrNull(v?.lat);
+    const vLng = toNumberOrNull(v?.lng);
+
+    if (!sameName || vLat === null || vLng === null) return false;
+
+    if (typeof App.util?.distanceKm === "function") {
+      return App.util.distanceKm(lat, lng, vLat, vLng) <= 0.12;
+    }
+
+    return vLat === lat && vLng === lng;
+  }) || null;
+}
+
 async function ensureVenueExistsFromEventData(eventLike = {}) {
   const name = safeString(eventLike.placeName || eventLike.name);
   const lat = toNumberOrNull(eventLike.lat);
@@ -199,12 +222,7 @@ async function ensureVenueExistsFromEventData(eventLike = {}) {
     return { ok: false, error: "INVALID_EVENT_VENUE_DATA" };
   }
 
-  const existingVenue = state.logic.venues.find((v) => {
-    const sameName = safeLower(v?.name) === safeLower(name);
-    const sameLat = Number(v?.lat) === lat;
-    const sameLng = Number(v?.lng) === lng;
-    return sameName && sameLat && sameLng;
-  });
+  const existingVenue = findExistingVenueFromEventData({ name, lat, lng });
 
   if (existingVenue) {
     return {
