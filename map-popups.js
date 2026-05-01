@@ -248,7 +248,10 @@ if (uniqueDates.length === 1) {
   const status = util.getEventStatus(e);
   const eid = e.id != null ? String(e.id) : "";
   const infoHref = getEventInfoHref(e);
-const infoLabel = getEventInfoLabel(e);
+  const infoLabel = getEventInfoLabel(e);
+
+  const pricingBadge = App.selectors?.getPricingBadge?.(e) || "";
+  const pricingType = App.selectors?.getEventPricingType?.(e) || "unknown";
 
   html += `
     <div class="popupItem" ${eid ? `data-eid="${encodeURIComponent(eid)}"` : ""}>
@@ -260,7 +263,15 @@ const infoLabel = getEventInfoLabel(e);
         </div>
       </div>
 
-      <div class="popupItemMeta">${util.formatDateDisplay(e.date)}</div>
+    <div class="popupItemMeta">${util.formatDateDisplay(e.date)}</div>
+
+    ${
+      pricingBadge
+        ? `<div class="popupPricingBadge popupPricingBadge--${pricingType}">
+            ${pricingBadge}
+          </div>`
+        : ""
+    }
 
       ${
         eid
