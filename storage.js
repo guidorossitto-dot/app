@@ -78,6 +78,8 @@ function loadVenuesCache() {
     category: row.category || "music",
     link: row.link || "",
     flyerUrl: row.flyer_url || "",
+    pricingType: row.pricing_type || "unknown",
+    priceNote: row.price_note || "",
     lat: Number(row.lat),
     lng: Number(row.lng),
 
@@ -168,6 +170,8 @@ function loadVenues() {
     category: safe.category || "music",
     link: safe.link || "",
     flyer_url: safe.flyerUrl || "",
+    pricing_type: safe.pricingType || "unknown",
+    price_note: safe.priceNote || "",
     lat: Number(safe.lat),
     lng: Number(safe.lng),
 
@@ -314,6 +318,7 @@ function loadVenues() {
   raw_date_text: c.raw?.dateText || c.date || "",
   raw_time_text: c.raw?.timeText || c.startTime || "",
   raw_place_text: c.raw?.placeText || c.venueName || "",
+  raw_price_text: c.raw?.priceText || c.priceNote || c.price_note || "",
   raw_link: c.raw?.link || c.sourceUrl || "",
 
   parsed_title: c.title || "",
@@ -321,6 +326,10 @@ function loadVenues() {
   parsed_start_time: c.startTime || null,
   parsed_place_name: c.venueName || "",
   parsed_category: c.category || "music",
+  parsed_pricing_type: App.util?.normalizePricingType
+    ? App.util.normalizePricingType(c.pricingType || c.pricing_type)
+    : (c.pricingType || c.pricing_type || "unknown"),
+  parsed_price_note: c.priceNote || c.price_note || "",
   parsed_lat: Number.isFinite(c.lat) ? c.lat : null,
   parsed_lng: Number.isFinite(c.lng) ? c.lng : null,
 
@@ -559,6 +568,8 @@ async function deleteVenueRemote(venueId) {
   category: safe.category || "music",
   link: safe.link || "",
   flyer_url: safe.flyerUrl || "",
+  pricing_type: safe.pricingType || "unknown",
+  price_note: safe.priceNote || "",
   lat: Number(safe.lat),
   lng: Number(safe.lng),
 

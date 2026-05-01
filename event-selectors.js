@@ -13,6 +13,53 @@
     return Number.isFinite(m) ? m : null;
   }
 
+  function getPricingConfig(type) {
+  const safeType = App.util?.normalizePricingType
+    ? App.util.normalizePricingType(type)
+    : String(type || "unknown").trim();
+
+  return App.CFG?.PRICING_TYPES?.[safeType] || App.CFG?.PRICING_TYPES?.unknown || {
+    label: "No informado",
+    emoji: "🎫"
+  };
+}
+
+  function getEventPricingType(ev) {
+    const raw = ev?.pricingType ?? ev?.pricing_type ?? "unknown";
+
+    return App.util?.normalizePricingType
+      ? App.util.normalizePricingType(raw)
+      : String(raw || "unknown").trim();
+  }
+
+  function getEventPriceNote(ev) {
+    return String(ev?.priceNote ?? ev?.price_note ?? "").trim();
+  }
+
+  function getPricingLabel(ev) {
+    const type = getEventPricingType(ev);
+    const note = getEventPriceNote(ev);
+
+    if (note) return note;
+    if (type === "unknown") return "";
+
+    return getPricingConfig(type).label || "";
+  }
+
+  function getPricingBadge(ev) {
+    const label = getPricingLabel(ev);
+    if (!label) return "";
+
+    const type = getEventPricingType(ev);
+    const cfg = getPricingConfig(type);
+
+    return `${cfg.emoji || "🎫"} ${label}`;
+  }
+
+  function isFreeEvent(ev) {
+    return getEventPricingType(ev) === "free";
+  }
+
   function normalizePartnerText(value) {
   return String(value || "")
     .trim()
@@ -21,7 +68,7 @@
     .replace(/[\u0300-\u036f]/g, "");
 }
 
-function getPartnerConfigs() {
+  function getPartnerConfigs() {
   const configured = Array.isArray(App.CFG?.PARTNER_VENUES)
     ? App.CFG.PARTNER_VENUES
     : [];
@@ -39,7 +86,7 @@ function getPartnerConfigs() {
       ];
 }
 
-function getEventPartner(ev) {
+  function getEventPartner(ev) {
   if (!ev) return null;
 
   const place = normalizePartnerText(
@@ -804,6 +851,14 @@ function getBaficiHeroData(list = state.logic.events) {
   ========================= */
   App.selectors = {
     safeMinutesToStart,
+
+    getPricingConfig,
+    getEventPricingType,
+    getEventPriceNote,
+    getPricingLabel,
+    getPricingBadge,
+    isFreeEvent,
+
     isFeaturedEvent,
     getPlaceBadge,
     getFeaturedRank,

@@ -59,6 +59,8 @@
     const catEl = document.getElementById("eventCategory");
     const linkEl = document.getElementById("eventLink");
     const flyerEl = document.getElementById("eventFlyerUrl");
+    const pricingTypeEl = document.getElementById("eventPricingType");
+    const priceNoteEl = document.getElementById("eventPriceNote");
     const venueMenuUrlEl = document.getElementById("venueMenuUrl");
     const venueGuideGroupEl = document.getElementById("venueGuideGroup");
     const createModeEl = document.getElementById("eventCreateMode");
@@ -75,6 +77,8 @@
         catEl,
         linkEl,
         flyerEl,
+        pricingTypeEl,
+        priceNoteEl,
         venueMenuUrlEl,
         venueGuideGroupEl,
         weeklyMultiDayValuesEl,
@@ -92,6 +96,8 @@
         category: catEl?.value || "music",
         link: linkEl?.value.trim() || "",
         flyerUrl: flyerEl?.value.trim() || "",
+        pricingType: pricingTypeEl?.value || "unknown",
+        priceNote: priceNoteEl?.value.trim() || "",
         venueMenuUrl: venueMenuUrlEl?.value.trim() || "",
         venueGuideGroup: venueGuideGroupEl?.value.trim() || "",
         weeklyMultiDayValues: weeklyMultiDayValuesEl?.value.trim() || "",
@@ -154,7 +160,9 @@ if (v.createMode === "weeklyMultiDayRange" && !v.weeklyMultiDayValues) {
       startTime: formValues.startTime,
       category: formValues.category,
       link: formValues.link,
-      flyerUrl: formValues.flyerUrl
+      flyerUrl: formValues.flyerUrl,
+      pricingType: formValues.pricingType || "unknown",
+      priceNote: formValues.priceNote || ""
     };
   }
 
@@ -168,6 +176,8 @@ if (v.createMode === "weeklyMultiDayRange" && !v.weeklyMultiDayValues) {
     const catEl = document.getElementById("eventCategory");
     const linkEl = document.getElementById("eventLink");
     const flyerEl = document.getElementById("eventFlyerUrl");
+    const pricingTypeEl = document.getElementById("eventPricingType");
+    const priceNoteEl = document.getElementById("eventPriceNote");
     const venueMenuUrlEl = document.getElementById("venueMenuUrl");
     const venueGuideGroupEl = document.getElementById("venueGuideGroup");
     const addBtn = document.getElementById("addEventBtn");
@@ -201,6 +211,8 @@ if (v.createMode === "weeklyMultiDayRange" && !v.weeklyMultiDayValues) {
     if (venueMenuUrlEl) venueMenuUrlEl.value = "";
     if (venueGuideGroupEl) venueGuideGroupEl.value = template.venueGuideGroup || "";
     if (flyerEl) flyerEl.value = "";
+    if (pricingTypeEl) pricingTypeEl.value = template.pricingType || "unknown";
+    if (priceNoteEl) priceNoteEl.value = template.priceNote || "";
     if (createModeEl) {
     createModeEl.value = template.createMode || "single";
 }
@@ -240,6 +252,8 @@ if (endDateLabelEl) {
     const catEl = document.getElementById("eventCategory");
     const linkEl = document.getElementById("eventLink");
     const flyerEl = document.getElementById("eventFlyerUrl");
+    const pricingTypeEl = document.getElementById("eventPricingType");
+    const priceNoteEl = document.getElementById("eventPriceNote");
     const venueMenuUrlEl = document.getElementById("venueMenuUrl");
     const venueGuideGroupEl = document.getElementById("venueGuideGroup");
 
@@ -271,6 +285,8 @@ if (endDateLabelEl) {
     if (catEl) catEl.value = template.category || "music";
     if (linkEl) linkEl.value = template.link || "";
     if (flyerEl) flyerEl.value = template.flyerUrl || "";
+    if (pricingTypeEl) pricingTypeEl.value = template.pricingType || "unknown";
+    if (priceNoteEl) priceNoteEl.value = template.priceNote || "";
     if (venueMenuUrlEl) venueMenuUrlEl.value = template.venueMenuUrl || "";
     if (venueGuideGroupEl) venueGuideGroupEl.value = template.venueGuideGroup || "";
 
@@ -380,6 +396,8 @@ if (createModeEl) {
     category,
     link,
     flyerUrl,
+    pricingType,
+    priceNote,
     venueMenuUrl,
     venueGuideGroup,
     createMode,
@@ -407,7 +425,9 @@ if (createModeEl) {
       startTime,
       category,
       link,
-      flyerUrl
+      flyerUrl,
+      pricingType,
+      priceNote
     });
 
     const editingId = String(state.logic.editingEventId || "").trim() || null;
@@ -538,6 +558,8 @@ if (keepTemplate && createdCount >= 1) {
     category,
     link,
     flyerUrl,
+    pricingType,
+    priceNote,  
     venueMenuUrl,
     venueGuideGroup,
     createMode,
@@ -583,6 +605,8 @@ if (keepTemplate && createdCount >= 1) {
     const catEl = document.getElementById("eventCategory");
     const linkEl = document.getElementById("eventLink");
     const flyerEl = document.getElementById("eventFlyerUrl");
+    const pricingTypeEl = document.getElementById("eventPricingType");
+    const priceNoteEl = document.getElementById("eventPriceNote");
     const addBtn = document.getElementById("addEventBtn");
     const cancelBtn = document.getElementById("cancelEditBtn");
 
@@ -595,6 +619,8 @@ if (keepTemplate && createdCount >= 1) {
     if (catEl) catEl.value = evData.category || "music";
     if (linkEl) linkEl.value = evData.link || "";
     if (flyerEl) flyerEl.value = evData.flyerUrl || "";
+    if (pricingTypeEl) pricingTypeEl.value = evData.pricingType || "unknown";
+    if (priceNoteEl) priceNoteEl.value = evData.priceNote || "";
 
     const adminRow = document.getElementById("adminCategoryChips");
     if (adminRow) {
@@ -901,7 +927,7 @@ if (keepTemplate && createdCount >= 1) {
     recycleAdminEventForm,
     createEventFromAdminForm,
 
-        readAdminVenueFormValues,
+    readAdminVenueFormValues,
     validateAdminVenueFormValues,
     resetAdminVenueForm,
     saveVenueFromAdminForm,

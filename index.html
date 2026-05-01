@@ -311,11 +311,25 @@
   </div>
 
   <input type="hidden" id="weeklyMultiDayValues" value="">
-</div>
-              <input id="eventStart" type="time">
+  </div>
+    <input id="eventStart" type="time">
 
-              <input id="eventLat" type="number" step="0.000001" placeholder="Latitud">
-              <input id="eventLng" type="number" step="0.000001" placeholder="Longitud">
+    <label for="eventPricingType">Entrada</label>
+    <select id="eventPricingType">
+      <option value="unknown">No informado</option>
+      <option value="free">Gratis</option>
+      <option value="paid">Arancelado</option>
+      <option value="contribution">A la gorra / contribución</option>
+    </select>
+
+    <input
+      id="eventPriceNote"
+      type="text"
+      placeholder="Detalle entrada: Gratis con inscripción / $5000 / A la gorra"
+    />
+
+    <input id="eventLat" type="number" step="0.000001" placeholder="Latitud">
+    <input id="eventLng" type="number" step="0.000001" placeholder="Longitud">
             </div>
 
             <input
@@ -458,19 +472,19 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-<script src="state-config.js"></script>
+<script src="state-config.js?v=93"></script>
 <script src="venue-service.js?v=92"></script>
 <script src="supabase-client.js"></script>
 <script src="auth-service.js"></script>
-<script src="storage.js?v=92"></script>
-<script src="event-selectors.js"></script>
+<script src="storage.js?v=93"></script>
+<script src="event-selectors.js?v=93"></script>
 <script src="store.js"></script>
 <script src="event-service.js"></script>
 
 <script src="candidate-dedupe.js"></script>
 <script src="candidate-service.js"></script>
 <script src="actions.js"></script>
-<script src="admin-event-form.js?v=92"></script>
+<script src="admin-event-form.js?v=93"></script>
 <script src="ui-calendar-popover.js"></script>
 <script src="ui-calendar.js"></script>
 <script src="ui-calendar-render.js"></script>

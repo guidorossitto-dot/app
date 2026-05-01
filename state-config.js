@@ -71,10 +71,30 @@ App.CFG = {
       label: "Fiesta",
       emoji: "🪩"
     }
+  },
+
+  PRICING_TYPES: {
+    unknown: {
+      label: "No informado",
+      emoji: "🎫"
+    },
+    free: {
+      label: "Gratis",
+      emoji: "🆓"
+    },
+    paid: {
+      label: "Arancelado",
+      emoji: "🎟️"
+    },
+    contribution: {
+      label: "A la gorra",
+      emoji: "🤲"
+    }
   }
 };
 
 App.CFG.ALLOWED_CATEGORIES = Object.keys(App.CFG.CATEGORIES);
+App.CFG.ALLOWED_PRICING_TYPES = Object.keys(App.CFG.PRICING_TYPES || {});
 
   /* =========================
      APP STATE
@@ -373,9 +393,18 @@ function formatTimeStart(ev) {
   /* =========================
      CATEGORY
   ========================= */
-  function normalizeCategory(raw) {
+function normalizeCategory(raw) {
   const v = (raw ?? "").toString().trim();
   return App.CFG.ALLOWED_CATEGORIES.includes(v) ? v : App.CFG.DEFAULT_CATEGORY;
+}
+
+function normalizePricingType(raw) {
+  const v = (raw ?? "").toString().trim();
+  const allowed = Array.isArray(App.CFG.ALLOWED_PRICING_TYPES)
+    ? App.CFG.ALLOWED_PRICING_TYPES
+    : ["free", "paid", "contribution", "unknown"];
+
+  return allowed.includes(v) ? v : "unknown";
 }
 
 function categoryEmoji(cat) {
@@ -480,8 +509,11 @@ function isEventDisplayedOnDate(ev, dateStr) {
     link: (raw?.link ?? "").toString().trim(),
     flyerUrl: (raw?.flyerUrl ?? raw?.flyer_url ?? "").toString().trim(),
 
+    pricingType: normalizePricingType(raw?.pricingType ?? raw?.pricing_type),
+    priceNote: (raw?.priceNote ?? raw?.price_note ?? "").toString().trim(),
+
     sourceName: (raw?.sourceName ?? raw?.source_name ?? "").toString().trim(),
-sourceUrl: (raw?.sourceUrl ?? raw?.source_url ?? "").toString().trim(),
+    sourceUrl: (raw?.sourceUrl ?? raw?.source_url ?? "").toString().trim(),
 
     seriesId: (raw?.seriesId ?? "").toString().trim(),
     recurrenceType: (raw?.recurrenceType ?? "").toString().trim(),
@@ -635,6 +667,7 @@ function getTodayEvents(list = getAllEvents()) {
     sortEventsByStatusThenTime,
 
     normalizeCategory,
+    normalizePricingType,
     categoryEmoji,
     categoryName,
     categoryLabel,
