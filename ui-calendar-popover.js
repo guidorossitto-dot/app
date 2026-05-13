@@ -41,6 +41,20 @@ function goToEventOnMap(ev) {
   return true;
 }
 
+  function calendarPricingBadgeHTML(ev, extraClass = "") {
+    const pricingBadge = App.selectors?.getPricingBadge?.(ev) || "";
+    if (!pricingBadge) return "";
+
+    const pricingType = App.selectors?.getEventPricingType?.(ev) || "unknown";
+    const extra = extraClass ? ` ${extraClass}` : "";
+
+    return `
+      <div class="calendarPricingBadge calendarPricingBadge--${pricingType}${extra}">
+        ${pricingBadge}
+      </div>
+    `;
+  }
+
 function showCalendarEventPopover(anchorEl, ev) {
   if (!anchorEl || !ev) return;
 
@@ -71,11 +85,13 @@ function showCalendarEventPopover(anchorEl, ev) {
       </button>
     </div>
 
-        ${
+    ${
       partner
         ? `<div class="partnerBadge calendarPartnerBadge">${partner.icon || "⭐"} ${partner.label || "Colaboradores"}</div>`
         : ""
     }
+
+    ${calendarPricingBadgeHTML(ev, "calendarPricingBadge--single")}
 
     <div class="calendarEventPopover__meta">
       ${time ? `<div><strong>Hora:</strong> ${time}</div>` : ""}
@@ -293,6 +309,8 @@ function showCalendarDayPopover(anchorEl, dateStr, events, opts = {}) {
                     <span class="calendarEventIcon">${icon}</span>
                     <span class="calendarEventTitleText">${ev.title || "Evento"}</span>
                   </div>
+
+                  ${calendarPricingBadgeHTML(ev)}
 
                   <div class="calendarDayPopover__itemMeta">
                     ${time ? `<div><strong>Hora:</strong> ${time}</div>` : ""}

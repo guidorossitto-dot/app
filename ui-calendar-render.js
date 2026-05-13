@@ -33,6 +33,53 @@ function eventsByDateMap() {
   return mapObj;
 }
 
+function getCalendarPricingInfo(ev) {
+  const badge = App.selectors?.getPricingBadge?.(ev) || "";
+  const type = App.selectors?.getEventPricingType?.(ev) || "unknown";
+
+  if (!badge) {
+    return {
+      badge: "",
+      type,
+      short: ""
+    };
+  }
+
+  const cfg = App.CFG?.PRICING_TYPES?.[type] || {};
+
+  return {
+    badge,
+    type,
+    short:
+      cfg.emoji ||
+      (type === "free"
+        ? "🆓"
+        : type === "paid"
+          ? "🎟️"
+          : type === "contribution"
+            ? "🤲"
+            : "🎫")
+  };
+}
+
+  function getCalendarPricingSummary(events = []) {
+    const seen = new Set();
+    const out = [];
+
+    for (const ev of events || []) {
+      const info = getCalendarPricingInfo(ev);
+
+      if (!info.badge) continue;
+      if (info.type === "unknown") continue;
+      if (seen.has(info.type)) continue;
+
+      seen.add(info.type);
+      out.push(info.short);
+    }
+
+    return out.join(" ");
+  }
+
   function renderCalendar() {
     const cal = document.getElementById("calendar");
     const label = document.getElementById("monthLabel");
@@ -103,10 +150,15 @@ if (isMobile) {
   if (evs.length > 0) {
     const more = document.createElement("div");
     more.className = "event event-more event-more--mobile";
-    more.textContent = `+${evs.length}`;
-    more.title = evs.length === 1
-      ? "1 evento"
-      : `${evs.length} eventos`;
+    const pricingSummary = getCalendarPricingSummary(evs);
+
+    more.textContent = pricingSummary
+      ? `+${evs.length} · ${pricingSummary}`
+      : `+${evs.length}`;
+
+    more.title = `${evs.length === 1 ? "1 evento" : `${evs.length} eventos`}${
+      pricingSummary ? ` · ${pricingSummary}` : ""
+    }`;
 
     more.addEventListener("click", (e) => {
       e.preventDefault();
@@ -125,14 +177,23 @@ if (isMobile) {
 
     const partner = App.selectors?.getEventPartner?.(ev);
 
-    b.className = `event${isFav ? " event--favorite" : ""}${partner ? " event--partner" : ""}`;
+const pricingInfo = getCalendarPricingInfo(ev);
 
-    const icon = util.categoryEmoji(ev.category) || "📍";
-    const favMark = isFav ? "❤️ " : "";
-    const partnerMark = partner ? `${partner.icon || "⭐"} ` : "";
+  b.className = `event${isFav ? " event--favorite" : ""}${partner ? " event--partner" : ""}${
+    pricingInfo.badge ? ` event--pricing event--pricing-${pricingInfo.type}` : ""
+  }`;
 
-    b.textContent = `${partnerMark}${favMark}${icon}${ev.title}`;
-    b.dataset.eid = ev.id || "";
+  const icon = util.categoryEmoji(ev.category) || "📍";
+  const favMark = isFav ? "❤️ " : "";
+  const partnerMark = partner ? `${partner.icon || "⭐"} ` : "";
+  const pricingText = pricingInfo.badge ? ` · ${pricingInfo.badge}` : "";
+
+  b.textContent = `${partnerMark}${favMark}${icon}${ev.title}${pricingText}`;
+  b.title = pricingInfo.badge
+    ? `${ev.title || "Evento"} · ${pricingInfo.badge}`
+    : `${ev.title || "Evento"}`;
+
+  b.dataset.eid = ev.id || "";
 
     b.addEventListener("click", (e) => {
       e.preventDefault();

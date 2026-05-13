@@ -3650,3 +3650,81 @@ header button {
   background: #f5f2ff;
   border-color: #ddd3ff;
 }
+
+/* =========================
+   PRICING / CALENDARIO
+========================= */
+
+.calendarPricingBadge {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  max-width: 100%;
+  gap: 4px;
+  margin: 3px 0 7px;
+  padding: 3px 7px;
+  border-radius: 999px;
+  border: 1px solid #e7e7e7;
+  background: #f8f8f8;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.15;
+  color: #111;
+}
+
+.calendarPricingBadge--single {
+  margin-top: -2px;
+  margin-bottom: 9px;
+}
+
+.calendarPricingBadge--free {
+  background: #f2fff5;
+  border-color: #cfead6;
+}
+
+.calendarPricingBadge--paid {
+  background: #fff8ef;
+  border-color: #efd8b8;
+}
+
+.calendarPricingBadge--contribution {
+  background: #f5f2ff;
+  border-color: #ddd3ff;
+}
+
+.calendarPricingBadge--unknown {
+  background: #f8f8f8;
+  border-color: #e7e7e7;
+}
+
+.day .event--pricing:not(.event--partner) {
+  border-left: 3px solid #e7e7e7;
+  padding-left: 5px;
+}
+
+.day .event--pricing-free:not(.event--partner) {
+  background: #f2fff5;
+  border-color: #cfead6;
+}
+
+.day .event--pricing-paid:not(.event--partner) {
+  background: #fff8ef;
+  border-color: #efd8b8;
+}
+
+.day .event--pricing-contribution:not(.event--partner) {
+  background: #f5f2ff;
+  border-color: #ddd3ff;
+}
+
+.day .event--pricing-unknown:not(.event--partner) {
+  background: #f8f8f8;
+  border-color: #e7e7e7;
+}
+
+@media (max-width: 768px) {
+  .calendarPricingBadge {
+    font-size: 11.5px;
+    padding: 3px 7px;
+  }
+}
