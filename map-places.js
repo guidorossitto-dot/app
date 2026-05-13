@@ -296,19 +296,30 @@ function bindVenueGuideUI() {
   const _catIconCache = new Map();
 
   function getCategoryIcon(cat) {
-    const key = cat || "default";
-    if (_catIconCache.has(key)) return _catIconCache.get(key);
+  const key = util.normalizeCategory
+    ? util.normalizeCategory(cat)
+    : String(cat || "default").trim();
 
-    const icon = L.divIcon({
-      className: "",
-      html: `<div class="catMarker">${categoryEmoji(cat)}</div>`,
-      iconSize: [28, 28],
-      iconAnchor: [14, 14]
-    });
+  const safeKey = key || "default";
 
-    _catIconCache.set(key, icon);
-    return icon;
-  }
+  if (_catIconCache.has(safeKey)) return _catIconCache.get(safeKey);
+
+  const icon = L.divIcon({
+    className: "",
+    html: `
+      <div class="catMarker catMarker--${safeKey}">
+        <span class="catMarker__emoji">${categoryEmoji(safeKey)}</span>
+      </div>
+    `,
+    iconSize: [34, 34],
+    iconAnchor: [17, 17],
+    popupAnchor: [0, -14]
+  });
+
+  _catIconCache.set(safeKey, icon);
+  return icon;
+}
+
 
   function categoryTagHTML(ev) {
     const t = util.categoryLabel(ev?.category);
