@@ -112,9 +112,12 @@ function sanitizeVenueUrl(value) {
   return raw;
 }
 
-function getShortVenueAddress(value) {
+function getShortVenueAddress(value, venueName = "", neighborhood = "") {
   const raw = String(value || "").trim();
   if (!raw) return "";
+
+  const venueNameNorm = normalizePopupText(venueName);
+  const neighborhoodNorm = normalizePopupText(neighborhood);
 
   const cleaned = raw
     .replace(/\s*,?\s*Argentina\s*$/i, "")
@@ -124,15 +127,107 @@ function getShortVenueAddress(value) {
     .replace(/\s*,?\s*Buenos Aires\s*$/i, "")
     .trim();
 
-  const firstPart = cleaned
+  const parts = cleaned
     .split(",")
     .map((part) => part.trim())
-    .filter(Boolean)[0] || cleaned;
+    .filter(Boolean);
 
-  return firstPart
-    .replace(/\s+C\d{4}[A-Z]{3}\b.*$/i, "")
-    .replace(/\s+Comuna\s+\d+.*$/i, "")
-    .trim();
+  if (!parts.length) return "";
+
+  function cleanPart(part) {
+    return String(part || "")
+      .replace(/\bC\d{4}[A-Z]{3}\b/gi, "")
+      .replace(/\bComuna\s+\d+\b/gi, "")
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+
+  function isOnlyNumber(part) {
+    return /^\d{1,5}[A-Z]?$/i.test(String(part || "").trim());
+  }
+
+  function hasNumber(part) {
+    return /\b\d{1,5}[A-Z]?\b/i.test(String(part || ""));
+  }
+
+  function hasLetters(part) {
+    return /[a-záéíóúñü]/i.test(String(part || ""));
+  }
+
+  function isBadPart(part) {
+    const n = normalizePopupText(part);
+
+    if (!n) return true;
+    if (venueNameNorm && n === venueNameNorm) return true;
+    if (neighborhoodNorm && n === neighborhoodNorm) return true;
+
+    return (
+      n === "argentina" ||
+      n === "caba" ||
+      n === "ciudad autonoma de buenos aires" ||
+      n === "cdad autonoma de buenos aires" ||
+      n === "buenos aires" ||
+      /^comuna\s+\d+$/i.test(n) ||
+      /^c\d{4}[a-z]{3}$/i.test(n)
+    );
+  }
+
+  function looksLikeStreetName(part) {
+    const p = cleanPart(part);
+    if (!hasLetters(p)) return false;
+    if (isBadPart(p)) return false;
+
+    return true;
+  }
+
+  function normalizeStreetAndNumber(street, number) {
+    const safeStreet = cleanPart(street);
+    const safeNumber = cleanPart(number);
+
+    if (!safeStreet || !safeNumber) return "";
+
+    return `${safeStreet} ${safeNumber}`.trim();
+  }
+
+  // Caso: "2246, Avenida Santa Fe, Palermo"
+  // Devuelve: "Avenida Santa Fe 2246"
+  for (let i = 0; i < parts.length; i++) {
+    const current = cleanPart(parts[i]);
+
+    if (!isOnlyNumber(current)) continue;
+
+    const next = cleanPart(parts[i + 1] || "");
+    const prev = cleanPart(parts[i - 1] || "");
+
+    if (looksLikeStreetName(next)) {
+      return normalizeStreetAndNumber(next, current);
+    }
+
+    if (looksLikeStreetName(prev)) {
+      return normalizeStreetAndNumber(prev, current);
+    }
+  }
+
+  // Caso: "Casa Fernández Blanco, Suipacha 1422, Retiro"
+  // Devuelve: "Suipacha 1422"
+  const candidates = parts
+    .map(cleanPart)
+    .filter((part) => {
+      if (isBadPart(part)) return false;
+      if (!hasLetters(part)) return false;
+      return hasNumber(part);
+    });
+
+  if (candidates.length) {
+    return candidates[0];
+  }
+
+  // Último recurso: primera parte útil que no sea nombre, barrio, comuna, CABA, etc.
+  const fallback = parts
+    .map(cleanPart)
+    .find((part) => !isBadPart(part) && hasLetters(part));
+
+  return fallback || "";
 }
 
     function buildPlacePopupHTML(loc) {
@@ -151,7 +246,11 @@ const matchedVenue =
 const menuUrl = sanitizeVenueUrl(matchedVenue?.menuUrl);
 const instagramUrl = sanitizeVenueUrl(matchedVenue?.instagramUrl);
 const websiteUrl = sanitizeVenueUrl(matchedVenue?.websiteUrl);
-const address = getShortVenueAddress(matchedVenue?.address);
+const address = getShortVenueAddress(
+  matchedVenue?.address,
+  matchedVenue?.name || placeTitle,
+  matchedVenue?.neighborhood || ""
+);
 const neighborhood = String(matchedVenue?.neighborhood || "").trim();
 
 const venueMeta = address || neighborhood;
