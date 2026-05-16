@@ -112,6 +112,29 @@ function sanitizeVenueUrl(value) {
   return raw;
 }
 
+function getShortVenueAddress(value) {
+  const raw = String(value || "").trim();
+  if (!raw) return "";
+
+  const cleaned = raw
+    .replace(/\s*,?\s*Argentina\s*$/i, "")
+    .replace(/\s*,?\s*Ciudad Autónoma de Buenos Aires\s*$/i, "")
+    .replace(/\s*,?\s*Cdad\.?\s*Aut[oó]noma de Buenos Aires\s*$/i, "")
+    .replace(/\s*,?\s*CABA\s*$/i, "")
+    .replace(/\s*,?\s*Buenos Aires\s*$/i, "")
+    .trim();
+
+  const firstPart = cleaned
+    .split(",")
+    .map((part) => part.trim())
+    .filter(Boolean)[0] || cleaned;
+
+  return firstPart
+    .replace(/\s+C\d{4}[A-Z]{3}\b.*$/i, "")
+    .replace(/\s+Comuna\s+\d+.*$/i, "")
+    .trim();
+}
+
     function buildPlacePopupHTML(loc) {
     if (!loc) return "";
 
@@ -128,10 +151,10 @@ const matchedVenue =
 const menuUrl = sanitizeVenueUrl(matchedVenue?.menuUrl);
 const instagramUrl = sanitizeVenueUrl(matchedVenue?.instagramUrl);
 const websiteUrl = sanitizeVenueUrl(matchedVenue?.websiteUrl);
-const address = String(matchedVenue?.address || "").trim();
+const address = getShortVenueAddress(matchedVenue?.address);
 const neighborhood = String(matchedVenue?.neighborhood || "").trim();
 
-const venueMeta = [address, neighborhood].filter(Boolean).join(" · ");
+const venueMeta = address || neighborhood;
 const venueNotes = String(matchedVenue?.notes || "").trim();
 
 const instagramBtn = instagramUrl
