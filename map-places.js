@@ -151,6 +151,19 @@ function buildVenueGuideItemHTML(venue) {
     `
     : "";
 
+
+    const deleteVenueBtn = util.canManageUI()
+  ? `
+    <button
+      type="button"
+      class="linkBtn venuesGuideDeleteBtn"
+      data-venue-id="${escapeAttr(encodeURIComponent(venue.id || ""))}"
+      data-venue-name="${escapeAttr(encodeURIComponent(venue.name || ""))}">
+      Borrar lugar
+    </button>
+  `
+  : "";
+
   return `
     <li class="venuesGuideItem">
       <div class="venuesGuideMain">
@@ -158,22 +171,24 @@ function buildVenueGuideItemHTML(venue) {
         ${meta ? `<div class="venuesGuideMeta">${escapeHTML(meta)}</div>` : ""}
       </div>
 
-      <div class="venuesGuideActions">
-        ${instagramBtn}
-        ${websiteBtn}
-        ${menuBtn}
+        <div class="venuesGuideActions">
+      ${instagramBtn}
+      ${websiteBtn}
+      ${menuBtn}
 
-        <button
-          type="button"
-          class="linkBtn venuesGuideMapBtn"
-          data-lat="${lat}"
-          data-lng="${lng}"
-          data-key="${escapeAttr(key)}"
-          data-venue-id="${escapeAttr(encodeURIComponent(venue.id || ""))}"
-          data-place-title="${escapeAttr(encodeURIComponent(venue.name || ""))}">
-          Ver en mapa
-        </button>
-      </div>
+      <button
+        type="button"
+        class="linkBtn venuesGuideMapBtn"
+        data-lat="${lat}"
+        data-lng="${lng}"
+        data-key="${escapeAttr(key)}"
+        data-venue-id="${escapeAttr(encodeURIComponent(venue.id || ""))}"
+        data-place-title="${escapeAttr(encodeURIComponent(venue.name || ""))}">
+        Ver en mapa
+      </button>
+
+      ${deleteVenueBtn}
+    </div>
     </li>
   `;
 }
@@ -265,7 +280,64 @@ function bindVenueGuideUI() {
   if (!root || root.dataset.bound === "true") return;
   root.dataset.bound = "true";
 
-  root.addEventListener("click", (e) => {
+  root.addEventListener("click", async (e) => {
+    const deleteBtn = e.target.closest(".venuesGuideDeleteBtn");
+
+    if (deleteBtn) {
+      e.preventDefault();
+      e.stopPropagation();
+
+      if (!util.canManageUI()) {
+        alert("No tenés permisos para borrar lugares.");
+        return;
+      }
+
+      const venueId = decodeURIComponent(deleteBtn.dataset.venueId || "");
+      const venueName = decodeURIComponent(deleteBtn.dataset.venueName || "");
+
+      if (!venueId) {
+        alert("No se pudo identificar el lugar.");
+        return;
+      }
+
+      const ok = confirm(
+        `¿Seguro que querés borrar este lugar?\n\n${venueName || "Lugar sin nombre"}\n\nEsto no borra los eventos cargados. Solo lo elimina de la guía de lugares.`
+      );
+
+      if (!ok) return;
+
+      deleteBtn.disabled = true;
+      deleteBtn.textContent = "Borrando...";
+
+      try {
+        const result = await App.venues?.removeVenueRemote?.(venueId);
+
+        if (!result?.ok) {
+          console.error("No se pudo borrar el lugar.", result?.error);
+          alert("No se pudo borrar el lugar.");
+          deleteBtn.disabled = false;
+          deleteBtn.textContent = "Borrar lugar";
+          return;
+        }
+
+        App.map?.renderVenueGuide?.();
+
+        App.commit?.({
+          persist: false,
+          purgePast: false,
+          rebuildMarkers: false,
+          recomputeNearby: false
+        });
+      } catch (err) {
+        console.error("Error borrando lugar.", err);
+        alert("Error inesperado al borrar el lugar.");
+        deleteBtn.disabled = false;
+        deleteBtn.textContent = "Borrar lugar";
+      }
+
+      return;
+    }
+
     const btn = e.target.closest(".venuesGuideMapBtn");
     if (!btn) return;
 

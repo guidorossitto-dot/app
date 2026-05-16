@@ -150,15 +150,11 @@ if (isMobile) {
   if (evs.length > 0) {
     const more = document.createElement("div");
     more.className = "event event-more event-more--mobile";
-    const pricingSummary = getCalendarPricingSummary(evs);
+    more.textContent = `+${evs.length}`;
 
-    more.textContent = pricingSummary
-      ? `+${evs.length} · ${pricingSummary}`
-      : `+${evs.length}`;
-
-    more.title = `${evs.length === 1 ? "1 evento" : `${evs.length} eventos`}${
-      pricingSummary ? ` · ${pricingSummary}` : ""
-    }`;
+more.title = evs.length === 1
+  ? "1 evento"
+  : `${evs.length} eventos`;
 
     more.addEventListener("click", (e) => {
       e.preventDefault();

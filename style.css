@@ -3728,3 +3728,12 @@ header button {
     padding: 3px 7px;
   }
 }
+
+.venuesGuideDeleteBtn {
+  color: #b42318;
+  border-color: rgba(180, 35, 24, 0.25);
+}
+
+.venuesGuideDeleteBtn:hover {
+  background: rgba(180, 35, 24, 0.08);
+}

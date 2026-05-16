@@ -421,6 +421,50 @@ App.store?.dispatch?.({
   };
 }
 
+async function removeVenueRemote(venueId) {
+  ensureVenueState();
+
+  const id = safeString(venueId);
+
+  if (!id) {
+    return { ok: false, error: "INVALID_VENUE_ID" };
+  }
+
+  const venue = getVenueById(id);
+
+  if (!venue) {
+    return { ok: false, error: "VENUE_NOT_FOUND" };
+  }
+
+  const remote = await App.storage?.deleteVenueRemote?.(id);
+
+  if (!remote?.ok) {
+    return {
+      ok: false,
+      error: remote?.error || "DELETE_VENUE_REMOTE_FAILED"
+    };
+  }
+
+  const local = removeVenue(id, { persist: true });
+
+  if (!local?.ok) {
+    // Si por alguna razón no pudo limpiar el estado local,
+    // recargamos desde Supabase para que la app quede sincronizada.
+    await loadVenuesRemote();
+
+    return {
+      ok: true,
+      venue,
+      reloaded: true
+    };
+  }
+
+  return {
+    ok: true,
+    venue
+  };
+}
+
   function replaceAllVenues(rawVenues = []) {
     ensureVenueState();
 
@@ -540,6 +584,7 @@ App.store?.dispatch?.({
   updateVenue,
   updateVenueRemote,
   removeVenue,
+  removeVenueRemote,
   replaceAllVenues,
   loadVenuesRemote,
   selectVenueForAdmin,
