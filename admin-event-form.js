@@ -55,6 +55,7 @@
     const latEl = document.getElementById("eventLat");
     const lngEl = document.getElementById("eventLng");
     const placeEl = document.getElementById("eventPlace");
+    const placeAddressEl = document.getElementById("eventPlaceAddress");
     const startEl = document.getElementById("eventStart");
     const catEl = document.getElementById("eventCategory");
     const linkEl = document.getElementById("eventLink");
@@ -73,6 +74,7 @@
         latEl,
         lngEl,
         placeEl,
+        placeAddressEl,
         startEl,
         catEl,
         linkEl,
@@ -92,6 +94,7 @@
         lat: Number(latEl?.value),
         lng: Number(lngEl?.value),
         placeName: placeEl?.value.trim() || "",
+        placeAddress: placeAddressEl?.value.trim() || "",
         startTime: startEl?.value.trim() || "",
         category: catEl?.value || "music",
         link: linkEl?.value.trim() || "",
@@ -172,6 +175,7 @@ if (v.createMode === "weeklyMultiDayRange" && !v.weeklyMultiDayValues) {
     const latEl = document.getElementById("eventLat");
     const lngEl = document.getElementById("eventLng");
     const placeEl = document.getElementById("eventPlace");
+    const placeAddressEl = document.getElementById("eventPlaceAddress");
     const startEl = document.getElementById("eventStart");
     const catEl = document.getElementById("eventCategory");
     const linkEl = document.getElementById("eventLink");
@@ -208,6 +212,7 @@ if (v.createMode === "weeklyMultiDayRange" && !v.weeklyMultiDayValues) {
     if (startEl) startEl.value = "";
     if (catEl) catEl.value = "music";
     if (linkEl) linkEl.value = "";
+    if (placeAddressEl) placeAddressEl.value = "";
     if (venueMenuUrlEl) venueMenuUrlEl.value = "";
     if (venueGuideGroupEl) venueGuideGroupEl.value = template.venueGuideGroup || "";
     if (flyerEl) flyerEl.value = "";
@@ -248,6 +253,7 @@ if (endDateLabelEl) {
     const latEl = document.getElementById("eventLat");
     const lngEl = document.getElementById("eventLng");
     const placeEl = document.getElementById("eventPlace");
+    const placeAddressEl = document.getElementById("eventPlaceAddress");
     const startEl = document.getElementById("eventStart");
     const catEl = document.getElementById("eventCategory");
     const linkEl = document.getElementById("eventLink");
@@ -279,7 +285,8 @@ if (endDateLabelEl) {
     if (latEl) latEl.value = Number.isFinite(safeLat) ? safeLat.toFixed(6) : "";
     if (lngEl) lngEl.value = Number.isFinite(safeLng) ? safeLng.toFixed(6) : "";
     if (placeEl) placeEl.value = template.placeName || "";
-
+    if (placeAddressEl) placeAddressEl.value = template.placeAddress || "";
+    
     if (startEl) startEl.value = "";
 
     if (catEl) catEl.value = template.category || "music";
@@ -392,6 +399,7 @@ if (createModeEl) {
     lat,
     lng,
     placeName,
+    placeAddress,
     startTime,
     category,
     link,
@@ -533,6 +541,7 @@ if (createModeEl) {
 
       const ensuredVenueResult = await App.venues?.ensureVenueExistsFromEventData?.({
         placeName,
+        address: placeAddress,
         lat,
         lng,
         guideGroup: venueGuideGroup
@@ -555,6 +564,7 @@ if (keepTemplate && createdCount >= 1) {
     lat,
     lng,
     placeName,
+    placeAddress,
     category,
     link,
     flyerUrl,
@@ -601,6 +611,7 @@ if (keepTemplate && createdCount >= 1) {
     const latEl = document.getElementById("eventLat");
     const lngEl = document.getElementById("eventLng");
     const placeEl = document.getElementById("eventPlace");
+    const placeAddressEl = document.getElementById("eventPlaceAddress");
     const startEl = document.getElementById("eventStart");
     const catEl = document.getElementById("eventCategory");
     const linkEl = document.getElementById("eventLink");

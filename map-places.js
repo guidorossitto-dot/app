@@ -1172,6 +1172,11 @@ state.runtime.map.on("zoomend", () => {
         const placeEl = document.getElementById("eventPlace");
         if (placeEl) placeEl.value = util.shortPlaceName(r.name || r.display_name);
 
+        const placeAddressEl = document.getElementById("eventPlaceAddress");
+        if (placeAddressEl) {
+          placeAddressEl.value = r.display_name || "";
+        }
+
         const titleEl = document.getElementById("eventTitle");
         if (titleEl && !titleEl.value.trim()) {
           titleEl.value = r.name || r.display_name.split(",")[0];
