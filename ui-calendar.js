@@ -790,8 +790,8 @@ function updateNearbyCount(list = state.logic.nearbyEvents) {
 
       if (dateStr === today) {
         return {
-        todayList: selectors.applyBaficiFilter
-            ? selectors.applyBaficiFilter(util.filterByActiveCategory([ev]))
+        todayList: selectors.applyFestivalFilter
+            ? selectors.applyFestivalFilter(util.filterByActiveCategory([ev]))
            : util.filterByActiveCategory([ev]),
             todayEmpty: "No hay eventos hoy",
           futureList: [],
@@ -803,8 +803,8 @@ function updateNearbyCount(list = state.logic.nearbyEvents) {
         return {
           todayList: selectors.getVisibleTodayEvents(state.logic.events || []),
           todayEmpty: "No hay eventos hoy",
-        futureList: selectors.applyBaficiFilter
-          ? selectors.applyBaficiFilter(util.filterByActiveCategory([ev]))
+        futureList: selectors.applyFestivalFilter
+          ? selectors.applyFestivalFilter(util.filterByActiveCategory([ev]))
           : util.filterByActiveCategory([ev]),
             futureEmpty: "No hay próximos eventos"
         };

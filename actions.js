@@ -22,8 +22,8 @@ async function logout() {
      LOGIC STATE
   ========================= */
 function selectCategory(category) {
-  if (App.state.logic.baficiOnly) {
-    App.state.logic.baficiOnly = false;
+  if (App.state.logic.festivalOnly) {
+    App.state.logic.festivalOnly = false;
   }
 
   return App.events?.setActiveCategory?.(category);
@@ -304,9 +304,9 @@ function toggleFavoritesOnly() {
   return App.events?.setFavoritesOnly?.(!App.events?.getFavoritesOnly?.());
 }
 
-function setBaficiOnly(value) {
+function setFestivalOnly(value) {
   const nextValue = !!value;
-  App.state.logic.baficiOnly = nextValue;
+  App.state.logic.festivalOnly = nextValue;
 
   if (nextValue) {
     App.events?.setActiveCategory?.("all");
@@ -319,7 +319,11 @@ function setBaficiOnly(value) {
     recomputeNearby: true
   });
 
-  return App.state.logic.baficiOnly;
+  return App.state.logic.festivalOnly;
+}
+
+function toggleFestivalOnly() {
+  return setFestivalOnly(!App.state.logic.festivalOnly);
 }
 
 function toggleBaficiOnly() {
@@ -993,8 +997,8 @@ async function deleteSkippedCandidateFlow(candidateId = "") {
         setFavoritesOnly,
     toggleFavoritesOnly,
 
-    setBaficiOnly,
-toggleBaficiOnly,
+    setFestivalOnly,
+    toggleFestivalOnly,
 
     setDiscoveryMode,
     generateDiscoveryFlow,

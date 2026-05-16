@@ -348,30 +348,195 @@ function getFeaturedRank(ev) {
   /* =========================
      FILTERED VIEWS
   ========================= */
-function shouldHideBaficiFromPublic(ev) {
-  if (!ev) return false;
-  if (!isBaficiEvent(ev)) return false;
+function getActiveFestivalConfig() {
+  const cfg = App.CFG?.ACTIVE_FESTIVAL || null;
+  if (!cfg || cfg.enabled !== true) return null;
+  return cfg;
+}
 
-  if (App.CFG?.BAFICI_HIDE_FROM_PUBLIC === true) return true;
+function normalizeFestivalText(value) {
+  return String(value || "")
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+}
 
-  const end = String(App.CFG?.BAFICI_MODE_END || "").trim();
+function festivalTextIncludesAny(text, keywords = []) {
+  const haystack = normalizeFestivalText(text);
+  const needles = Array.isArray(keywords) ? keywords : [];
+
+  return needles.some((kw) => {
+    const needle = normalizeFestivalText(kw);
+    return needle && haystack.includes(needle);
+  });
+}
+
+function getFestivalAllowedCategories(cfg) {
+  if (!cfg) return [];
+
+  const fromList = Array.isArray(cfg.categories) ? cfg.categories : [];
+  const fromSingle = cfg.category ? [cfg.category] : [];
+
+  return [...new Set([...fromList, ...fromSingle]
+    .map((cat) => util.normalizeCategory
+      ? util.normalizeCategory(cat)
+      : String(cat || "").trim()
+    )
+    .filter(Boolean)
+  )];
+}
+
+function festivalAllowsCategory(ev, cfg) {
+  const allowed = getFestivalAllowedCategories(cfg);
+  if (!allowed.length) return true;
+
+  const cat = util.normalizeCategory
+    ? util.normalizeCategory(ev?.category)
+    : String(ev?.category || "").trim();
+
+  return allowed.includes(cat);
+}
+
+function isActiveFestivalModeActive() {
+  const cfg = getActiveFestivalConfig();
+  if (!cfg) return false;
+
+  const start = String(cfg.start || "").trim();
+  const end = String(cfg.end || "").trim();
   const today = util.todayStrYYYYMMDD();
 
-  if (end && today > end) return true;
+  if (start && today < start) return false;
+  if (end && today > end) return false;
+
+  return true;
+}
+
+function isActiveFestivalEvent(ev) {
+  const cfg = getActiveFestivalConfig();
+  if (!cfg || !ev) return false;
+
+  const date = String(ev.date || "").slice(0, 10);
+  const start = String(cfg.start || "").trim();
+  const end = String(cfg.end || "").trim();
+
+  if (!date) return false;
+  if (start && date < start) return false;
+  if (end && date > end) return false;
+
+  if (!festivalAllowsCategory(ev, cfg)) {
+    return false;
+  }
+
+  const allowedSources = Array.isArray(cfg.sourceNames)
+    ? cfg.sourceNames.map((s) => normalizeFestivalText(s)).filter(Boolean)
+    : [];
+
+  const source = normalizeFestivalText(ev.sourceName || ev.source_name || "");
+  if (source && allowedSources.includes(source)) {
+    return true;
+  }
+
+  const title = String(ev.title || "");
+  const place = String(ev.placeName || ev.place_name || "");
+  const link = String(ev.link || "");
+  const sourceUrl = String(ev.sourceUrl || ev.source_url || "");
+
+  if (festivalTextIncludesAny(title, cfg.titleKeywords || [])) {
+    return true;
+  }
+
+  if (festivalTextIncludesAny(place, cfg.placeKeywords || [])) {
+    return true;
+  }
+
+  if (festivalTextIncludesAny(link, cfg.linkKeywords || [])) {
+    return true;
+  }
+
+  if (festivalTextIncludesAny(sourceUrl, cfg.linkKeywords || [])) {
+    return true;
+  }
+
+  if (cfg.matchAllCategoryInRange === true) {
+    return true;
+  }
 
   return false;
 }
 
-function applyBaficiFilter(list = []) {
+function getActiveFestivalEvents(list = state.logic.events) {
+  const safe = Array.isArray(list) ? list : [];
+  return safe.filter(isActiveFestivalEvent);
+}
+
+function getVisibleActiveFestivalEvents(list = state.logic.events) {
+  return util.filterByActiveCategory(getActiveFestivalEvents(list));
+}
+
+function getTodayActiveFestivalEvents(list = state.logic.events) {
+  const today = util.todayStrYYYYMMDD();
+
+  return getActiveFestivalEvents(list)
+    .filter((ev) => {
+      return util.isEventDisplayedOnDate
+        ? util.isEventDisplayedOnDate(ev, today)
+        : String(ev?.date || "").slice(0, 10) === today;
+    })
+    .sort(util.sortEventsByStatusThenTime);
+}
+
+function getSoonActiveFestivalEvents(list = state.logic.events) {
+  const cfg = getActiveFestivalConfig();
+  const soonMin = Number(cfg?.soonMin ?? 180);
+
+  return getTodayActiveFestivalEvents(list)
+    .filter((ev) => {
+      const mins = safeMinutesToStart(ev);
+      return mins !== null && mins >= -15 && mins <= soonMin;
+    })
+    .sort((a, b) => {
+      const ma = safeMinutesToStart(a);
+      const mb = safeMinutesToStart(b);
+      return (ma ?? 999999) - (mb ?? 999999);
+    });
+}
+
+function getActiveFestivalHeroData(list = state.logic.events) {
+  const cfg = getActiveFestivalConfig();
+  if (!cfg) return null;
+  if (!isActiveFestivalModeActive()) return null;
+
+  const all = getActiveFestivalEvents(list);
+  if (!all.length) return null;
+
+  const today = getTodayActiveFestivalEvents(list);
+
+  if (cfg.showHeroOnlyOnEventDays !== false && !today.length) {
+    return null;
+  }
+
+  const soon = getSoonActiveFestivalEvents(list);
+
+  return {
+    config: cfg,
+    total: all.length,
+    todayCount: today.length,
+    soonCount: soon.length,
+    todayEvents: today,
+    soonEvents: soon,
+    nextEvent: soon[0] || today[0] || all[0] || null
+  };
+}
+
+function applyFestivalFilter(list = []) {
   const safe = Array.isArray(list) ? list : [];
 
-  const withoutHiddenBafici = safe.filter((ev) => !shouldHideBaficiFromPublic(ev));
+  if (!state.logic.festivalOnly) return safe;
 
-  if (!state.logic.baficiOnly) return withoutHiddenBafici;
+  if (!isActiveFestivalModeActive()) return safe;
 
-  if (!isBaficiModeActive()) return withoutHiddenBafici;
-
-  return withoutHiddenBafici.filter(isBaficiEvent);
+  return safe.filter(isActiveFestivalEvent);
 }
   
 function getVisibleTodayEvents(list = state.logic.events) {
@@ -379,9 +544,9 @@ function getVisibleTodayEvents(list = state.logic.events) {
   const safe = Array.isArray(list) ? list : [];
 
   const filtered = util.filterByActiveCategory(safe);
-  const baficiFiltered = applyBaficiFilter(filtered);
+  const festivalFiltered = applyFestivalFilter(filtered);
 
-  return baficiFiltered.filter((ev) => {
+  return festivalFiltered.filter((ev) => {
     const isTodayDisplay = util.isEventDisplayedOnDate
       ? util.isEventDisplayedOnDate(ev, today)
       : String(ev?.date || "").slice(0, 10) === today;
@@ -395,9 +560,9 @@ function getVisibleFutureEvents(list = state.logic.events) {
   const safe = Array.isArray(list) ? list : [];
 
   const filtered = util.filterByActiveCategory(safe);
-  const baficiFiltered = applyBaficiFilter(filtered);
+  const festivalFiltered = applyFestivalFilter(filtered);
 
-  return baficiFiltered.filter((ev) => {
+  return festivalFiltered.filter((ev) => {
     const displayDate = util.getEventDisplayDate
       ? util.getEventDisplayDate(ev)
       : String(ev?.date || "").slice(0, 10);
@@ -411,9 +576,9 @@ function getVisibleEventsOnDate(dateStr, list = state.logic.events) {
   const safe = Array.isArray(list) ? list : [];
 
   const filtered = util.filterByActiveCategory(safe);
-  const baficiFiltered = applyBaficiFilter(filtered);
+  const festivalFiltered = applyFestivalFilter(filtered);
 
-  return baficiFiltered.filter((ev) => {
+  return festivalFiltered.filter((ev) => {
     return util.isEventDisplayedOnDate
       ? util.isEventDisplayedOnDate(ev, safeDate)
       : String(ev?.date || "").slice(0, 10) === safeDate;
@@ -475,8 +640,8 @@ function isEventVisibleOnMap(ev, now = new Date()) {
 
 function getMapVisibleEvents(list = state.logic.events) {
   const base = util.filterByActiveCategory(Array.isArray(list) ? list : []);
-  const baficiFiltered = applyBaficiFilter(base);
-  return baficiFiltered.filter((ev) => isEventVisibleOnMap(ev));
+  const festivalFiltered = applyFestivalFilter(base);
+  return festivalFiltered.filter((ev) => isEventVisibleOnMap(ev));
 }
 
   function getGroupedTodayEvents(list = state.logic.events) {
@@ -496,7 +661,7 @@ function getMapVisibleEvents(list = state.logic.events) {
   ========================= */
  function getTodayNearbyEvents(list = state.logic.nearbyEvents) {
   const today = util.getTodayEvents(list || []);
-  return applyBaficiFilter(today);
+  return applyFestivalFilter(today);
 }
 
   function getFeaturedNearbyEvents(list = state.logic.nearbyEvents) {
@@ -737,115 +902,6 @@ function getDiscoverySuggestion() {
   };
 }
 
-function isBaficiModeActive(now = new Date()) {
-  if (!App.CFG?.BAFICI_MODE_ENABLED) return false;
-
-  const start = String(App.CFG.BAFICI_MODE_START || "").trim();
-  const end = String(App.CFG.BAFICI_MODE_END || "").trim();
-  const today = util.todayStrYYYYMMDD();
-
-  if (start && today < start) return false;
-  if (end && today > end) return false;
-  return true;
-}
-
-function isBaficiEvent(ev) {
-  if (!ev) return false;
-
-  const allowedSources = Array.isArray(App.CFG?.BAFICI_SOURCE_NAMES)
-    ? App.CFG.BAFICI_SOURCE_NAMES.map((s) => String(s).trim().toLowerCase())
-    : [];
-
-  const source = String(ev.sourceName || ev.source_name || "").trim().toLowerCase();
-  if (source && allowedSources.includes(source)) return true;
-
-  const link = String(ev.link || "").trim().toLowerCase();
-  if (link.includes("bafici")) return true;
-
-  const place = String(ev.placeName || "").trim().toLowerCase();
-  const title = String(ev.title || "").trim().toLowerCase();
-  const cat = String(ev.category || "").trim().toLowerCase();
-  const date = String(ev.date || "").slice(0, 10);
-
-  const start = String(App.CFG?.BAFICI_MODE_START || "").trim();
-  const end = String(App.CFG?.BAFICI_MODE_END || "").trim();
-
-  const inFestivalRange = !!date && !!start && !!end && date >= start && date <= end;
-
-  const knownBaficiVenues = [
-    "teatro san martín",
-    "sala lugones",
-    "hall alcón",
-    "casacuberta",
-    "coronado",
-    "cine teatro alvear",
-    "centro cultural 25 de mayo",
-    "cinépolis plaza houssay",
-    "cinepolis plaza houssay",
-    "cinépolis recoleta",
-    "cinepolis recoleta",
-    "cinearte cacodelphia",
-    "cine gaumont",
-    "usina del arte",
-    "museo del cine",
-    "pablo ducrós hicken",
-    "pablo ducros hicken"
-  ];
-
-  const matchesKnownVenue = knownBaficiVenues.some((v) => place.includes(v));
-
-  if (inFestivalRange && cat === "cinema" && (matchesKnownVenue || title.includes("bafici"))) {
-    return true;
-  }
-
-  return false;
-}
-
-function getBaficiEvents(list = state.logic.events) {
-  const safe = Array.isArray(list) ? list : [];
-  return safe.filter(isBaficiEvent);
-}
-
-function getVisibleBaficiEvents(list = state.logic.events) {
-  return util.filterByActiveCategory(getBaficiEvents(list));
-}
-
-function getTodayBaficiEvents(list = state.logic.events) {
-  return util.getTodayEvents(getVisibleBaficiEvents(list));
-}
-
-function getSoonBaficiEvents(list = state.logic.events) {
-  const soonMin = Number(App.CFG?.BAFICI_SOON_MIN ?? 120);
-
-  return getTodayBaficiEvents(list)
-    .filter((ev) => {
-      const mins = safeMinutesToStart(ev);
-      return mins !== null && mins >= -15 && mins <= soonMin;
-    })
-    .sort((a, b) => {
-      const ma = safeMinutesToStart(a);
-      const mb = safeMinutesToStart(b);
-      return (ma ?? 999999) - (mb ?? 999999);
-    });
-}
-
-function getBaficiHeroData(list = state.logic.events) {
-  if (!isBaficiModeActive()) return null;
-
-  const all = getBaficiEvents(list);
-  if (!all.length) return null;
-
-  const today = getTodayBaficiEvents(list);
-  const soon = getSoonBaficiEvents(list);
-
-  return {
-    total: all.length,
-    todayCount: today.length,
-    soonCount: soon.length,
-    nextEvent: soon[0] || today[0] || all[0] || null
-  };
-}
-
   /* =========================
      EXPORT
   ========================= */
@@ -900,14 +956,14 @@ function getBaficiHeroData(list = state.logic.events) {
     buildDiscoveryReason,
     getDiscoverySuggestion,
 
-    isBaficiModeActive,
-    isBaficiEvent,
-    shouldHideBaficiFromPublic,
-    getBaficiEvents,
-    getVisibleBaficiEvents,
-    getTodayBaficiEvents,
-    getSoonBaficiEvents,
-    getBaficiHeroData,
-    applyBaficiFilter,
+    getActiveFestivalConfig,
+    isActiveFestivalModeActive,
+    isActiveFestivalEvent,
+    getActiveFestivalEvents,
+    getVisibleActiveFestivalEvents,
+    getTodayActiveFestivalEvents,
+    getSoonActiveFestivalEvents,
+    getActiveFestivalHeroData,
+    applyFestivalFilter,
   };
 })();

@@ -172,10 +172,13 @@ function renderFestivalHero() {
   const existing = document.getElementById("festivalHeroCard");
   if (existing) existing.remove();
 
-  const data = App.selectors?.getBaficiHeroData?.();
+  const data = App.selectors?.getActiveFestivalHeroData?.();
   if (!data) return;
 
-  const soonList = (App.selectors?.getSoonBaficiEvents?.() || []).slice(0, 8);
+  const cfg = data.config || {};
+  const soonList = Array.isArray(data.soonEvents) ? data.soonEvents.slice(0, 8) : [];
+  const todayList = Array.isArray(data.todayEvents) ? data.todayEvents.slice(0, 8) : [];
+  const tickerList = soonList.length ? soonList : todayList;
 
   const card = document.createElement("section");
   card.className = "panelCard festivalHeroCard";
@@ -185,46 +188,47 @@ function renderFestivalHero() {
     <div class="festivalHeroTop">
       <div>
         <div class="festivalHeroKicker">Modo festival</div>
-        <h2 class="festivalHeroTitle">${App.CFG?.BAFICI_HERO_TITLE || "🎬 BAFICI ahora"}</h2>
-        <p class="festivalHeroText">${App.CFG?.BAFICI_HERO_TEXT || ""}</p>
+        <h2 class="festivalHeroTitle">${cfg.title || "Festival"}</h2>
+        <p class="festivalHeroText">${cfg.text || ""}</p>
       </div>
 
       <div class="festivalHeroStats">
-        <span class="festivalStat">${data.todayCount} hoy</span>
-        <span class="festivalStat">${data.soonCount} pronto</span>
+        <span class="festivalStat">${data.todayCount || 0} hoy</span>
+        <span class="festivalStat">${data.soonCount || 0} pronto</span>
       </div>
     </div>
 
-<div class="festivalHeroActions">
-  <button
-    type="button"
-    class="chip festivalChip"
-    id="baficiOnlyChip">
-    ${App.CFG?.BAFICI_CHIP_LABEL || "🎬 BAFICI"}
-  </button>
-</div>
+    <div class="festivalHeroActions">
+      <button
+        type="button"
+        class="chip festivalChip"
+        id="festivalOnlyChip">
+        ${cfg.label || "Festival"}
+      </button>
+    </div>
 
-<div class="festivalHeroHint">
-  Presioná arriba para seguir solo la programación
-</div>
+    <div class="festivalHeroHint">
+      Presioná arriba para seguir solo la programación
+    </div>
 
     ${
-      soonList.length
+      tickerList.length
         ? `
           <div class="festivalTicker" id="festivalTicker">
             <div class="festivalTicker__item" id="festivalTickerItem">
               ${(() => {
-  const initialIndex =
-    soonList.length > 0
-      ? (Number(App.state.runtime.festivalTickerIndex || 0) % soonList.length + soonList.length) % soonList.length
-      : 0;
+                const initialIndex =
+                  tickerList.length > 0
+                    ? (Number(App.state.runtime.festivalTickerIndex || 0) % tickerList.length + tickerList.length) % tickerList.length
+                    : 0;
 
-  const ev = soonList[initialIndex];
-  const evTime = (ev?.startTime || "").slice(0, 5);
-  const evTitle = ev?.title || "Función";
-  const evPlace = App.util?.shortPlaceName?.(ev?.placeName) || "";
-  return `${evTime ? `${evTime} · ` : ""}${evTitle}${evPlace ? ` · ${evPlace}` : ""}`;
-})()}
+                const ev = tickerList[initialIndex];
+                const evTime = (ev?.startTime || "").slice(0, 5);
+                const evTitle = ev?.title || "Actividad";
+                const evPlace = App.util?.shortPlaceName?.(ev?.placeName) || "";
+
+                return `${evTime ? `${evTime} · ` : ""}${evTitle}${evPlace ? ` · ${evPlace}` : ""}`;
+              })()}
             </div>
           </div>
         `
@@ -234,58 +238,58 @@ function renderFestivalHero() {
 
   pageShell.insertBefore(card, appLayout);
 
-  const baficiChip = card.querySelector("#baficiOnlyChip");
-  if (baficiChip) {
-    baficiChip.classList.toggle("isActive", !!App.state.logic.baficiOnly);
+  const festivalChip = card.querySelector("#festivalOnlyChip");
+  if (festivalChip) {
+    festivalChip.classList.toggle("isActive", !!App.state.logic.festivalOnly);
 
-    baficiChip.addEventListener("click", () => {
-      App.actions?.toggleBaficiOnly?.();
+    festivalChip.addEventListener("click", () => {
+      App.actions?.toggleFestivalOnly?.();
     });
   }
 
   const tickerEl = card.querySelector("#festivalTickerItem");
 
-if (tickerEl && soonList.length > 0) {
-  let tickerIndex = Number(App.state.runtime.festivalTickerIndex || 0);
-  if (!Number.isFinite(tickerIndex) || tickerIndex < 0) tickerIndex = 0;
-  tickerIndex = tickerIndex % soonList.length;
+  if (tickerEl && tickerList.length > 0) {
+    let tickerIndex = Number(App.state.runtime.festivalTickerIndex || 0);
+    if (!Number.isFinite(tickerIndex) || tickerIndex < 0) tickerIndex = 0;
+    tickerIndex = tickerIndex % tickerList.length;
 
-  const currentEv = soonList[tickerIndex];
-  if (currentEv) {
-    const evTime = (currentEv?.startTime || "").slice(0, 5);
-    const evTitle = currentEv?.title || "Función";
-    const evPlace = App.util?.shortPlaceName?.(currentEv?.placeName) || "";
+    const currentEv = tickerList[tickerIndex];
+    if (currentEv) {
+      const evTime = (currentEv?.startTime || "").slice(0, 5);
+      const evTitle = currentEv?.title || "Actividad";
+      const evPlace = App.util?.shortPlaceName?.(currentEv?.placeName) || "";
 
-    tickerEl.textContent = `${evTime ? `${evTime} · ` : ""}${evTitle}${evPlace ? ` · ${evPlace}` : ""}`;
-  }
+      tickerEl.textContent = `${evTime ? `${evTime} · ` : ""}${evTitle}${evPlace ? ` · ${evPlace}` : ""}`;
+    }
 
-  window.clearInterval(App.state.runtime.festivalTickerInterval);
+    window.clearInterval(App.state.runtime.festivalTickerInterval);
 
-  if (soonList.length > 1) {
-    App.state.runtime.festivalTickerInterval = window.setInterval(() => {
-      tickerEl.classList.add("is-leaving");
-
-      window.setTimeout(() => {
-        tickerIndex = (tickerIndex + 1) % soonList.length;
-        App.state.runtime.festivalTickerIndex = tickerIndex;
-
-        const ev = soonList[tickerIndex];
-        const evTime = (ev?.startTime || "").slice(0, 5);
-        const evTitle = ev?.title || "Función";
-        const evPlace = App.util?.shortPlaceName?.(ev?.placeName) || "";
-
-        tickerEl.textContent = `${evTime ? `${evTime} · ` : ""}${evTitle}${evPlace ? ` · ${evPlace}` : ""}`;
-
-        tickerEl.classList.remove("is-leaving");
-        tickerEl.classList.add("is-entering");
+    if (tickerList.length > 1) {
+      App.state.runtime.festivalTickerInterval = window.setInterval(() => {
+        tickerEl.classList.add("is-leaving");
 
         window.setTimeout(() => {
-          tickerEl.classList.remove("is-entering");
-        }, 320);
-      }, 220);
-    }, 3700);
+          tickerIndex = (tickerIndex + 1) % tickerList.length;
+          App.state.runtime.festivalTickerIndex = tickerIndex;
+
+          const ev = tickerList[tickerIndex];
+          const evTime = (ev?.startTime || "").slice(0, 5);
+          const evTitle = ev?.title || "Actividad";
+          const evPlace = App.util?.shortPlaceName?.(ev?.placeName) || "";
+
+          tickerEl.textContent = `${evTime ? `${evTime} · ` : ""}${evTitle}${evPlace ? ` · ${evPlace}` : ""}`;
+
+          tickerEl.classList.remove("is-leaving");
+          tickerEl.classList.add("is-entering");
+
+          window.setTimeout(() => {
+            tickerEl.classList.remove("is-entering");
+          }, 320);
+        }, 220);
+      }, 3700);
+    }
   }
-}
 }
 
   function renderAll(opts = {}) {

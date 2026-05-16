@@ -109,7 +109,7 @@ App.CFG.ALLOWED_PRICING_TYPES = Object.keys(App.CFG.PRICING_TYPES || {});
   calendarCursor: new Date(),
   favorites: [],
   favoritesOnly: false,
-  baficiOnly: false,
+  festivalOnly: false,
   activeCategory: App.CFG.CATEGORY_ALL,
   editingEventId: null,
   editingMode: null,
@@ -171,17 +171,65 @@ pendingMapClickTimer: null,
 App.CFG = {
   ...(App.CFG || {}),
 
-  BAFICI_MODE_ENABLED: false,
-  BAFICI_HIDE_FROM_PUBLIC: false,
+  ACTIVE_FESTIVAL: {
+    enabled: true,
+    key: "dia_museos_2026",
+    label: "🏛️ Museos",
+    title: "🏛️ Día de los Museos",
+    text: "Actividades especiales en museos y sedes de la Ciudad.",
+    start: "2026-05-16",
+    end: "2026-05-18",
 
-  BAFICI_MODE_START: "2026-04-01",
-  BAFICI_MODE_END: "2026-04-26",
+    categories: [
+      "visual_arts",
+      "music",
+      "cinema",
+      "literature",
+      "theatre",
+      "dance"
+    ],
 
-  BAFICI_SOURCE_NAMES: ["bafici_web", "bafici_pdf"],
-  BAFICI_CHIP_LABEL: "🎬 BAFICI",
-  BAFICI_HERO_TITLE: "🎬 BAFICI ahora",
-  BAFICI_HERO_TEXT: "Funciones y sedes del festival en tu mapa.",
-  BAFICI_SOON_MIN: 120
+    titleKeywords: [
+      "día de los museos",
+      "dia de los museos"
+    ],
+
+    placeKeywords: [
+      "quinquela",
+      "benito quinquela",
+      "museo saavedra",
+      "saavedra",
+      "fernandez blanco",
+      "casa fernandez blanco",
+      "museo sivori",
+      "sivori",
+      "museo larreta",
+      "larreta",
+      "museo del cine",
+      "museo gardel",
+      "gardel",
+      "museo perlotti",
+      "perlotti",
+      "arte popular",
+      "museo de arte popular",
+      "museo de la ciudad"
+    ],
+
+    linkKeywords: [
+      "museos",
+      "dia-de-los-museos",
+      "dia-internacional-de-los-museos"
+    ],
+
+    sourceNames: [
+      "dia_museos_2026",
+      "museos_2026"
+    ],
+
+    soonMin: 240,
+    showHeroOnlyOnEventDays: true,
+    matchAllCategoryInRange: false
+  }
 };
 
   /* =========================

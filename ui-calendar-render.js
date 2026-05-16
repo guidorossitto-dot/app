@@ -16,9 +16,9 @@ function eventsByDateMap() {
   const mapObj = {};
 
   const categoryFiltered = util.filterByActiveCategory(state.logic.events || []);
-  const visible = App.selectors?.applyBaficiFilter
-    ? App.selectors.applyBaficiFilter(categoryFiltered)
-    : categoryFiltered;
+  const visible = App.selectors?.applyFestivalFilter
+  ? App.selectors.applyFestivalFilter(categoryFiltered)
+  : categoryFiltered;
 
   for (const ev of visible) {
     const bucketDate = util.getEventDisplayDate
