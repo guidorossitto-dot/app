@@ -198,14 +198,22 @@ if (uniqueDates.length === 1) {
       </button>
     `;
 
-    const routeBtn = `
-      <button class="popupBtn popupRouteBtn"
-        data-lat="${loc.lat}"
-        data-lng="${loc.lng}"
-        data-place="${encodeURIComponent(placeTitle || "")}">
-        Cómo llegar
-      </button>
-    `;
+      const mapsUrl =
+        `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(
+          `${loc.lat},${loc.lng}`
+        )}`;
+
+      const routeBtn = `
+        <a class="popupBtn popupRouteBtn"
+          href="${mapsUrl}"
+          target="_blank"
+          rel="noopener noreferrer"
+          data-lat="${loc.lat}"
+          data-lng="${loc.lng}"
+          data-place="${encodeURIComponent(placeTitle || "")}">
+          Cómo llegar
+        </a>
+      `;
 
     let html = `
       <div class="popupCard">
