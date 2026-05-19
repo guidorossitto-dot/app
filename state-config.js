@@ -171,8 +171,8 @@ pendingMapClickTimer: null,
 App.CFG = {
   ...(App.CFG || {}),
 
-  ACTIVE_FESTIVAL: {
-    enabled: true,
+    ACTIVE_FESTIVAL: {
+    enabled: false,
     key: "dia_museos_2026",
     label: "🏛️ Museos",
     title: "🏛️ Día de los Museos",
