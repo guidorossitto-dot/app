@@ -72,11 +72,50 @@
 
   <div class="mainColumn">
 <div class="panelCard panelCard--map">
+
+  <div class="mapTopBar">
+    <details class="mapDateDropdown" id="mapDateBar">
+      <summary class="mapDateDropdownSummary">
+        <span id="mapDateSummaryText">Hoy</span>
+        <span class="mapDateArrow">▾</span>
+      </summary>
+
+      <div class="mapDateDropdownPanel">
+        <button type="button" class="mapDateOption isActive" data-map-date-offset="0">
+          Hoy
+        </button>
+
+        <button type="button" class="mapDateOption" data-map-date-offset="1">
+          Mañana
+        </button>
+
+        <button type="button" class="mapDateOption" data-map-date-offset="2">
+          Pasado mañana
+        </button>
+
+        <label class="mapDateCustomLabel" for="mapDateInput">
+          Elegir fecha
+        </label>
+
+        <input
+          type="date"
+          id="mapDateInput"
+          class="mapDateInput"
+          aria-label="Elegir fecha del mapa"
+        >
+
+        <div id="mapDateLabel" class="mapDateLabel"></div>
+      </div>
+    </details>
+  </div>
+
   <div class="mapStage">
 <div class="mapOverlay mapOverlay--top">
 
   <!-- IZQUIERDA: FILTROS -->
   <div class="mapOverlayLeft">
+
+    
     <div class="filtersBar filtersBar--map">
       <button
         type="button"

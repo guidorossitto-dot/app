@@ -164,6 +164,111 @@ function renderDiscovery() {
   `;
 }
 
+function getMapDateHumanLabel(dateStr) {
+  const today = App.util.todayStrYYYYMMDD();
+  const tomorrow = App.util.addDaysYYYYMMDD(today, 1);
+  const afterTomorrow = App.util.addDaysYYYYMMDD(today, 2);
+
+  if (dateStr === today) return "Hoy";
+  if (dateStr === tomorrow) return "Mañana";
+  if (dateStr === afterTomorrow) return "Pasado mañana";
+
+  return "Fecha elegida";
+}
+
+function setSelectedMapDate(dateStr) {
+  const safeDate = String(dateStr || "").slice(0, 10);
+  if (!safeDate) return;
+
+  App.state.logic.selectedMapDate = safeDate;
+
+  if (App.state.runtime.map) {
+    App.state.runtime.map.closePopup();
+  }
+
+  App.state.runtime.activePopupWantsPreserve = false;
+  App.state.runtime.activePopupLocationKey = null;
+  App.state.runtime.activePopupEventId = null;
+  App.state.runtime.activePopupLatLng = null;
+
+  App.commit?.({
+    persist: false,
+    purgePast: false,
+    rebuildMarkers: true,
+    recomputeNearby: true
+  });
+}
+
+function renderMapDateUI() {
+  const root = document.getElementById("mapDateBar");
+  if (!root) return;
+
+  const today = App.util.todayStrYYYYMMDD();
+  const selectedDate = String(
+    App.state.logic.selectedMapDate || today
+  ).slice(0, 10);
+
+  const input = document.getElementById("mapDateInput");
+  if (input && input.value !== selectedDate) {
+    input.value = selectedDate;
+  }
+
+  root.querySelectorAll("[data-map-date-offset]").forEach((btn) => {
+    const offset = Number(btn.dataset.mapDateOffset || 0);
+    const btnDate = App.util.addDaysYYYYMMDD(today, offset);
+
+    btn.classList.toggle("isActive", btnDate === selectedDate);
+  });
+
+const humanLabel = getMapDateHumanLabel(selectedDate);
+
+const summaryText = document.getElementById("mapDateSummaryText");
+if (summaryText) {
+  summaryText.textContent = humanLabel;
+}
+
+const label = document.getElementById("mapDateLabel");
+if (label) {
+  label.textContent = `${humanLabel} · ${App.util.formatDateDisplay(selectedDate)}`;
+}
+}
+
+function bindMapDateUI() {
+  if (App.state.runtime.bindings.mapDateUI) return;
+  App.state.runtime.bindings.mapDateUI = true;
+
+  const root = document.getElementById("mapDateBar");
+  if (!root) return;
+
+root.addEventListener("click", (e) => {
+  const btn = e.target.closest("[data-map-date-offset]");
+  if (!btn) return;
+
+  const offset = Number(btn.dataset.mapDateOffset || 0);
+  const today = App.util.todayStrYYYYMMDD();
+  const nextDate = App.util.addDaysYYYYMMDD(today, offset);
+
+  setSelectedMapDate(nextDate);
+
+  if (root.tagName === "DETAILS") {
+    root.open = false;
+  }
+});
+
+  const input = document.getElementById("mapDateInput");
+  if (input) {
+input.addEventListener("change", () => {
+  setSelectedMapDate(input.value);
+
+  if (root.tagName === "DETAILS") {
+    root.open = false;
+  }
+});
+  }
+
+  renderMapDateUI();
+}
+
 function renderFestivalHero() {
   const pageShell = document.querySelector("#publicView .pageShell");
   const appLayout = document.querySelector(".appLayout");
@@ -309,8 +414,10 @@ function renderFestivalHero() {
     }
 
     
-       App.ui.renderAppShell();
+    App.ui.renderAppShell();
     App.ui.renderLoginUI();
+    App.ui.bindMapDateUI?.();
+    App.ui.renderMapDateUI?.();
     App.ui.renderFestivalHero?.();
     App.ui.renderDiscovery?.();
     App.ui.renderList();
@@ -338,10 +445,13 @@ function renderFestivalHero() {
     return renderAll(finalOpts);
   }
 
-    App.ui.renderLoginUI = renderLoginUI;
+  App.ui.renderLoginUI = renderLoginUI;
   App.ui.renderDiscovery = renderDiscovery;
   App.ui.bindLoginUI = bindLoginUI;
   App.ui.renderFestivalHero = renderFestivalHero;
+  App.ui.renderMapDateUI = renderMapDateUI;
+  App.ui.bindMapDateUI = bindMapDateUI;
+  App.ui.setSelectedMapDate = setSelectedMapDate;
 
   App.renderAll = renderAll;
   App.commit = commit;

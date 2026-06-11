@@ -840,7 +840,16 @@ setActivePopupIntent({
     return [];
   }
 
-  const nearby = util.getNearbyTodayEvents(lat, lng, state.logic.events || []);
+const visibleMapEvents = selectors?.getMapVisibleEvents?.(state.logic.events || []) || [];
+
+const nearby = visibleMapEvents.filter((ev) => {
+  if (!util.isValidCoord(ev?.lat) || !util.isValidCoord(ev?.lng)) return false;
+
+  return (
+    util.distanceKm(lat, lng, Number(ev.lat), Number(ev.lng)) <=
+    App.CFG.SEARCH_RADIUS_KM
+  );
+});
 
   App.actions?.setNearbyCenter?.({ lat, lng });
   App.actions?.setNearbyEvents?.(nearby);

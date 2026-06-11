@@ -111,6 +111,7 @@ App.CFG.ALLOWED_PRICING_TYPES = Object.keys(App.CFG.PRICING_TYPES || {});
   favoritesOnly: false,
   festivalOnly: false,
   activeCategory: App.CFG.CATEGORY_ALL,
+  selectedMapDate: todayStrYYYYMMDD(),
   editingEventId: null,
   editingMode: null,
   editingSeriesId: null,
@@ -160,9 +161,10 @@ pendingMapClickTimer: null,
   uiPanZoomInProgress: false,
 
   // 👇 NUEVO
-    bindings: {
-    loginUI: false,
-    discoveryUI: false
+  bindings: {
+   loginUI: false,
+   discoveryUI: false,
+   mapDateUI: false
   }
 }
   };

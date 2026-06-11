@@ -585,6 +585,11 @@ function getVisibleEventsOnDate(dateStr, list = state.logic.events) {
   });
 }
 
+  function getSelectedMapDate() {
+  const selected = String(state.logic?.selectedMapDate || "").slice(0, 10);
+  return selected || util.todayStrYYYYMMDD();
+}
+
   function isMapPersistentCategory(category) {
   const cat = util.normalizeCategory(category);
   return cat === "visual_arts" || cat === "games";
@@ -595,19 +600,26 @@ function isMapTimedCategory(category) {
   return cat === "music" || cat === "dance" || cat === "theatre" || cat === "cinema" || cat === "party";
 }
 
-function isEventVisibleOnMap(ev, now = new Date()) {
+function isEventVisibleOnMap(ev, now = new Date(), dateStr = getSelectedMapDate()) {
   if (!ev?.date) return false;
 
+  const targetDate = String(dateStr || "").slice(0, 10);
+  if (!targetDate) return false;
+
+  const isOnTargetDate = util.isEventDisplayedOnDate
+    ? util.isEventDisplayedOnDate(ev, targetDate)
+    : String(ev?.date || "").slice(0, 10) === targetDate;
+
+  if (!isOnTargetDate) return false;
+
   const today = util.todayStrYYYYMMDD();
-  const evDate = String(ev.date || "").slice(0, 10);
 
-  if (evDate > today) return false;
-
-  const isTodayLike =
-    evDate === today ||
-    (typeof util.isLateNightCarryoverEvent === "function" && util.isLateNightCarryoverEvent(ev));
-
-  if (!isTodayLike) return false;
+  // Si estoy mirando mañana, pasado mañana o una fecha elegida,
+  // muestro todos los eventos de ese día.
+  // La lógica de "ya empezó hace mucho" solo la aplico para HOY.
+  if (targetDate !== today) {
+    return true;
+  }
 
   const cat = util.normalizeCategory(ev.category);
 
@@ -632,7 +644,7 @@ function isEventVisibleOnMap(ev, now = new Date()) {
   }
 
   if (cat === "theatre" || cat === "cinema" || cat === "dance") {
-  return diffHours <= 1;
+    return diffHours <= 1;
   }
 
   return true;
@@ -641,7 +653,11 @@ function isEventVisibleOnMap(ev, now = new Date()) {
 function getMapVisibleEvents(list = state.logic.events) {
   const base = util.filterByActiveCategory(Array.isArray(list) ? list : []);
   const festivalFiltered = applyFestivalFilter(base);
-  return festivalFiltered.filter((ev) => isEventVisibleOnMap(ev));
+  const selectedDate = getSelectedMapDate();
+
+  return festivalFiltered.filter((ev) => {
+    return isEventVisibleOnMap(ev, new Date(), selectedDate);
+  });
 }
 
   function getGroupedTodayEvents(list = state.logic.events) {
@@ -937,6 +953,7 @@ function getDiscoverySuggestion() {
     getGroupedFutureEvents,
     getGroupedNearbyEvents,
 
+    getSelectedMapDate,
     isMapPersistentCategory,
     isMapTimedCategory,
     isEventVisibleOnMap,
