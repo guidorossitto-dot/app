@@ -71,6 +71,39 @@ function isUsefulVenueUrl(value) {
   return /^https?:\/\//i.test(url);
 }
 
+function normalizeVenueInstagramUrl(value) {
+  let raw = String(value || "").trim();
+
+  if (!raw) return "";
+
+  raw = raw.replace(/^@/, "");
+
+  if (/^https?:\/\//i.test(raw)) {
+    try {
+      const url = new URL(raw);
+      const host = url.hostname.replace(/^www\./, "");
+
+      if (host === "instagram.com") {
+        const handle = url.pathname.split("/").filter(Boolean)[0] || "";
+        return handle ? `https://www.instagram.com/${handle}/` : "";
+      }
+
+      return raw;
+    } catch {
+      return "";
+    }
+  }
+
+  raw = raw
+    .replace(/^www\.instagram\.com\//i, "")
+    .replace(/^instagram\.com\//i, "")
+    .split(/[/?#]/)[0]
+    .replace(/^@/, "")
+    .trim();
+
+  return raw ? `https://www.instagram.com/${raw}/` : "";
+}
+
 function getVenueGuideGroupKey(venue) {
   const raw = String(venue?.guideGroup || "").trim();
 
@@ -151,6 +184,19 @@ function buildVenueGuideItemHTML(venue) {
     `
     : "";
 
+      const addInstagramBtn = util.canManageUI()
+    ? `
+      <button
+        type="button"
+        class="linkBtn venuesGuideAddInstagramBtn"
+        data-venue-id="${escapeAttr(encodeURIComponent(venue.id || ""))}"
+        data-venue-name="${escapeAttr(encodeURIComponent(venue.name || ""))}"
+        data-current-instagram="${escapeAttr(encodeURIComponent(venue.instagramUrl || ""))}">
+        ${isUsefulVenueUrl(venue.instagramUrl) ? "Editar Instagram" : "Agregar Instagram"}
+      </button>
+    `
+    : "";
+
 
     const deleteVenueBtn = util.canManageUI()
   ? `
@@ -187,6 +233,7 @@ function buildVenueGuideItemHTML(venue) {
         Ver en mapa
       </button>
 
+      ${addInstagramBtn}
       ${deleteVenueBtn}
     </div>
     </li>
@@ -281,6 +328,73 @@ function bindVenueGuideUI() {
   root.dataset.bound = "true";
 
   root.addEventListener("click", async (e) => {
+        const addInstagramBtn = e.target.closest(".venuesGuideAddInstagramBtn");
+
+    if (addInstagramBtn) {
+      e.preventDefault();
+      e.stopPropagation();
+
+      if (!util.canManageUI()) {
+        alert("No tenés permisos para editar lugares.");
+        return;
+      }
+
+      const venueId = decodeURIComponent(addInstagramBtn.dataset.venueId || "");
+      const venueName = decodeURIComponent(addInstagramBtn.dataset.venueName || "");
+      const currentInstagram = decodeURIComponent(addInstagramBtn.dataset.currentInstagram || "");
+
+      if (!venueId) {
+        alert("No se pudo identificar el lugar.");
+        return;
+      }
+
+      const input = prompt(
+        `Instagram de ${venueName || "este lugar"}\n\nPodés pegar @usuario o el link completo.\nDejá vacío para borrar el Instagram.`,
+        currentInstagram
+      );
+
+      if (input === null) return;
+
+      const instagramUrl = normalizeVenueInstagramUrl(input);
+
+      addInstagramBtn.disabled = true;
+      addInstagramBtn.textContent = "Guardando...";
+
+      try {
+        const result = await App.venues?.updateVenueRemote?.(venueId, {
+          instagramUrl
+        });
+
+        if (!result?.ok) {
+          console.error("No se pudo guardar el Instagram.", result?.error);
+          alert("No se pudo guardar el Instagram.");
+          addInstagramBtn.disabled = false;
+          addInstagramBtn.textContent = currentInstagram ? "Editar Instagram" : "Agregar Instagram";
+          return;
+        }
+
+        if (App.venues?.loadVenuesRemote) {
+          await App.venues.loadVenuesRemote();
+        }
+
+        App.map?.renderVenueGuide?.();
+
+        App.commit?.({
+          persist: false,
+          purgePast: false,
+          rebuildMarkers: false,
+          recomputeNearby: false
+        });
+      } catch (err) {
+        console.error("Error guardando Instagram.", err);
+        alert("Error inesperado al guardar el Instagram.");
+        addInstagramBtn.disabled = false;
+        addInstagramBtn.textContent = currentInstagram ? "Editar Instagram" : "Agregar Instagram";
+      }
+
+      return;
+    }
+    
     const deleteBtn = e.target.closest(".venuesGuideDeleteBtn");
 
     if (deleteBtn) {
