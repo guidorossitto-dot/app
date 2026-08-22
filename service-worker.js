@@ -1,5 +1,5 @@
-const CACHE_NAME = "agendapp-shell-v99";
-const RUNTIME_CACHE = "agendapp-runtime-v99";
+const CACHE_NAME = "agendapp-shell-v100";
+const RUNTIME_CACHE = "agendapp-runtime-v100";
 
 const APP_SHELL = [
   "/",
@@ -47,9 +47,9 @@ const APP_SHELL = [
   "/libs/leaflet-markercluster/leaflet.markercluster.js",
 
   // icons
-  "/icons/icon-192.png",
-  "/icons/icon-512.png",
-  "/icons/icon-512-maskable.png"
+  "/icons/icon-192-v2.png",
+  "/icons/icon-512-v2.png",
+  "/icons/icon-512-maskable-v2.png"
 ];
 
 self.addEventListener("install", (event) => {
