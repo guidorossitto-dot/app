@@ -174,64 +174,39 @@ App.CFG = {
   ...(App.CFG || {}),
 
     ACTIVE_FESTIVAL: {
-    enabled: false,
-    key: "dia_museos_2026",
-    label: "🏛️ Museos",
-    title: "🏛️ Día de los Museos",
-    text: "Actividades especiales en museos y sedes de la Ciudad.",
-    start: "2026-05-16",
-    end: "2026-05-18",
+  enabled: true,
+  key: "tangoba_2026",
+  label: "🪗 Tango BA",
+  title: "🪗 Tango BA Festival",
+  text: "Conciertos, milongas, clases y actividades del Festival y Mundial de Tango BA.",
+  start: "2026-08-19",
+  end: "2026-09-02",
 
-    categories: [
-      "visual_arts",
-      "music",
-      "cinema",
-      "literature",
-      "theatre",
-      "dance"
-    ],
+  categories: [
+    "music",
+    "dance",
+    "literature",
+    "cinema",
+    "theatre",
+    "visual_arts"
+  ],
 
-    titleKeywords: [
-      "día de los museos",
-      "dia de los museos"
-    ],
+  sourceNames: [],
 
-    placeKeywords: [
-      "quinquela",
-      "benito quinquela",
-      "museo saavedra",
-      "saavedra",
-      "fernandez blanco",
-      "casa fernandez blanco",
-      "museo sivori",
-      "sivori",
-      "museo larreta",
-      "larreta",
-      "museo del cine",
-      "museo gardel",
-      "gardel",
-      "museo perlotti",
-      "perlotti",
-      "arte popular",
-      "museo de arte popular",
-      "museo de la ciudad"
-    ],
+  titleKeywords: [
+    "tango ba"
+  ],
 
-    linkKeywords: [
-      "museos",
-      "dia-de-los-museos",
-      "dia-internacional-de-los-museos"
-    ],
+  placeKeywords: [],
 
-    sourceNames: [
-      "dia_museos_2026",
-      "museos_2026"
-    ],
+  linkKeywords: [
+    "tangoba.org"
+  ],
 
-    soonMin: 240,
-    showHeroOnlyOnEventDays: true,
-    matchAllCategoryInRange: false
-  }
+  soonMin: 240,
+  showHeroOnlyOnEventDays: true,
+  matchAllCategoryInRange: false
+}
 };
 
   /* =========================
